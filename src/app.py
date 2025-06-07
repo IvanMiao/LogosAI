@@ -1,5 +1,5 @@
 import gradio as gr
-from process.ocr import ocr_workflow
+from process.ocr import perform_raw_ocr, correct_text_with_ai
 from process.gradio_css import CUSTOM_CSS
 
 
@@ -25,11 +25,31 @@ def ocr_workflow_wrapper(file):
 	yield "Processing...", "⏳ Processing, please wait...\n\n\n"
 
 	try:
-		result = ocr_workflow(file, MISTRAL_API_KEY)
+		result = perform_raw_ocr(file, MISTRAL_API_KEY)
 		yield result, f"\n{result}\n"
 	except Exception as e:
 		error_msg = f"An error occurred during processing: {str(e)}"
 		yield error_msg, error_msg + "\n\n\n"
+
+
+def ai_correct(current_text: str):
+	if not MISTRAL_API_KEY:
+		error_msg = "Error: Mistral API Key not set."
+		yield error_msg, error_msg + "\n\n\n"
+		return
+	if not current_text or current_text.strip() == "*Raw output will appear here...*":
+		error_msg = "*No text to correct. Upload a file, or paste text into 'Raw Text' box first*"
+		yield error_msg, error_msg
+		return
+
+	yield "⏳ AI Correcting text...", "⏳ AI Correcting text...\n\n*Please wait...*"
+	try:
+		result = correct_text_with_ai(current_text, MISTRAL_API_KEY)
+		yield result, result
+	except Exception as e:
+		error_msg = f"Error : {e}"
+		yield error_msg, error_msg + "\n\n\n"
+
 
 
 with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
@@ -74,7 +94,8 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 					label="Upload Image/PDF/text",
 					file_types=["image", ".pdf", ".txt"]
 					)
-				process_button = gr.Button("File Process", variant="primary")
+				process_button = gr.Button("1. File Process (OCR)", variant="primary")
+				ai_correct_button = gr.Button("2. AI Correct", variant="primary")
 			with gr.Column(scale=2):
 				gr.Markdown("### Processed result")
 				with gr.Tabs():
@@ -84,17 +105,25 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 						)
 					with gr.Tab("Raw Text"):
 						text_display = gr.Textbox(
-							label="Raw Output",
+							label="Raw Output / Editable Text",
 							lines=15,
 							max_lines=20,
 							show_copy_button=True,
-							value="*Raw output will appear here...*"
+							value="*Raw output will appear here...*",
+							interactive=True
 						)
 
-	# Hook the button click event
+	# Hook the ocr button to click event
 	process_button.click(
 		fn=ocr_workflow_wrapper,
 		inputs=file_input,
+		outputs=[text_display, text_markdown]
+	)
+
+	# AI correction button to click event
+	ai_correct_button.click(
+		fn=ai_correct,
+		inputs=text_display,
 		outputs=[text_display, text_markdown]
 	)
 
@@ -105,7 +134,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 		with gr.Row():
 			with gr.Column(scale=1):
 				language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Prof's Language")
-				style_seletor = gr.Radio(["News", "Narrative", "Poem", "Philosophy"], label="Genre")
+				style_seletor = gr.Radio(["News", "Narrative", "Poem", "Philosophy", "Paper"], label="Genre")
 				interpret_button = gr.Button("Generate Interpretation", variant="primary")
 
 			with gr.Column(scale=2):

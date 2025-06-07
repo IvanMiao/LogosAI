@@ -82,6 +82,22 @@ def correct_text_with_ai(text: str, api_key: str):
 	)
 	return(response.choices[0].message.content)
 
+
+def perform_raw_ocr(input_file, api_key):
+	file_ext = input_file.name.split('.')[-1].lower()
+	
+	if file_ext == "txt":
+		with open(input_file, "r", encoding="utf-8") as f:
+			return f.read()
+	elif file_ext == "pdf":
+		file_type = "pdf"
+	else:
+		file_type = "image"
+	response = ocr_from_file(input_file, api_key, file_type)
+	res_text = get_combined_markdown(response)
+	return res_text
+
+"""
 def	ocr_workflow(input_file, api_key):
 	if input_file.name.split('.')[-1].lower() == "pdf":
 		file_type = "pdf"
@@ -92,3 +108,4 @@ def	ocr_workflow(input_file, api_key):
 	corr_text = correct_text_with_ai(res_text, api_key)
 
 	return corr_text
+"""
