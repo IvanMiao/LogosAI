@@ -1,40 +1,83 @@
 from mistralai import Mistral
+from mistralai.models import OCRResponse
 import os
 
 API_KEY = os.environ["MISTRAL_API_KEY"]
 OCR_MODEL = "mistral-ocr-latest"
+CHAT_MODEL = "mistral-large-latest"
 
 client = Mistral(api_key=API_KEY)
 
-def	ocr_from_image(image_path):
+
+def	ocr_from_file(file_path, mode="image"):
 
 	uploaded_image = client.files.upload(
     	file={
-        	"file_name": image_path,
-        	"content": open(image_path, "rb"),
+        	"file_name": file_path,
+        	"content": open(file_path, "rb"),
     	},
     	purpose="ocr"
 	)
-
 	signed_url = client.files.get_signed_url(file_id=uploaded_image.id)
 
-	ocr_response = client.ocr.process(
-		model=OCR_MODEL,
-		document={
-			"type": "image_url",
-			"image_url": signed_url.url,
-		},
-		include_image_base64=True
-	)
+	if mode == "image":
+		ocr_response = client.ocr.process(
+			model=OCR_MODEL,
+			document={
+				"type": "image_url",
+				"image_url": signed_url.url,
+			},
+			include_image_base64=True
+		)
+	elif mode == "pdf":
+		ocr_response = client.ocr.process(
+			model=OCR_MODEL,
+			document={
+				"type": "pdf_url",
+				"pdf_url": signed_url.url,
+			},
+			include_image_base64=True
+		)
 
 	return ocr_response
 
 
-def ocr_from_pdf(pdf_path):
-	pass
+def get_combined_markdown(ocr_response: OCRResponse) -> str:
 
-def	correct_text_with_ai(text: str):
-	pass
+	markdowns: list[str] = []
+	for page in ocr_response.pages:
+		markdowns.append(page.markdown)
 
-res = ocr_from_image("./test.png")
-print(res.pages) # This returns a OCRPageObject
+	return "\n\n".join(markdowns)
+
+
+def correct_text_with_ai(text: str):
+
+	response = client.chat.complete(
+		model=CHAT_MODEL,
+		messages=[
+			{
+				"role": "system",
+				"content":
+					"""You are an expert proofreader specializing in Markdown formatting and OCR error correction. Your task is to meticulously review provided Markdown text that has been generated via OCR.
+					Your primary goal is to identify and correct **typographical errors, spelling mistakes, and redundant symbols** that are clearly a result of the OCR process.
+
+					**Crucially, you must NOT alter the original meaning or content of the text.** Your corrections should be limited to:
+					* Obvious OCR-induced spelling errors
+					* Erroneous or redundant symbols
+					* Markdown formatting errors:
+
+					After your thorough review, output the carefully corrected Markdown text. JUST the text."""
+				},
+			{"role": "user", "content": text},
+		],
+		temperature=0.1,
+	)
+	return(response.choices[0].message.content)
+
+def	ocr_workflow(input_file):
+	response = ocr_from_file(input_file)
+	res_text = get_combined_markdown(response)
+	corr_text = correct_text_with_ai(res_text)
+
+	return corr_text
