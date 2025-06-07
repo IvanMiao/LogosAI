@@ -1,0 +1,4 @@
+.gradio/
+.env
+src/__pycache__/
+src/process/__pycache__/

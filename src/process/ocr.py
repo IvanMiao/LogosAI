@@ -1,16 +1,16 @@
 from mistralai import Mistral
 from mistralai.models import OCRResponse
-import os
 
-API_KEY = os.environ["MISTRAL_API_KEY"]
+
 OCR_MODEL = "mistral-ocr-latest"
 CHAT_MODEL = "mistral-large-latest"
 
-client = Mistral(api_key=API_KEY)
 
+def ocr_from_file(file_path, api_key, mode="image"):
 
-def ocr_from_file(file_path, mode="image"):
-
+	if not api_key:
+		raise ValueError("Mistral API Key is required.")
+	client = Mistral(api_key=api_key)
 	uploaded_image = client.files.upload(
 		file={
 			"file_name": file_path,
@@ -51,7 +51,11 @@ def get_combined_markdown(ocr_response: OCRResponse) -> str:
 	return "\n\n".join(markdowns)
 
 
-def correct_text_with_ai(text: str):
+def correct_text_with_ai(text: str, api_key: str):
+
+	if not api_key:
+		raise ValueError("Mistral API Key if required.")
+	client = Mistral(api_key=api_key)
 
 	response = client.chat.complete(
 		model=CHAT_MODEL,
@@ -78,13 +82,13 @@ def correct_text_with_ai(text: str):
 	)
 	return(response.choices[0].message.content)
 
-def	ocr_workflow(input_file):
+def	ocr_workflow(input_file, api_key):
 	if input_file.name.split('.')[-1].lower() == "pdf":
 		file_type = "pdf"
 	else:
 		file_type = "image"
-	response = ocr_from_file(input_file, file_type)
+	response = ocr_from_file(input_file, api_key, file_type)
 	res_text = get_combined_markdown(response)
-	corr_text = correct_text_with_ai(res_text)
+	corr_text = correct_text_with_ai(res_text, api_key)
 
 	return corr_text
