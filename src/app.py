@@ -58,10 +58,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 		process_button = gr.Button("File Process")
 	
 	gr.Markdown("## Processed result")
-	text_display = gr.Textbox(
-		label="Prettier Text (with Mistral)",
-		lines=20,
-		)
+	text_display = gr.Textbox(label="Prettier Text (with Mistral)",lines=20)
 
 	# Hook the button click event
 	process_button.click(

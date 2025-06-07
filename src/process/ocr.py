@@ -9,14 +9,14 @@ CHAT_MODEL = "mistral-large-latest"
 client = Mistral(api_key=API_KEY)
 
 
-def	ocr_from_file(file_path, mode="image"):
+def ocr_from_file(file_path, mode="image"):
 
 	uploaded_image = client.files.upload(
-    	file={
-        	"file_name": file_path,
-        	"content": open(file_path, "rb"),
-    	},
-    	purpose="ocr"
+		file={
+			"file_name": file_path,
+			"content": open(file_path, "rb"),
+		},
+		purpose="ocr"
 	)
 	signed_url = client.files.get_signed_url(file_id=uploaded_image.id)
 
@@ -33,8 +33,8 @@ def	ocr_from_file(file_path, mode="image"):
 		ocr_response = client.ocr.process(
 			model=OCR_MODEL,
 			document={
-				"type": "pdf_url",
-				"pdf_url": signed_url.url,
+				"type": "document_url",
+				"document_url": signed_url.url,
 			},
 			include_image_base64=True
 		)
@@ -69,14 +69,21 @@ def correct_text_with_ai(text: str):
 
 					After your thorough review, output the carefully corrected Markdown text. JUST the text."""
 				},
-			{"role": "user", "content": text},
+			{
+				"role": "user",
+				"content": text
+				},
 		],
 		temperature=0.1,
 	)
 	return(response.choices[0].message.content)
 
 def	ocr_workflow(input_file):
-	response = ocr_from_file(input_file)
+	if input_file.name.split('.')[-1].lower() == "pdf":
+		file_type = "pdf"
+	else:
+		file_type = "image"
+	response = ocr_from_file(input_file, file_type)
 	res_text = get_combined_markdown(response)
 	corr_text = correct_text_with_ai(res_text)
 
