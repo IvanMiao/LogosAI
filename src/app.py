@@ -20,23 +20,23 @@ def update_api_keys(mistral_key, gemini_key):
 def ocr_workflow_wrapper(file):
 	if not MISTRAL_API_KEY:
 		error_msg = "Error: Mistral API Key not set."
-		yield error_msg, error_msg + "\n\n\n"
+		yield error_msg, error_msg + "\n\n"
 		return
 
-	yield "Processing...", "⏳ Processing, please wait...\n\n\n"
+	yield "Processing...", "⏳ Processing, please wait...\n\n"
 
 	try:
 		result = perform_raw_ocr(file, MISTRAL_API_KEY)
 		yield result, f"\n{result}\n"
 	except Exception as e:
 		error_msg = f"An error occurred during processing: {str(e)}"
-		yield error_msg, error_msg + "\n\n\n"
+		yield error_msg, error_msg + "\n\n"
 
 
 def ai_correct(current_text: str):
 	if not MISTRAL_API_KEY:
 		error_msg = "Error: Mistral API Key not set."
-		yield error_msg, error_msg + "\n\n\n"
+		yield error_msg, error_msg + "\n\n"
 		return
 	if not current_text or current_text.strip() == "":
 		error_msg = "*No text to correct. Upload a file, or paste text into 'Raw Text' box first*"
@@ -49,7 +49,7 @@ def ai_correct(current_text: str):
 		yield result, result
 	except Exception as e:
 		error_msg = f"Error : {e}"
-		yield error_msg, error_msg + "\n\n\n"
+		yield error_msg, error_msg + "\n\n"
 
 
 def interpretation_workflow(text: str, genre: str, learn_language, target_language):
@@ -62,19 +62,19 @@ def interpretation_workflow(text: str, genre: str, learn_language, target_langua
 	if not learn_language or target_language:
 		yield "Error: Language not selected"
 
-	if genre.lower() == "news":
-		yield "⏳ Generating interpretation for News..."
-		result = get_interpretation("news", GEMINI_API_KEY, text, learn_language, target_language)
+	if genre.lower() in ["general", "news"]:
+		yield f"⏳ Generating interpretation for {genre}..."
+		result = get_interpretation(genre.lower(), GEMINI_API_KEY, text, learn_language, target_language)
 		yield result
 	else:
 		yield "not implemented yet"
 
 
 with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
-	gr.Markdown("# 📚 Language Professor Agent", elem_classes=["section-header"])
+	gr.Markdown("# 📚 LogosAI - Language Professor Agent", elem_classes=["section-header"])
 
 	# --- API Key ---
-	with gr.Accordion("API Configuration", open=False):
+	with gr.Accordion("API Configuration", open=True):
 		with gr.Row():
 			with gr.Column(scale=2):
 				mistral_api = gr.Textbox(
@@ -93,7 +93,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 			with gr.Column(scale=1):
 				update_keys_button = gr.Button("Save keys")
 
-	api_key_status_output = gr.Textbox(label="Status", interactive=False, show_label=False)
+	api_key_status_output = gr.Markdown()
 
 	update_keys_button.click(
 		fn=update_api_keys,
@@ -117,10 +117,6 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 			with gr.Column(scale=2):
 				gr.Markdown("### Processed result")
 				with gr.Tabs():
-					with gr.Tab("Formatted View"):
-						text_markdown = gr.Markdown(
-							value="*Processed text will appear here...*\n\n",
-						)
 					with gr.Tab("Raw Text"):
 						text_display = gr.Textbox(
 							label="Raw Output / Editable Text",
@@ -129,6 +125,10 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 							show_copy_button=True,
 							value="",
 							interactive=True
+						)
+					with gr.Tab("Formatted View"):
+						text_markdown = gr.Markdown(
+							value="*Processed text will appear here...*\n\n",
 						)
 
 	# Hook the ocr button to click event
@@ -151,9 +151,9 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 
 		with gr.Row():
 			with gr.Column(scale=1):
-				target_language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Prof's Language")
+				prof_language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Prof's Language")
 				learn_language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Language to Learn")
-				style_seletor = gr.Radio(["News", "Narrative", "Poem", "Philosophy", "Paper"], label="Genre")
+				style_seletor = gr.Radio(["General", "Paper", "News", "Narrative", "Poem", "Philosophy"], label="Genre")
 				interpret_button = gr.Button("Generate Interpretation", variant="primary")
 
 			with gr.Column(scale=2):
@@ -165,7 +165,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 
 	interpret_button.click(
 		fn=interpretation_workflow,
-		inputs=[text_display, style_seletor, learn_language_seletor, target_language_seletor],
+		inputs=[text_display, style_seletor, learn_language_seletor, prof_language_seletor],
 		outputs=interpretation_output
 	)
 
