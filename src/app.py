@@ -61,7 +61,7 @@ def interpretation_workflow(text: str, genre: str, learn_language, target_langua
 		return
 	if not learn_language or target_language:
 		yield "Error: Language not selected"
-	
+
 	if genre.lower() == "news":
 		yield "⏳ Generating interpretation for News..."
 		result = get_interpretation("news", GEMINI_API_KEY, text, learn_language, target_language)
@@ -171,4 +171,3 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 
 if __name__ == "__main__":
 	demo.launch(share=True)
-
