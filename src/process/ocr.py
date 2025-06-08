@@ -54,7 +54,7 @@ def get_combined_markdown(ocr_response: OCRResponse) -> str:
 def correct_text_with_ai(text: str, api_key: str):
 
 	if not api_key:
-		raise ValueError("Mistral API Key if required.")
+		raise ValueError("Mistral API Key is required.")
 	client = Mistral(api_key=api_key)
 
 	response = client.chat.complete(
@@ -65,11 +65,13 @@ def correct_text_with_ai(text: str, api_key: str):
 				"content":
 					"""You are an expert proofreader specializing in Markdown formatting and OCR error correction. Your task is to meticulously review provided Markdown text that has been generated via OCR.
 					Your primary goal is to identify and correct **typographical errors, spelling mistakes, and redundant symbols** that are clearly a result of the OCR process.
+					Additionally, you must correct any illogical or jumbled line breaks to ensure proper Markdown paragraph formatting.
 
 					**Crucially, you must NOT alter the original meaning or content of the text.** Your corrections should be limited to:
 					* Obvious OCR-induced spelling errors
 					* Erroneous or redundant symbols
-					* Markdown formatting errors:
+					* Markdown formatting errors
+					* Jumbled or incorrect line breaks for proper paragraphing
 
 					After your thorough review, output the carefully corrected Markdown text. JUST the text."""
 				},
