@@ -1,19 +1,6 @@
----
-title: LogosAI
-emoji: 📚
-colorFrom: purple
-colorTo: indigo
-python_version: 3.13
-sdk: gradio
-sdk_version: 5.33.0
-app_file: app.py
-pinned: false
-tags: ["mcp-server-track"]
-license: mit
-short_description: Deeply read any text in any language, from news to philosoph
----
+# Prof-Agent/LogosAI 🚀
 
-# LogosAI 🚀
+[Try this demo app in HuggingFace Space!](https://huggingface.co/spaces/IvanMiao/LogosAI)
 
 An intelligent system that reads, reasons about and transforms language.
 
