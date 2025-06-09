@@ -1,7 +1,7 @@
 import gradio as gr
 from process.ocr import perform_raw_ocr, correct_text_with_ai
 from process.interpretation import get_interpretation
-from process.translation import get_tranlaton
+from process.translation import get_translaton
 from process.gradio_css import CUSTOM_CSS
 
 
@@ -141,7 +141,7 @@ def translation_workflow(text: str, target_language: str, gemini_key):
 	
 	if target_language in ["Deutsch", "English", "Français", "Русский язык", "中文"]:
 		yield f"⏳ Generating interpretation for target_language: {[target_language]} ..."
-		result = get_tranlaton(text, gemini_key, target_language)
+		result = get_translaton(text, gemini_key, target_language)
 		yield result
 	else:
 		yield "not implemented yet"
