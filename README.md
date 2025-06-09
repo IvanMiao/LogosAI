@@ -6,7 +6,6 @@ An intelligent system that reads, reasons about and transforms language.
 
 **Deeply read any text in any language — OCR, correct, interpret & translate in one interactive demo!**
 
----
 
 ## Why LogosAI?
 
@@ -14,7 +13,6 @@ An intelligent system that reads, reasons about and transforms language.
 • **Novel hackathon demo**: Leverages Mistral for OCR & correction, Gemini for interpretation/translation, served live as an MCP server.  
 • **Genre intelligence**: Tailored system prompts for news, narratives, poetry, philosophy and general texts.  
 
----
 
 ## ⚙️ Features
 
@@ -29,9 +27,8 @@ An intelligent system that reads, reasons about and transforms language.
 4. **Live Gradio + MCP**  
    – runs with `mcp_server=True`  
 
----
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local)
 
 1. Clone this repo  
 2. `pip install -r requirements.txt` (with `python 3.13`!)
