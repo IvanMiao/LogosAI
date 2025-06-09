@@ -86,7 +86,10 @@ def correct_text_with_ai(text: str, api_key: str):
 
 
 def perform_raw_ocr(input_file, api_key):
-	file_ext = input_file.name.split('.')[-1].lower()
+	if input_file != None:
+		file_ext = input_file.name.split('.')[-1].lower()
+	else:
+		return "File/Text not found"
 
 	if file_ext == "txt":
 		with open(input_file, "r", encoding="utf-8") as f:

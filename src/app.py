@@ -1,6 +1,7 @@
 import gradio as gr
 from process.ocr import perform_raw_ocr, correct_text_with_ai
 from process.interpretation import get_interpretation
+from process.translation import get_tranlaton
 from process.gradio_css import CUSTOM_CSS
 
 
@@ -9,6 +10,16 @@ GEMINI_API_KEY = ""
 
 
 def update_api_keys(mistral_key, gemini_key):
+	"""
+	Updates the global MISTRAL_API_KEY and GEMINI_API_KEY variables.
+
+	Args:
+		mistral_key: The Mistral API key.
+		gemini_key: The Gemini API key.
+
+	Returns:
+		A string confirming that the API keys have been saved.
+	"""
 	global MISTRAL_API_KEY, GEMINI_API_KEY
 
 	MISTRAL_API_KEY = mistral_key
@@ -17,24 +28,48 @@ def update_api_keys(mistral_key, gemini_key):
 	return "API keys saved"
 
 
-def ocr_workflow_wrapper(file):
-	if not MISTRAL_API_KEY:
+def ocr_workflow_wrapper(file, mistral_key):
+	"""
+	Manages the OCR workflow, processing an uploaded file to extract text.
+
+	Args:
+		file: The file object to process (image, PDF, or text).
+		mistral_key: The Mistral API key for OCR processing.
+
+	Yields:
+		Status messages and the extracted text or error messages.
+	"""
+	if not mistral_key:
 		error_msg = "Error: Mistral API Key not set."
+		yield error_msg, error_msg + "\n\n"
+		return
+	if not file:
+		error_msg = "Error: File/Text not found."
 		yield error_msg, error_msg + "\n\n"
 		return
 
 	yield "Processing...", "⏳ Processing, please wait...\n\n"
 
 	try:
-		result = perform_raw_ocr(file, MISTRAL_API_KEY)
+		result = perform_raw_ocr(file, mistral_key)
 		yield result, f"\n{result}\n"
 	except Exception as e:
 		error_msg = f"An error occurred during processing: {str(e)}"
 		yield error_msg, error_msg + "\n\n"
 
 
-def ai_correct(current_text: str):
-	if not MISTRAL_API_KEY:
+def ai_correct(current_text: str, mistral_key: str):
+	"""
+	Corrects the provided text using an AI model.
+
+	Args:
+		current_text: The text to be corrected.
+		mistral_key: The Mistral API key for AI correction.
+
+	Yields:
+		Status messages and the corrected text or error messages.
+	"""
+	if not mistral_key:
 		error_msg = "Error: Mistral API Key not set."
 		yield error_msg, error_msg + "\n\n"
 		return
@@ -45,15 +80,28 @@ def ai_correct(current_text: str):
 
 	yield "⏳ AI Correcting text...", "⏳ AI Correcting text...\n\n*Please wait...*"
 	try:
-		result = correct_text_with_ai(current_text, MISTRAL_API_KEY)
+		result = correct_text_with_ai(current_text, mistral_key)
 		yield result, result
 	except Exception as e:
 		error_msg = f"Error : {e}"
 		yield error_msg, error_msg + "\n\n"
 
 
-def interpretation_workflow(text: str, genre: str, learn_language, target_language):
-	if not GEMINI_API_KEY:
+def interpretation_workflow(text: str, genre: str, learn_language: str, target_language: str, gemini_key: str):
+	"""
+	Generates an interpretation of the text based on genre and language settings.
+
+	Args:
+		text: The text to interpret.
+		genre: The genre of the text (e.g., "general", "news").
+		learn_language: The language being learned.
+		target_language: The language for the interpretation output.
+		gemini_key: The Gemini API key for interpretation.
+
+	Yields:
+		Status messages and the generated interpretation or error messages.
+	"""
+	if not gemini_key:
 		yield "Error: Gemini api key not found."
 		return
 	if not text or text.strip() == "":
@@ -63,15 +111,44 @@ def interpretation_workflow(text: str, genre: str, learn_language, target_langua
 		yield "Error: Language not selected"
 
 	if genre.lower() in ["general", "news"]:
-		yield f"⏳ Generating interpretation for {genre}..."
-		result = get_interpretation(genre.lower(), GEMINI_API_KEY, text, learn_language, target_language)
+		yield f"⏳ Generating interpretation for genre: {[genre]} ... (10s - 2min)"
+		result = get_interpretation(genre.lower(), gemini_key, text, learn_language, target_language)
 		yield result
 	else:
 		yield "not implemented yet"
 
 
-with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
-	gr.Markdown("# 📚 LogosAI - Language Professor Agent", elem_classes=["section-header"])
+def translation_workflow(text: str, target_language: str, gemini_key):
+	"""
+    Translates the provided text to the target language.
+
+    Args:
+        text: The text to translate.
+        target_language: The language to translate the text into.
+        gemini_key: The Gemini API key for translation.
+
+    Yields:
+        Status messages and the translated text or error messages.
+    """
+	if not gemini_key:
+		yield "Error: Gemini api key not found."
+		return
+	if not text or text.strip() == "":
+		yield "Error: Text is empty"
+		return
+	if not target_language:
+		yield "Error: Language not selected"
+	
+	if target_language in ["Deutsch", "English", "Français", "Русский язык", "中文"]:
+		yield f"⏳ Generating interpretation for target_language: {[target_language]} ..."
+		result = get_tranlaton(text, gemini_key, target_language)
+		yield result
+	else:
+		yield "not implemented yet"
+
+
+with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
+	gr.Markdown("# 📚 LogosAI - Intensive Reading in Any Language", elem_classes=["section-header"])
 
 	# --- API Key ---
 	with gr.Accordion("API Configuration", open=True):
@@ -103,7 +180,7 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 
 	# --- Text Processing ---
 	gr.Markdown("---")
-	with gr.Tab("Text Processing"):
+	with gr.Tab("Text"):
 
 		with gr.Row():
 			with gr.Column(scale=1):
@@ -113,20 +190,20 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 					file_types=["image", ".pdf", ".txt"]
 					)
 				process_button = gr.Button("1. File Process (OCR/Read)", variant="primary")
-				ai_correct_button = gr.Button("2. AI Correct", variant="secondary")
+				ai_correct_button = gr.Button("2. AI Correct", variant="primary")
 			with gr.Column(scale=2):
 				gr.Markdown("### Processed result")
 				with gr.Tabs():
 					with gr.Tab("Raw Text"):
 						text_display = gr.Textbox(
-							label="Raw Output / Editable Text",
+							label="Raw Text(editable)",
 							lines=15,
 							max_lines=20,
 							show_copy_button=True,
 							value="",
 							interactive=True
 						)
-					with gr.Tab("Formatted View"):
+					with gr.Tab("Formatted Text"):
 						text_markdown = gr.Markdown(
 							value="*Processed text will appear here...*\n\n",
 						)
@@ -134,26 +211,26 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 	# Hook the ocr button to click event
 	process_button.click(
 		fn=ocr_workflow_wrapper,
-		inputs=file_input,
+		inputs=[file_input, mistral_api],
 		outputs=[text_display, text_markdown]
 	)
 
 	# AI correction button to click event
 	ai_correct_button.click(
 		fn=ai_correct,
-		inputs=text_display,
+		inputs=[text_display, mistral_api],
 		outputs=[text_display, text_markdown]
 	)
 
 	# --- Text Interpertation ---
-	with gr.Tab("🎓 Text Interpretation"):
+	with gr.Tab("🎓 Interpretation"):
 		gr.Markdown("### Configure Interpretation Settings")
 
 		with gr.Row():
 			with gr.Column(scale=1):
-				prof_language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Prof's Language")
-				learn_language_seletor = gr.Radio(["EN", "ZH", "FR"], label="Language to Learn")
-				style_seletor = gr.Radio(["General", "Paper", "News", "Narrative", "Poem", "Philosophy"], label="Genre")
+				prof_language_seletor = gr.Dropdown(["DE", "EN", "FR", "RU", "ZH"], label="Prof's Language", value="EN")
+				learn_language_seletor = gr.Dropdown(["DE", "EN", "FR", "RU", "ZH"], label="Language to Learn", value="EN")
+				style_seletor = gr.Dropdown(["General", "Paper", "News", "Narrative", "Poem", "Philosophy"], label="Genre")
 				interpret_button = gr.Button("Generate Interpretation", variant="primary")
 
 			with gr.Column(scale=2):
@@ -165,9 +242,34 @@ with gr.Blocks(theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
 
 	interpret_button.click(
 		fn=interpretation_workflow,
-		inputs=[text_display, style_seletor, learn_language_seletor, prof_language_seletor],
+		inputs=[text_display, style_seletor, learn_language_seletor, prof_language_seletor, gemini_api],
 		outputs=interpretation_output
 	)
 
+	with gr.Tab("Translation"):
+		gr.Markdown("### Configure Translation Settings")
+		with gr.Row():
+			with gr.Column(scale=1):
+				target_language_selector = gr.Dropdown(
+					["Deutsch", "English", "Français", "Русский язык", "中文"],
+					value="English",
+					label="Target Language",
+					interactive=True)
+				translation_button = gr.Button("Translate!", variant="primary")
+
+			with gr.Column(scale=2):
+				interpretation_output = gr.Markdown(
+					value="*Translation will appear here ...*\n\n",
+					show_copy_button=True
+					)
+
+	translation_button.click(
+		fn=translation_workflow,
+		inputs=[text_display, target_language_selector, gemini_api],
+		outputs=interpretation_output
+	)
+
+
+
 if __name__ == "__main__":
-	demo.launch(share=True)
+	demo.launch(mcp_server=True)
