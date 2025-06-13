@@ -16,9 +16,23 @@ def get_translaton(text: str, api_key: str, target_language: str) -> str:
 	if not text:
 		return "Error: text not found."
 
-	client = genai.Client(api_key=api_key)
+	try:
+		client = genai.Client(api_key=api_key)
+	except Exception as e:
+		return f"ERROR: {str(e)}"
 
-	lang_map = {"Deutsch": "German", "English": "English", "Français": "French", "Русский язык": "Russian", "中文": "Chinese"}
+	lang_map = {
+		"العربية": "Arabic",
+		"Deutsch": "German",
+		"Español": "Spanish",
+		"English": "English",
+		"Français": "French",
+		"Italiano": "Italian",
+		"日本語": "Japanese",
+		"Русский язык": "Russian",
+		"中文": "Chinese"
+		}
+	lang_map = {"Deutsch": "German", "English": "English", "Français": "French", "Русский язык": "Russain", "中文": "Chinese"}
 	tar_lang = lang_map.get(target_language, "English")
 	sys_prompt = SYS_PROMPT_TRANSLATION.replace("[TARGET_LANGUAGE]", tar_lang)
 	response = client.models.generate_content(

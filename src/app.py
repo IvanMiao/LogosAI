@@ -1,4 +1,5 @@
 import gradio as gr
+from gradio import File
 from process.ocr import perform_raw_ocr, correct_text_with_ai
 from process.interpretation import get_interpretation
 from process.translation import get_translaton
@@ -28,7 +29,7 @@ def update_api_keys(mistral_key, gemini_key):
 	return "API keys saved"
 
 
-def ocr_workflow_wrapper(file, mistral_key):
+def ocr_workflow_wrapper(file: File, mistral_key: str):
 	"""
 	Manages the OCR workflow, processing an uploaded file to extract text.
 
@@ -41,21 +42,19 @@ def ocr_workflow_wrapper(file, mistral_key):
 	"""
 	if not mistral_key:
 		error_msg = "Error: Mistral API Key not set."
-		yield error_msg, error_msg + "\n\n"
+		yield error_msg, error_msg
 		return
-	if not file:
+	if not file or file.name == "":
 		error_msg = "Error: File/Text not found."
-		yield error_msg, error_msg + "\n\n"
+		yield error_msg, error_msg
 		return
-
-	yield "Processing...", "⏳ Processing, please wait...\n\n"
 
 	try:
 		result = perform_raw_ocr(file, mistral_key)
 		yield result, f"\n{result}\n"
 	except Exception as e:
 		error_msg = f"An error occurred during processing: {str(e)}"
-		yield error_msg, error_msg + "\n\n"
+		yield error_msg, error_msg
 
 
 def ai_correct(current_text: str, mistral_key: str):
@@ -71,20 +70,19 @@ def ai_correct(current_text: str, mistral_key: str):
 	"""
 	if not mistral_key:
 		error_msg = "Error: Mistral API Key not set."
-		yield error_msg, error_msg + "\n\n"
+		yield error_msg, error_msg
 		return
 	if not current_text or current_text.strip() == "":
 		error_msg = "*No text to correct. Upload a file, or paste text into 'Raw Text' box first*"
 		yield error_msg, error_msg
 		return
 
-	yield "⏳ AI Correcting text...", "⏳ AI Correcting text...\n\n*Please wait...*"
 	try:
 		result = correct_text_with_ai(current_text, mistral_key)
 		yield result, result
 	except Exception as e:
 		error_msg = f"Error : {e}"
-		yield error_msg, error_msg + "\n\n"
+		yield error_msg, error_msg
 
 
 def interpretation_workflow(text: str, genre: str, learn_language: str, target_language: str, gemini_key: str):
@@ -107,11 +105,11 @@ def interpretation_workflow(text: str, genre: str, learn_language: str, target_l
 	if not text or text.strip() == "":
 		yield "Error: Text is empty"
 		return
-	if not learn_language or target_language:
+	if not learn_language or not target_language:
 		yield "Error: Language not selected"
+		return
 
-	if genre.lower() in ["general", "news"]:
-		yield f"⏳ Generating interpretation for genre: {[genre]} ... (10s - 2min)"
+	if genre.lower() in ["general", "news", "philosophy"]:
 		result = get_interpretation(genre.lower(), gemini_key, text, learn_language, target_language)
 		yield result
 	else:
@@ -139,8 +137,7 @@ def translation_workflow(text: str, target_language: str, gemini_key):
 	if not target_language:
 		yield "Error: Language not selected"
 	
-	if target_language in ["Deutsch", "English", "Français", "Русский язык", "中文"]:
-		yield f"⏳ Generating interpretation for target_language: {[target_language]} ..."
+	if target_language in ["العربية", "Deutsch", "Español", "English", "Français", "Italiano", "日本語", "Русский язык", "中文"]:
 		result = get_translaton(text, gemini_key, target_language)
 		yield result
 	else:
@@ -206,6 +203,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
 					with gr.Tab("Formatted Text"):
 						text_markdown = gr.Markdown(
 							value="*Processed text will appear here...*\n\n",
+							label="Formatted Text"
 						)
 
 	# Hook the ocr button to click event
@@ -228,15 +226,16 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
 
 		with gr.Row():
 			with gr.Column(scale=1):
-				prof_language_seletor = gr.Dropdown(["DE", "EN", "FR", "RU", "ZH"], label="Prof's Language", value="EN")
-				learn_language_seletor = gr.Dropdown(["DE", "EN", "FR", "RU", "ZH"], label="Language to Learn", value="EN")
-				style_seletor = gr.Dropdown(["General", "Paper", "News", "Narrative", "Poem", "Philosophy"], label="Genre")
+				prof_language_seletor = gr.Dropdown(["AR", "DE", "ES", "EN", "FR", "IT", "JA", "RU", "ZH"], label="Prof's Language", value="EN")
+				learn_language_seletor = gr.Dropdown(["AR", "DE", "ES", "EN", "FR", "IT", "JA", "RU", "ZH"], label="Language to Learn", value="EN")
+				style_seletor = gr.Dropdown(["General", "News", "Philosophy", "Narrative", "Poem", "Paper"], label="Genre")
 				interpret_button = gr.Button("Generate Interpretation", variant="primary")
 
 			with gr.Column(scale=2):
 				gr.Markdown("### COURSE")
 				interpretation_output = gr.Markdown(
 					value="*Interpretation will appear here after processing...*\n\n",
+					label="Interpretation Result",
 					show_copy_button=True
 					)
 
@@ -251,7 +250,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
 		with gr.Row():
 			with gr.Column(scale=1):
 				target_language_selector = gr.Dropdown(
-					["Deutsch", "English", "Français", "Русский язык", "中文"],
+					["العربية", "Deutsch", "Español", "English", "Français", "Italiano", "日本語", "Русский язык", "中文"],
 					value="English",
 					label="Target Language",
 					interactive=True)
@@ -260,6 +259,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
 			with gr.Column(scale=2):
 				interpretation_output = gr.Markdown(
 					value="*Translation will appear here ...*\n\n",
+					label="Translation Result",
 					show_copy_button=True
 					)
 

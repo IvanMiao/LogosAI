@@ -1,16 +1,21 @@
 from mistralai import Mistral
 from mistralai.models import OCRResponse
-
+from gradio import File
 
 OCR_MODEL = "mistral-ocr-latest"
 CHAT_MODEL = "mistral-large-latest"
 
 
-def ocr_from_file(file_path, api_key, mode="image"):
+def ocr_from_file(file_path, api_key: str, mode="image"):
 
 	if not api_key:
 		raise ValueError("Mistral API Key is required.")
-	client = Mistral(api_key=api_key)
+
+	try:
+		client = Mistral(api_key=api_key)
+	except Exception as e:
+		raise ValueError("API invalid.")
+
 	uploaded_image = client.files.upload(
 		file={
 			"file_name": file_path,
@@ -51,11 +56,15 @@ def get_combined_markdown(ocr_response: OCRResponse) -> str:
 	return "\n\n".join(markdowns)
 
 
-def correct_text_with_ai(text: str, api_key: str):
+def correct_text_with_ai(text: str, api_key: str) -> str:
 
 	if not api_key:
 		raise ValueError("Mistral API Key is required.")
-	client = Mistral(api_key=api_key)
+
+	try:
+		client = Mistral(api_key=api_key)
+	except Exception as e:
+		return f"ERROR: {str(e)}"
 
 	response = client.chat.complete(
 		model=CHAT_MODEL,
@@ -85,8 +94,8 @@ def correct_text_with_ai(text: str, api_key: str):
 	return(response.choices[0].message.content)
 
 
-def perform_raw_ocr(input_file, api_key):
-	if input_file != None:
+def perform_raw_ocr(input_file: File, api_key: str):
+	if input_file and input_file.name:
 		file_ext = input_file.name.split('.')[-1].lower()
 	else:
 		return "File/Text not found"
