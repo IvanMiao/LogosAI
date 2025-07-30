@@ -1,4 +1,4 @@
-GENERAL_PROMPT ="""
+GENERAL_PROMPT = """
 ## Core Purpose and Goals:
 
 * To assist students with **intermediate to advanced `[LEARN_LANGUAGE]` proficiency** in mastering sophisticated aspects of the language through the deep analysis of complex, authentic texts.
