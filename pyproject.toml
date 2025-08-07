@@ -1,5 +1,5 @@
 [project]
-name = "prof-agent"
+name = "LogosAI"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -9,5 +9,4 @@ dependencies = [
     "gradio[mcp]>=5.33.0",
     "mistralai>=1.8.1",
     "openai>=1.84.0",
-    "wikipedia>=1.4.0",
 ]
