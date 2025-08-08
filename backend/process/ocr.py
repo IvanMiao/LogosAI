@@ -87,7 +87,7 @@ def correct_text_with_ai(text: str, api_key: str) -> str:
     return response.choices[0].message.content
 
 
-def perform_raw_ocr(input_file: File, api_key: str):
+def extract_text_from_file(input_file: File, api_key: str):
     if input_file and input_file.name:
         file_ext = input_file.name.split(".")[-1].lower()
     else:

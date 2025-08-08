@@ -1,14 +1,13 @@
 import gradio as gr
 from gradio import File
-from process.ocr import perform_raw_ocr, correct_text_with_ai
+from process.ocr import extract_text_from_file, correct_text_with_ai
 from process.interpretation import get_interpretation
-from process.translation import get_translaton
-from process.gradio_css import CUSTOM_CSS
-from process.agent import AutomatedAnalysisAgent
+from process.translation import get_translation
+from process.agent import TextAnalysisAgent
+import os
 
-
-MISTRAL_API_KEY = ""
-GEMINI_API_KEY = ""
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 
 def update_api_keys(mistral_key, gemini_key):
@@ -51,7 +50,7 @@ def ocr_workflow_wrapper(file: File, mistral_key: str):
         return
 
     try:
-        result = perform_raw_ocr(file, mistral_key)
+        result = extract_text_from_file(file, mistral_key)
         yield result, f"\n{result}\n"
     except Exception as e:
         error_msg = f"An error occurred during processing: {str(e)}"
@@ -154,7 +153,7 @@ def translation_workflow(text: str, target_language: str, gemini_key):
         "中文",
     ]
     if target_language in existin_languages:
-        result = get_translaton(text, gemini_key, target_language)
+        result = get_translation(text, gemini_key, target_language)
         yield result
     else:
         yield "not implemented yet"
@@ -167,14 +166,14 @@ def agent_workflow(text: str, prof_language: str, mistral_key: str, gemini_key: 
         return "Error: Input text is empty."
 
     try:
-        agent = AutomatedAnalysisAgent(mistral_key=mistral_key, gemini_key=gemini_key)
-        result = agent.run(text, prof_language=prof_language)
+        agent = TextAnalysisAgent(mistral_key=mistral_key, gemini_key=gemini_key)
+        result = agent.run_analysis(text, prof_language=prof_language)
         return result
     except Exception as e:
         return f"An error occurred in the agent workflow: {e}"
 
 
-with gr.Blocks(theme=gr.themes.Monochrome(), css=CUSTOM_CSS) as demo:
+with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
     gr.Markdown(
         "# 📚 LogosAI - Intensive Reading in Any Language",
         elem_classes=["section-header"],

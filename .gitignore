@@ -1,4 +1,4 @@
-.gradio/
+node_modules/
 .env
-src/__pycache__/
-src/process/__pycache__/
+*/__pycache__/
+*/*/__pycache__/

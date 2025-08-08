@@ -10,7 +10,7 @@ Maintain the original meaning and tone as closely as possible.
 """
 
 
-def get_translaton(text: str, api_key: str, target_language: str) -> str:
+def get_translation(text: str, api_key: str, target_language: str) -> str:
     if not api_key:
         return "Error: Gemini API Key not found."
     if not text:
