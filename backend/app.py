@@ -44,7 +44,7 @@ def ocr_workflow_wrapper(file: File, mistral_key: str):
         error_msg = "Error: Mistral API Key not set."
         yield error_msg, error_msg
         return
-    if not file or file == "":
+    if not file:
         error_msg = "Error: File/Text not found."
         yield error_msg, error_msg
         return
