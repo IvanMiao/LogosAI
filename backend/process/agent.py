@@ -55,6 +55,8 @@ class TextAnalysisAgent:
                 ),
                 contents=[text],
             )
+            if response.text is None:
+                raise(ValueError("llm response has not text."))
             directives = json.loads(response.text)
             # Basic validation
             if (
@@ -70,7 +72,7 @@ class TextAnalysisAgent:
             # Provide a default, safe directive
             return {"language": "EN", "genre": "General", "correction_needed": True}
 
-    def run_analysis(self, text: str, user_language: str = "EN") -> str:
+    def run_analysis(self, text: str, user_language: str = "EN") -> str | None :
         """
         Runs the full automated analysis and interpretation workflow.
         """

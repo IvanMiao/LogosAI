@@ -9,7 +9,7 @@ POEM_PROMPT = ""
 
 def get_interpretation(
     genre: str, api_key: str, text: str, learn_language: str, user_language: str
-) -> str:
+) -> str | None :
     if not api_key:
         return "Error: Gemini API Key not found."
     if not text:
@@ -46,6 +46,8 @@ def get_interpretation(
             .replace("[LEARN_LANGUAGE]", learn_lang)
             .replace("[USER_LANGUAGE]", user_lang)
         )
+    else:
+        return "Genre error"
 
     response = client.models.generate_content(
         model="gemini-2.5-pro",

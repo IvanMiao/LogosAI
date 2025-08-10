@@ -1,5 +1,5 @@
 import gradio as gr
-from gradio import File
+from gradio import File, themes
 from process.ocr import extract_text_from_file, correct_text_with_ai
 from process.interpretation import get_interpretation
 from process.translation import get_translation
@@ -44,7 +44,7 @@ def ocr_workflow_wrapper(file: File, mistral_key: str):
         error_msg = "Error: Mistral API Key not set."
         yield error_msg, error_msg
         return
-    if not file or file.name == "":
+    if not file or file == "":
         error_msg = "Error: File/Text not found."
         yield error_msg, error_msg
         return
@@ -159,7 +159,7 @@ def translation_workflow(text: str, target_language: str, gemini_key):
         yield "not implemented yet"
 
 
-def agent_workflow(text: str, prof_language: str, mistral_key: str, gemini_key: str):
+def agent_workflow(text: str, user_language: str, mistral_key: str, gemini_key: str):
     if not mistral_key or not gemini_key:
         return "Error: Both Mistral and Gemini API keys are required."
     if not text or not text.strip():
@@ -167,13 +167,13 @@ def agent_workflow(text: str, prof_language: str, mistral_key: str, gemini_key: 
 
     try:
         agent = TextAnalysisAgent(mistral_key=mistral_key, gemini_key=gemini_key)
-        result = agent.run_analysis(text, prof_language=prof_language)
+        result = agent.run_analysis(text, user_language=user_language)
         return result
     except Exception as e:
         return f"An error occurred in the agent workflow: {e}"
 
 
-with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
+with gr.Blocks(theme=themes.Monochrome()) as demo:
     gr.Markdown(
         "# 📚 LogosAI - Intensive Reading in Any Language",
         elem_classes=["section-header"],
