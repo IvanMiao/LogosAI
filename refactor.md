@@ -2,4 +2,4 @@
 
 2. backend (API, db)
 
-3. frontend (componenets, API call)
+3. frontend (components, API call)
