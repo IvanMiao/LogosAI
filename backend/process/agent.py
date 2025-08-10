@@ -56,7 +56,7 @@ class TextAnalysisAgent:
                 contents=[text],
             )
             if response.text is None:
-                raise(ValueError("llm response has not text."))
+                raise(ValueError("llm response has no text."))
             directives = json.loads(response.text)
             # Basic validation
             if (
