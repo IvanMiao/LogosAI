@@ -33,7 +33,7 @@ Example output:
 """
 
 
-class AutomatedAnalysisAgent:
+class TextAnalysisAgent:
     def __init__(self, mistral_key: str, gemini_key: str):
         if not mistral_key or not gemini_key:
             raise ValueError("Both Mistral and Gemini API keys are required.")
@@ -55,6 +55,8 @@ class AutomatedAnalysisAgent:
                 ),
                 contents=[text],
             )
+            if response.text is None:
+                raise(ValueError("llm response has no text."))
             directives = json.loads(response.text)
             # Basic validation
             if (
@@ -70,7 +72,7 @@ class AutomatedAnalysisAgent:
             # Provide a default, safe directive
             return {"language": "EN", "genre": "General", "correction_needed": True}
 
-    def run(self, text: str, prof_language: str = "EN") -> str:
+    def run_analysis(self, text: str, user_language: str = "EN") -> str | None :
         """
         Runs the full automated analysis and interpretation workflow.
         """
@@ -97,7 +99,7 @@ class AutomatedAnalysisAgent:
                 api_key=self.gemini_key,
                 text=processed_text,
                 learn_language=directives.get("language", "EN"),
-                prof_language=prof_language,
+                user_language=user_language,
             )
             return interpretation
         except Exception as e:

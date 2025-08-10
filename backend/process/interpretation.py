@@ -8,8 +8,8 @@ POEM_PROMPT = ""
 
 
 def get_interpretation(
-    genre: str, api_key: str, text: str, learn_language: str, prof_language: str
-) -> str:
+    genre: str, api_key: str, text: str, learn_language: str, user_language: str
+) -> str | None :
     if not api_key:
         return "Error: Gemini API Key not found."
     if not text:
@@ -32,7 +32,7 @@ def get_interpretation(
         "ZH": "Chinese",
     }
     learn_lang = lang_map.get(learn_language.upper(), "English")
-    prof_lang = lang_map.get(prof_language.upper(), "English")
+    user_lang = lang_map.get(user_language.upper(), "English")
     genres = {
         "general": GENERAL_PROMPT,
         "news": NEWS_PROMPT,
@@ -44,8 +44,10 @@ def get_interpretation(
         sys_prompt = (
             genres[genre.lower()]
             .replace("[LEARN_LANGUAGE]", learn_lang)
-            .replace("[PROF_LANGUAGE]", prof_lang)
+            .replace("[USER_LANGUAGE]", user_lang)
         )
+    else:
+        return "Genre error"
 
     response = client.models.generate_content(
         model="gemini-2.5-pro",
