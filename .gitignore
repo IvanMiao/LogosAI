@@ -2,6 +2,7 @@
 
 node_modules/
 .env
+backend/.env
 */__pycache__/
 */*/__pycache__/
 
