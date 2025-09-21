@@ -3,8 +3,8 @@
 node_modules/
 .env
 backend/.env
-*/__pycache__/
-*/*/__pycache__/
+**/__pycache__/
+**/test.md
 
 .ruff_cache/
 
