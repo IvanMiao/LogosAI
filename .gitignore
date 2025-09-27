@@ -4,7 +4,9 @@ node_modules/
 .env
 backend/.env
 **/__pycache__/
+
 **/test.md
+**/note.md
 
 .ruff_cache/
 

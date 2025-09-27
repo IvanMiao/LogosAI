@@ -1,0 +1,64 @@
+<html>
+<head>
+
+	<meta charset="UTF-8">
+	<title>Text Analysis</title>
+	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+	<h1> TEST </h1>
+	<textarea id="text-input" placeholder="Enter text to analyze"></textarea>
+	<label for="lang-select">Language:</label>
+	<select id="lang-select">
+		<option value="en">English</option>
+		<option value="zh">Chinese</option>
+		<option value="fr">French</option>
+	</select>
+
+	<button id="analyze-button">Analyze</button>
+
+	<h3>Result:</h3>
+	<div id="result" style="display: block;"></div>
+	<div id="error" style="display: none;"></div>
+
+	<script>
+		const textInput = document.getElementById('text-input');
+		const langSelect = document.getElementById('lang-select');
+		const analyzeButton = document.getElementById('analyze-button');
+		const resultDiv = document.getElementById('result');
+		const errorDiv = document.getElementById('error');
+
+		analyzeButton.addEventListener('click', async () => {
+			const requestData = {
+				text: textInput.value,
+				user_language: langSelect.value
+			};
+
+			resultDiv.textContent = "Analysis Request received";
+
+			const response = await fetch('http://127.0.0.1:8000/analyze', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(requestData)
+			});
+
+			const data = await response.json();
+
+			if(data.success)
+			{
+				resultDiv.innerHTML = marked.parse(data.result);
+			}
+			else
+			{
+				errorDiv.textContent = 'Error: ' + data.error;
+				errorDiv.style.display = 'block';
+			}
+		});
+	</script>
+</body>
+</body>
+
+</html>
