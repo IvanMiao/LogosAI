@@ -13,10 +13,10 @@ agent = TextAnalysisAgent(gemini_key=os.getenv("GEMINI_API_KEY"))
 app = FastAPI()
 
 # FastAPI Documentation: CORS (Cross-Origin Resource Sharing)
-
 origins = [
     "http://localhost",
     "http://localhost:8080",
+    "http://localhost:5173",
     "null"
 ]
 app.add_middleware(
