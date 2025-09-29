@@ -31,7 +31,7 @@ app.add_middleware(
 async def get_analyse_info(request: AnalysisRequest):
     try:
         result = agent.run_analysis(request.text, request.user_language)
-        print(result)
+        # print(result)
         if result is None:
             raise HTTPException(status_code=500, detail="Analysis failed")
         return AnalysisResponse(result=result, success=True)
