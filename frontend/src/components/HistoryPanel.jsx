@@ -135,40 +135,46 @@ export function HistoryPanel({ history, onLoadHistory, onDeleteHistory }) {
       </Card>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white border-slate-200 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-slate-900">Delete Analysis</DialogTitle>
-            <DialogDescription className="text-slate-600">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <DialogTitle className="text-xl text-slate-900 font-bold">Delete Analysis</DialogTitle>
+            </div>
+            <DialogDescription className="text-slate-600 text-sm leading-relaxed pt-2">
               This will permanently delete this analysis from your history. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           {itemToDelete && (
-            <div className="py-4">
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <p className="text-sm text-slate-700 line-clamp-3 leading-relaxed">
+            <div className="py-3">
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 shadow-sm">
+                <p className="text-sm font-medium text-slate-500 mb-2">Content to be deleted:</p>
+                <p className="text-sm text-slate-800 line-clamp-3 leading-relaxed">
                   {itemToDelete.prompt}
                 </p>
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => {
                 setDeleteDialogOpen(false);
                 setItemToDelete(null);
               }}
-              className="border-slate-300"
+              className="border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+              Delete Permanently
             </Button>
           </DialogFooter>
         </DialogContent>
