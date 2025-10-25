@@ -2,8 +2,11 @@
 
 node_modules/
 .env
-*/__pycache__/
-*/*/__pycache__/
+backend/.env
+**/__pycache__/
+
+**/test.md
+**/note.md
 
 .ruff_cache/
 
