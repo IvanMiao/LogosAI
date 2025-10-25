@@ -1,6 +1,4 @@
-/* App.css - 自定义样式补充 */
-
-/* 自定义滚动条样式 */
+/* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -19,25 +17,18 @@
   background: #94a3b8;
 }
 
-/* 平滑滚动 */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Markdown 内容美化 */
+/* Markdown prose styles for ReactMarkdown */
 .prose {
   color: #334155;
   line-height: 1.75;
 }
 
-/* 段落间距 */
 .prose p {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
   line-height: 1.75;
 }
 
-/* 标题间距 */
 .prose h1 {
   margin-top: 2em;
   margin-bottom: 1em;
@@ -62,7 +53,6 @@ html {
   line-height: 1.4;
 }
 
-/* 列表间距 */
 .prose ul, .prose ol {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
@@ -79,7 +69,6 @@ html {
   margin-bottom: 0.75em;
 }
 
-/* 代码块样式 */
 .prose code {
   background: #f1f5f9;
   padding: 0.2em 0.4em;
@@ -105,7 +94,6 @@ html {
   padding: 0;
 }
 
-/* 引用块样式 */
 .prose blockquote {
   border-left-width: 4px;
   border-left-color: #475569;
@@ -121,17 +109,11 @@ html {
   margin-bottom: 0.5em;
 }
 
-/* 强调文本 */
 .prose strong {
   color: #0f172a;
   font-weight: 600;
 }
 
-.prose em {
-  font-style: italic;
-}
-
-/* 链接样式 */
 .prose a {
   color: #0f172a;
   text-decoration: underline;
@@ -142,43 +124,14 @@ html {
   color: #334155;
 }
 
-/* 分隔线 */
-.prose hr {
-  margin-top: 2em;
-  margin-bottom: 2em;
-  border-color: #e2e8f0;
-}
-
-/* 表格样式 */
-.prose table {
-  margin-top: 1.5em;
-  margin-bottom: 1.5em;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.prose th, .prose td {
-  padding: 0.75em 1em;
-  border: 1px solid #e2e8f0;
-}
-
-.prose th {
-  background: #f8fafc;
-  font-weight: 600;
-}
-
-.prose tr:nth-child(even) {
-  background: #f9fafb;
-}
-
-/* 小尺寸 prose 样式（用于历史记录） */
+/* Small prose for history panel */
 .prose-sm p {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
   line-height: 1.6;
 }
 
-.prose-sm h1, .prose-sm h2, .prose-sm h3, 
+.prose-sm h1, .prose-sm h2, .prose-sm h3,
 .prose-sm h4, .prose-sm h5, .prose-sm h6 {
   margin-top: 1em;
   margin-bottom: 0.5em;
