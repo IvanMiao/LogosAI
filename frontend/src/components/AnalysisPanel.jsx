@@ -34,9 +34,9 @@ export function AnalysisPanel({ text, setText, language, setLanguage, result, is
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="zh">🇨🇳 中文 (Chinese)</SelectItem>
-                <SelectItem value="en">🇬🇧 English</SelectItem>
-                <SelectItem value="fr">🇫🇷 Français (French)</SelectItem>
+                <SelectItem value="zh">中文 (Chinese)</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="fr">Français (French)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -52,7 +52,9 @@ export function AnalysisPanel({ text, setText, language, setLanguage, result, is
               id="text-input"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Enter or paste your text here for analysis...&#10;&#10;Try analyzing articles, essays, code, or any content you'd like to understand better."
+              placeholder="Enter or paste your text here for analysis...
+
+Try analyzing articles, essays, code, or any content you'd like to understand better."
               rows={12}
               disabled={isLoading}
               className="resize-none text-sm border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 hover:border-slate-400"
