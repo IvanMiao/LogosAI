@@ -8,7 +8,7 @@ export function useAnalysis() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8000/history');
       if (response.ok) {
@@ -20,7 +20,7 @@ export function useAnalysis() {
     } catch (e) {
       console.error('Failed to fetch history:', e);
     }
-  };
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -62,7 +62,7 @@ export function useAnalysis() {
     } finally {
       setIsLoading(false);
     }
-  }, [text, language]);
+  }, [text, language, fetchHistory]);
 
   const handleDeleteHistory = async (id) => {
     try {

@@ -1,20 +1,82 @@
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes slide-in-from-top-2 {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-from-top-2 {
+  animation: slide-in-from-top-2 0.2s ease-out;
+}
+
+@keyframes slide-in-from-top-4 {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-from-top-4 {
+  animation: slide-in-from-top-4 0.3s ease-out;
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-from-bottom-4 {
+  animation: slide-in-from-bottom-4 0.5s ease-out;
 }
 
 /* Markdown prose styles for ReactMarkdown */
@@ -70,21 +132,23 @@
 }
 
 .prose code {
-  background: #f1f5f9;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
   color: #0f172a;
   font-weight: 500;
+  border: 1px solid #e2e8f0;
 }
 
 .prose pre {
-  background: #1e293b;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 0.5rem;
   padding: 1rem;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
   overflow-x: auto;
+  border: 1px solid #334155;
 }
 
 .prose pre code {
@@ -92,16 +156,20 @@
   color: #e2e8f0;
   font-weight: 400;
   padding: 0;
+  border: none;
 }
 
 .prose blockquote {
   border-left-width: 4px;
-  border-left-color: #475569;
+  border-left-color: #6366f1;
   padding-left: 1em;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
   color: #475569;
   font-style: normal;
+  background: linear-gradient(90deg, #f8fafc 0%, transparent 100%);
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
 }
 
 .prose blockquote p {
@@ -115,13 +183,14 @@
 }
 
 .prose a {
-  color: #0f172a;
+  color: #6366f1;
   text-decoration: underline;
   font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .prose a:hover {
-  color: #334155;
+  color: #4f46e5;
 }
 
 /* Small prose for history panel */

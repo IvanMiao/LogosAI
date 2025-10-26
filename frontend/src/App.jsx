@@ -25,10 +25,10 @@ function App() {
   useEffect(() => {
     setMounted(true);
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Header mounted={mounted} />
 
