@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from workflow.agent import TextAnalysisAgent
 from schema.analyze_schema import AnalysisRequest, AnalysisResponse, HistoryResponse
 from dotenv import load_dotenv
+from database import init_db, get_db_connection
 import os
-import sqlite3
-from datetime import datetime
 
 
 load_dotenv()
+
+init_db()
 
 agent = TextAnalysisAgent(gemini_key=os.getenv("GEMINI_API_KEY"))
 
@@ -21,6 +22,7 @@ origins = [
     "http://localhost:5173",
     "null"
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -29,10 +31,6 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-def get_db_connection():
-    conn = sqlite3.connect('history.db')
-    conn.row_factory = sqlite3.Row
-    return conn
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def get_analyse_info(request: AnalysisRequest):
@@ -52,6 +50,7 @@ async def get_analyse_info(request: AnalysisRequest):
     except Exception as e:
         return AnalysisResponse(result="", success=False, error=str(e))
 
+
 @app.get("/history", response_model=HistoryResponse)
 async def get_history():
     try:
@@ -63,6 +62,7 @@ async def get_history():
         return HistoryResponse(history=history, success=True)
     except Exception as e:
         return HistoryResponse(history=[], success=False, error=str(e))
+
 
 @app.delete("/history/{history_id}")
 async def delete_history(history_id: int):
