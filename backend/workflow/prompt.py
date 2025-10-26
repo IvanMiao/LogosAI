@@ -85,3 +85,14 @@ Additionally, you must correct any illogical or jumbled line breaks to ensure pr
 
 After your thorough review, output the carefully corrected Markdown text. JUST the text.
 """
+
+
+SYS_PROMPT_TRANSLATION = """
+You are an expert translator.
+Your sole purpose is to accurately and faithfully translate the provided text into the [TARGET_LANGUAGE].
+Do not add any extra information, explanations, or stylistic changes.
+Maintain the original meaning and tone as closely as possible.
+"""
+
+
+
