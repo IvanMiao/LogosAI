@@ -30,39 +30,41 @@ function App() {
     fetchHistory();
   }, []);
 
+  const viewComponents = {
+    home: (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <AnalysisPanel
+            text={text}
+            setText={setText}
+            language={language}
+            setLanguage={setLanguage}
+            result={result}
+            isLoading={isLoading}
+            error={error}
+            onAnalyze={handleAnalyze}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <HistoryPanel
+            history={history}
+            onLoadHistory={handleLoadHistory}
+            onDeleteHistory={handleDeleteHistory}
+          />
+        </div>
+      </div>
+    ),
+    settings: <SettingsView />,
+    about: <AboutView />,
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Header mounted={mounted} activeView={activeView} onViewChange={setActiveView} />
 
         <main className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          {activeView === 'home' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <AnalysisPanel
-                  text={text}
-                  setText={setText}
-                  language={language}
-                  setLanguage={setLanguage}
-                  result={result}
-                  isLoading={isLoading}
-                  error={error}
-                  onAnalyze={handleAnalyze}
-                />
-              </div>
-
-              <div className="lg:col-span-1">
-                <HistoryPanel
-                  history={history}
-                  onLoadHistory={handleLoadHistory}
-                  onDeleteHistory={handleDeleteHistory}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeView === 'settings' && <SettingsView />}
-          {activeView === 'about' && <AboutView />}
+          {viewComponents[activeView]}
         </main>
       </div>
     </div>
