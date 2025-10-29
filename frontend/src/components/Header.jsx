@@ -36,14 +36,14 @@ export function Header({ mounted, activeView, onViewChange }) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-9 h-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center transition-colors focus:outline-none">
+                <button className="w-9 h-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center transition-colors">
                   <Menu className="w-5 h-5 text-slate-700" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem 
                   onClick={() => onViewChange('settings')}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2"
                 >
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
@@ -51,7 +51,7 @@ export function Header({ mounted, activeView, onViewChange }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => onViewChange('about')}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2"
                 >
                   <Info className="w-4 h-4" />
                   <span>About</span>
