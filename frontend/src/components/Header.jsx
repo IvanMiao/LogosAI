@@ -36,7 +36,7 @@ export function Header({ mounted, activeView, onViewChange }) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-9 h-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center transition-colors">
+                <button className="w-9 h-9 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center transition-colors focus:outline-none">
                   <Menu className="w-5 h-5 text-slate-700" />
                 </button>
               </DropdownMenuTrigger>
