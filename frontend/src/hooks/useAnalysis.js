@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 export function useAnalysis() {
   const [text, setText] = useState('');
-  const [language, setLanguage] = useState('zh');
+  const [language, setLanguage] = useState('en');
   const [result, setResult] = useState('');
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
