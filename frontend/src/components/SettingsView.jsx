@@ -42,7 +42,7 @@ export function SettingsView() {
             </div>
 
             <div className="p-5 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">🚀 More Settings Coming Soon</h3>
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">More Settings Coming Soon</h3>
               <p className="text-sm text-blue-700">
                 We're working on adding more customization options including default language preferences, 
                 history management, and analysis parameters.
