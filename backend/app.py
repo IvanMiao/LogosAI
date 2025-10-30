@@ -18,8 +18,9 @@ app = FastAPI()
 # FastAPI Documentation: CORS (Cross-Origin Resource Sharing)
 origins = [
     "http://localhost",
+    "http://localhost:3000",  # Docker frontend
     "http://localhost:8080",
-    "http://localhost:5173",
+    "http://localhost:5173",  # Vite dev server
     "null"
 ]
 

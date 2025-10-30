@@ -1,8 +1,7 @@
 .venv/
 
 node_modules/
-.env
-backend/.env
+**/.env
 backend/history.db
 
 **/__pycache__/
