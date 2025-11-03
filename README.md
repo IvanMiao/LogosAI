@@ -14,14 +14,14 @@ LogosAI is an AI-powered tool designed for deep language learning, capable of an
 React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons
 
 **Backend:**
-FastAPI,SQLite,Pydantic,
+FastAPI, SQLite, Pydantic,
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Node.js (v18 or higher recommended)
-*   Python (v3.13 or higher)
+-   Node.js (v18 or higher)
+-   Python (v3.13 or higher)
 
 ### Installation & Setup
 
@@ -53,6 +53,5 @@ FastAPI,SQLite,Pydantic,
 ## TODO
 
 - [ ] Dark mode
-- [ ] Dockerfile & Docker Compose
 - [ ] Stream output
 - [ ] Agent with LangChain/LangGraph
