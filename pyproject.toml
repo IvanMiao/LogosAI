@@ -7,6 +7,8 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "google-genai>=1.19.0",
+    "langchain>=1.0.2",
+    "langchain-google-genai>=3.0.0",
     "mistralai>=1.8.1",
     "openai>=1.109.1",
     "python-dotenv>=1.1.0",

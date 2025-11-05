@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: .  # Build from project root directory
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./backend:/app  # Mount backend content to /app
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Use port 3000 to avoid conflicts with system services
+    depends_on:
+      - backend
+    restart: unless-stopped

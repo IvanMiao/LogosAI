@@ -14,22 +14,27 @@ LogosAI is an AI-powered tool designed for deep language learning, capable of an
 React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons
 
 **Backend:**
-FastAPI,SQLite,Pydantic,
+FastAPI, SQLite, Pydantic
 
 ## Getting Started
 
-### Prerequisites
+### Option 1 - Docker
 
-*   Node.js (v18 or higher recommended)
-*   Python (v3.13 or higher)
+1. Copy `.env.copy` to `.env`, then add your API key to the env file
 
-### Installation & Setup
+2. Excute this command:
+```bash
+docker compose up -d
+```
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/IvanMiao/LogosAI.git
-    cd LogosAI
-    ```
+### Option 2 Manuel Installation
+
+**Prerequisites**
+
+-   Node.js (v18 or higher)
+-   Python (v3.13 or higher)
+
+1.  Copy `.env.copy` to `.env`, then add your API key to the env file
 
 2.  **Backend Setup:**
 
@@ -53,6 +58,5 @@ FastAPI,SQLite,Pydantic,
 ## TODO
 
 - [ ] Dark mode
-- [ ] Dockerfile & Docker Compose
 - [ ] Stream output
 - [ ] Agent with LangChain/LangGraph

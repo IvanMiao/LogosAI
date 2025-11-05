@@ -37,6 +37,10 @@ export function AnalysisPanel({ text, setText, language, setLanguage, result, is
                 <SelectItem value="zh">中文 (Chinese)</SelectItem>
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="fr">Français (French)</SelectItem>
+                <SelectItem value="de">Deutsch (German)</SelectItem>
+                <SelectItem value="es">Español (Spanish)</SelectItem>
+                <SelectItem value="it">Italiano (Italian)</SelectItem>
+                <SelectItem value="ja">日本語 (Japanese)</SelectItem>
               </SelectContent>
             </Select>
           </div>
