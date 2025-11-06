@@ -5,8 +5,8 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    env_file:
+      - ./.env
     volumes:
       - ./backend:/app  # Mount backend content to /app
       - ./data:/app/data
