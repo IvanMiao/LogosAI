@@ -41,7 +41,6 @@ app.add_middleware(
 @app.post("/analyze", response_model=AnalysisResponse)
 async def get_analyse_info(request: AnalysisRequest):
     try:
-        # 准备初始状态
         initial_state: MultiAgentState = {
             "messages": [],
             "text": request.text,
@@ -50,7 +49,7 @@ async def get_analyse_info(request: AnalysisRequest):
             "needs_correction": False,
             "corrected_text": None,
             "interpretation": None,
-            "user_language": request.user_language
+            "user_language": request.user_language.upper()
         }
 
         final_state = agent.graph.invoke(initial_state)
