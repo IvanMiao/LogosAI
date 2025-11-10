@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from workflow.agent import TextAnalysisAgent
-from schema.analyze_schema import AnalysisRequest, AnalysisResponse, HistoryResponse
+from workflow.agent import TextAnalysisAgent, TextAnalysisLangchain
+from workflow.agent import MultiAgentState
+from schema.analyze_schema import AnalysisRequest, AnalysisResponse
+from schema.analyze_schema import HistoryResponse, HistoryItem
 from dotenv import load_dotenv
 from database import init_db, get_db_connection
 import os
@@ -11,7 +13,10 @@ load_dotenv()
 
 init_db()
 
-agent = TextAnalysisAgent(gemini_key=os.getenv("GEMINI_API_KEY"))
+# Use new LangChain agent system
+agent = TextAnalysisLangchain(gemini_key=os.getenv("GEMINI_API_KEY"))
+
+# legacy_agent = TextAnalysisAgent(gemini_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
 
@@ -36,10 +41,24 @@ app.add_middleware(
 @app.post("/analyze", response_model=AnalysisResponse)
 async def get_analyse_info(request: AnalysisRequest):
     try:
-        result = agent.run_analysis(request.text, request.user_language)
-        # print(result)
-        if result is None:
-            raise HTTPException(status_code=500, detail="Analysis failed")
+        # 准备初始状态
+        initial_state: MultiAgentState = {
+            "messages": [],
+            "text": request.text,
+            "text_language": "",
+            "genre": "",
+            "needs_correction": False,
+            "corrected_text": None,
+            "interpretation": None,
+            "user_language": request.user_language
+        }
+
+        final_state = agent.graph.invoke(initial_state)
+
+        result = final_state.get("interpretation", "")
+
+        if not result:
+            raise HTTPException(status_code=500, detail="Analysis failed - no interpretation generated")
 
         # Save to database
         conn = get_db_connection()

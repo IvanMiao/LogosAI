@@ -24,3 +24,9 @@ class HistoryResponse(BaseModel):
     history: List[HistoryItem]
     success: bool
     error: str | None = None
+
+
+class TextDerectives(BaseModel):
+    language: str
+    genre: str
+    correction_needed: bool
