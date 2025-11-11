@@ -55,6 +55,7 @@ export function AboutView() {
                   <div>
                     <p className="text-xs font-medium text-slate-500 mb-2">Backend</p>
                     <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Langchain</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">FastAPI</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">SQLite</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Pydantic</Badge>
