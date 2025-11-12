@@ -4,53 +4,29 @@ import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { SettingsView } from '@/components/SettingsView';
 import { AboutView } from '@/components/AboutView';
-import { useAnalysis } from '@/hooks/useAnalysis';
+import { AnalysisProvider, useAnalysisContext } from '@/hooks/AnalysisContext';
+
 import './App.css';
 
-function App() {
+
+function AppWrapper() {
   const [mounted, setMounted] = useState(false);
   const [activeView, setActiveView] = useState('home');
-  const {
-    text,
-    setText,
-    language,
-    setLanguage,
-    result,
-    history,
-    isLoading,
-    error,
-    fetchHistory,
-    handleAnalyze,
-    handleDeleteHistory,
-    handleLoadHistory,
-  } = useAnalysis();
+  const { fetchHistory } = useAnalysisContext();
 
   useEffect(() => {
     setMounted(true);
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   const viewComponents = {
     home: (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <AnalysisPanel
-            text={text}
-            setText={setText}
-            language={language}
-            setLanguage={setLanguage}
-            result={result}
-            isLoading={isLoading}
-            error={error}
-            onAnalyze={handleAnalyze}
-          />
+          <AnalysisPanel />
         </div>
-        <div className="lg:col-span-1">
-          <HistoryPanel
-            history={history}
-            onLoadHistory={handleLoadHistory}
-            onDeleteHistory={handleDeleteHistory}
-          />
+        <div className='lg:col-span-1'>
+          <HistoryPanel />
         </div>
       </div>
     ),
@@ -68,6 +44,15 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+
+function App() {
+  return (
+    <AnalysisProvider>
+      <AppWrapper />
+    </AnalysisProvider>
   );
 }
 

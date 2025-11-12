@@ -6,8 +6,13 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { History, Clock, Eye, RotateCcw, Trash2 } from 'lucide-react';
 import { formatDate, formatTime } from '@/utils/helpers';
+import { useAnalysisContext } from '@/hooks/AnalysisContext';
 
-export function HistoryPanel({ history, onLoadHistory, onDeleteHistory }) {
+
+export function HistoryPanel() {
+  
+  const { history, onLoadHistory, onDeleteHistory } = useAnalysisContext();
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [expandedItems, setExpandedItems] = useState(new Set());
