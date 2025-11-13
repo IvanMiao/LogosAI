@@ -25,7 +25,7 @@ function AppWrapper() {
         <div className="lg:col-span-2">
           <AnalysisPanel />
         </div>
-        <div className='lg:col-span-1'>
+        <div className="lg:col-span-1">
           <HistoryPanel />
         </div>
       </div>
