@@ -1,5 +1,7 @@
 .venv/
 
+**/.vscode
+
 node_modules/
 **/.env
 backend/history.db

@@ -50,12 +50,12 @@ export function AboutView() {
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Vite</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">TailwindCSS</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">shadcn/ui</Badge>
-                      <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Lucide Icons</Badge>
                     </div>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500 mb-2">Backend</p>
                     <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Langchain</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">FastAPI</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">SQLite</Badge>
                       <Badge variant="outline" className="text-xs border-slate-300 text-slate-700">Pydantic</Badge>
@@ -72,7 +72,7 @@ export function AboutView() {
               <div>
                 <h3 className="text-base font-semibold text-slate-900 mb-2">Open Source</h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                  LogosAI is an open-source project. Check out the source code and contribute on GitHub.
+                  LogosAI is an open-source project. Check out the source code on GitHub.
                 </p>
                 <a 
                   href="https://github.com/IvanMiao/LogosAI" 

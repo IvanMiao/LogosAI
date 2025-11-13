@@ -5,8 +5,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, FileText, Loader2, AlertCircle, Languages } from 'lucide-react';
+import { useAnalysisContext } from '@/hooks/AnalysisContext';
 
-export function AnalysisPanel({ text, setText, language, setLanguage, result, isLoading, error, onAnalyze }) {
+
+export function AnalysisPanel() {
+  const { text, setText, language, setLanguage, result, isLoading, error, onAnalyze } = useAnalysisContext();
+
   return (
     <div className="space-y-6">
       <Card className="border-slate-200 shadow-sm">
