@@ -93,8 +93,8 @@ export function useAnalysis() {
     isLoading,
     error,
     fetchHistory,
-    handleAnalyze,
-    handleDeleteHistory,
-    handleLoadHistory,
+    onAnalyze: handleAnalyze,
+    onDeleteHistory: handleDeleteHistory,
+    onLoadHistory: handleLoadHistory,
   };
 }

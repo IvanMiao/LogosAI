@@ -17,7 +17,7 @@ function AppWrapper() {
   useEffect(() => {
     setMounted(true);
     fetchHistory();
-  }, [fetchHistory]);
+  }, []);
 
   const viewComponents = {
     home: (
