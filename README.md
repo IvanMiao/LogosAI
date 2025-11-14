@@ -11,10 +11,10 @@ LogosAI is an AI-powered tool designed for deep language learning, capable of an
 ## Tech Stack
 
 **Frontend:**
-React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons
+React, Vite, Tailwind CSS, shadcn/ui
 
 **Backend:**
-FastAPI, SQLite, Pydantic
+LangChain/LangGraph, FastAPI, Postgresql, Pydantic
 
 ## Getting Started
 
@@ -59,4 +59,4 @@ docker compose up -d
 
 - [ ] Dark mode
 - [ ] Stream output
-- [ ] Agent with LangChain/LangGraph
+- [ ] Agent Refactor
