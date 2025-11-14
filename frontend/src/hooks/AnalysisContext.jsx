@@ -17,7 +17,7 @@ export function useAnalysisContext() {
 	const context = useContext(AnalysisContext);
 
 	if (!context) {
-		throw new Error('useAnalysisContext must be within an AnaysisProvider');
+		throw new Error('useAnalysisContext must be within an AnalysisProvider');
 	}
 
 	return context;
