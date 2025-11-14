@@ -10,7 +10,7 @@ export function useAnalysis() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('http://localhost:8000/history');
+      const response = await fetch('/api/history');
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -34,7 +34,7 @@ export function useAnalysis() {
     setResult('');
 
     try {
-      const response = await fetch('http://localhost:8000/analyze', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export function useAnalysis() {
 
   const handleDeleteHistory = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/history/${id}`, {
+      const response = await fetch(`/api/history/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {

@@ -5,16 +5,18 @@ services:
       - ./.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
+    networks:
+      - logos-ai
     restart: unless-stopped
 
   backend:
     build:
       context: .  # Build from project root directory
       dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - ./.env
     volumes:
@@ -22,6 +24,8 @@ services:
       - ./data:/app/data
     depends_on:
       - postgres
+    networks:
+      - logos-ai
     restart: unless-stopped
 
   frontend:
@@ -29,10 +33,16 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"  # Use port 3000 to avoid conflicts with system services
+      - "3000:80"  # Just Nginx expose the port to outside world
     depends_on:
       - backend
+    networks:
+      - logos-ai
     restart: unless-stopped
 
 volumes:
   postgres_data:
+
+networks:
+  logos-ai:
+    driver: bridge
