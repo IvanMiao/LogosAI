@@ -1,4 +1,14 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
   backend:
     build:
       context: .  # Build from project root directory
@@ -10,6 +20,8 @@ services:
     volumes:
       - ./backend:/app  # Mount backend content to /app
       - ./data:/app/data
+    depends_on:
+      - postgres
     restart: unless-stopped
 
   frontend:
@@ -21,3 +33,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:

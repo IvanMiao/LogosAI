@@ -5,11 +5,11 @@ from schema.analyze_schema import AnalysisRequest, AnalysisResponse
 from schema.analyze_schema import HistoryResponse
 from dotenv import load_dotenv
 from database import init_db, get_db_connection
+from database import History
 import os
 
 
 load_dotenv()
-
 init_db()
 
 # Use new LangChain agent system
@@ -55,10 +55,11 @@ async def get_analyse_info(request: AnalysisRequest):
             raise HTTPException(status_code=500, detail="Analysis failed - no interpretation generated")
 
         # Save to database
-        conn = get_db_connection()
-        conn.execute('INSERT INTO history (prompt, result) VALUES (?, ?)', (request.text, result))
-        conn.commit()
-        conn.close()
+        db = get_db_connection()
+        history = History(prompt=request.text, result=result)
+        db.add(history)
+        db.commit()
+        db.close()
 
         return AnalysisResponse(result=result, success=True)
     except Exception as e:
@@ -68,11 +69,11 @@ async def get_analyse_info(request: AnalysisRequest):
 @app.get("/history", response_model=HistoryResponse)
 async def get_history():
     try:
-        conn = get_db_connection()
-        rows = conn.execute('SELECT id, prompt, result, timestamp FROM history ORDER BY timestamp DESC').fetchall()
-        conn.close()
+        db = get_db_connection()
+        rows = db.query(History).order_by(History.timestamp.desc()).all()
+        history = [row.to_dict() for row in rows]
+        db.close()
 
-        history = [{"id": row["id"], "prompt": row["prompt"], "result": row["result"], "timestamp": row["timestamp"]} for row in rows]
         return HistoryResponse(history=history, success=True)
     except Exception as e:
         return HistoryResponse(history=[], success=False, error=str(e))
@@ -81,10 +82,11 @@ async def get_history():
 @app.delete("/history/{history_id}")
 async def delete_history(history_id: int):
     try:
-        conn = get_db_connection()
-        conn.execute('DELETE FROM history WHERE id = ?', (history_id,))
-        conn.commit()
-        conn.close()
+        db = get_db_connection()
+        history = db.query(History).filter(History.id == history_id).first()
+        db.delete(history)
+        db.commit()
+        db.close()
         return {"success": True, "message": "History item deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
