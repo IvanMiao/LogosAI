@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, Text, DateTime, func
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, Text, DateTime, func, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.pool import StaticPool
 import os
 
 
@@ -16,35 +16,56 @@ class History(Base):
     result = Column(Text, nullable=False)
     timestamp = Column(DateTime, server_default=func.now())
 
+    key_vocabulary = Column(JSON)
+    grammar_points = Column(JSON)
+    identified_errors = Column(JSON)
+
     def to_dict(self):
         return {
             'id': self.id,
             'prompt': self.prompt,
             'result': self.result,
-            'timestamp': self.timestamp.isoformat()
+            'timestamp': self.timestamp.isoformat(),
+            'key_vocabulary': self.key_vocabulary,
+            'grammar_points': self.grammar_points,
+            'identified_errors': self.identified_errors
         }
 
-pg_user = os.getenv('POSTGRES_USER')
-pg_password = os.getenv('POSTGRES_PASSWORD')
-pg_host = os.getenv('POSTGRES_HOST', 'localhost')
-pg_port = os.getenv('POSTGRES_PORT', '5432')
-pg_db = os.getenv('POSTGRES_DB')
+# Check for a testing environment
+if os.getenv("TESTING"):
+    DATABASE_URL = "sqlite:///:memory:"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool  # Use StaticPool for in-memory DB persistence
+    )
+else:
+    # Production database configuration
+    pg_user = os.getenv('POSTEGRES_USER')
+    pg_password = os.getenv('POSTGRES_PASSWORD')
+    pg_host = os.getenv('POSTGRES_HOST', 'localhost')
+    pg_port = os.getenv('POSTGRES_PORT', '5432')
+    pg_db = os.getenv('POSTGRES_DB')
 
-DATABASE_URL = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+    if not all([pg_user, pg_password, pg_host, pg_port, pg_db]):
+        raise ValueError("One or more PostgreSQL environment variables are not set.")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_size=5,
-    max_overflow=10,
-    pool_pre_ping=True
-)
+    DATABASE_URL = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 def init_db():
     Base.metadata.create_all(bind=engine)
 
-
-def get_db_connection():
-    return SessionLocal()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

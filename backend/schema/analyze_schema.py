@@ -13,11 +13,21 @@ class AnalysisResponse(BaseModel):
     error: str | None = None
 
 
+class StructuredInterpretation(BaseModel):
+    summary: str
+    key_vocabulary: List[dict]
+    grammar_points: List[dict]
+    identified_errors: List[dict]
+
+
 class HistoryItem(BaseModel):
     id: int
     prompt: str
     result: str
     timestamp: str
+    key_vocabulary: List[dict] | None = None
+    grammar_points: List[dict] | None = None
+    identified_errors: List[dict] | None = None
 
 
 class HistoryResponse(BaseModel):

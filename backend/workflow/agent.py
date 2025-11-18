@@ -1,6 +1,5 @@
 from workflow.prompt import GENERAL_PROMPT, EXAM_SYS_PROMPT, CORRECTION_SYS_PROMPT
-from schema.analyze_schema import TextDerectives
-from langchain.agents import create_agent
+from schema.analyze_schema import TextDerectives, StructuredInterpretation
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
@@ -16,7 +15,7 @@ class MultiAgentState(TypedDict):
     genre: str
     needs_correction: bool
     corrected_text: Optional[str]
-    interpretation: Optional[str]
+    interpretation: Optional[StructuredInterpretation]
 
 
 class TextAnalysisLangchain:
@@ -87,10 +86,13 @@ class TextAnalysisLangchain:
                 SystemMessage(sys_prompt),
                 HumanMessage(state["text"])
             )
-            response = self.llm_flash.invoke(messages)
+
+            # Use structured output
+            structured_llm = self.llm_flash.with_structured_output(StructuredInterpretation)
+            response = structured_llm.invoke(messages)
 
             return {
-                "interpretation": response.content
+                "interpretation": response
             }
 
         def route_after_detection(state: MultiAgentState) -> str:
