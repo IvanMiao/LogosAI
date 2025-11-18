@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from workflow.agent import TextAnalysisLangchain, MultiAgentState
 from schema.analyze_schema import AnalysisRequest, AnalysisResponse
-from schema.analyze_schema import HistoryResponse
+from schema.analyze_schema import HistoryResponse, SettingsRequest, SettingsResponse
 from dotenv import load_dotenv
 from database import init_db, get_db_connection
 from database import History
@@ -12,8 +12,17 @@ import os
 load_dotenv()
 init_db()
 
+# Global settings
+settings = {
+    "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
+    "model": "gemini-2.5-flash"
+}
+
 # Use new LangChain agent system
-agent = TextAnalysisLangchain(gemini_key=os.getenv("GEMINI_API_KEY"))
+agent = TextAnalysisLangchain(
+    gemini_key=settings["gemini_api_key"],
+    model=settings["model"]
+) if settings["gemini_api_key"] else None
 
 app = FastAPI()
 
@@ -37,7 +46,11 @@ app.add_middleware(
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def get_analyse_info(request: AnalysisRequest):
+    global agent
     try:
+        if not agent:
+            raise HTTPException(status_code=400, detail="Please configure Gemini API key in settings")
+        
         initial_state: MultiAgentState = {
             "messages": [],
             "text": request.text,
@@ -90,3 +103,49 @@ async def delete_history(history_id: int):
         return {"success": True, "message": "History item deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/settings", response_model=SettingsResponse)
+async def get_settings():
+    has_key = bool(settings["gemini_api_key"])
+    return SettingsResponse(
+        gemini_api_key=settings["gemini_api_key"][:8] + "..." if has_key else "",
+        model=settings["model"],
+        has_api_key=has_key,
+        success=True
+    )
+
+
+@app.post("/settings", response_model=SettingsResponse)
+async def update_settings(request: SettingsRequest):
+    global agent, settings
+    try:
+        # Update API key only if provided
+        if request.gemini_api_key:
+            settings["gemini_api_key"] = request.gemini_api_key
+        
+        # Always update model
+        settings["model"] = request.model
+        
+        # Reinitialize agent with new settings
+        if settings["gemini_api_key"]:
+            agent = TextAnalysisLangchain(
+                gemini_key=settings["gemini_api_key"],
+                model=settings["model"]
+            )
+        
+        has_key = bool(settings["gemini_api_key"])
+        return SettingsResponse(
+            gemini_api_key=settings["gemini_api_key"][:8] + "..." if has_key else "",
+            model=settings["model"],
+            has_api_key=has_key,
+            success=True
+        )
+    except Exception as e:
+        return SettingsResponse(
+            gemini_api_key="",
+            model="",
+            has_api_key=False,
+            success=False,
+            error=str(e)
+        )
