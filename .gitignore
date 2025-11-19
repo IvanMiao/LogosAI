@@ -2,6 +2,8 @@
 
 **/.vscode
 
+L_docs/
+
 node_modules/
 **/.env
 backend/history.db
