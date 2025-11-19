@@ -30,3 +30,16 @@ class TextDerectives(BaseModel):
     language: str
     genre: str
     correction_needed: bool
+
+
+class SettingsRequest(BaseModel):
+    gemini_api_key: str | None = None
+    model: str = "gemini-2.5-flash"
+
+
+class SettingsResponse(BaseModel):
+    gemini_api_key: str
+    model: str
+    has_api_key: bool
+    success: bool
+    error: str | None = None

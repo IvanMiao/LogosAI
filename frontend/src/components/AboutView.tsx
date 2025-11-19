@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Info, Brain, Code, Layers, ExternalLink } from 'lucide-react';
@@ -29,8 +29,8 @@ export function AboutView() {
               <div>
                 <h3 className="text-base font-semibold text-slate-900 mb-2">What is LogosAI?</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  LogosAI is an AI-powered text analysis platform that deeply reads and reasons about 
-                  text in any language. It provides comprehensive insights including themes, sentiment, 
+                  LogosAI is an AI-powered text analysis platform that deeply reads and reasons about
+                  text in any language. It provides comprehensive insights including themes, sentiment,
                   structure analysis, and key takeaways to help you understand written content better.
                 </p>
               </div>
@@ -74,9 +74,9 @@ export function AboutView() {
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
                   LogosAI is an open-source project. Check out the source code on GitHub.
                 </p>
-                <a 
-                  href="https://github.com/IvanMiao/LogosAI" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/IvanMiao/LogosAI"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors"
                 >

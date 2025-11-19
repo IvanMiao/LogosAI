@@ -10,8 +10,8 @@ import './App.css';
 
 
 function AppWrapper() {
-  const [mounted, setMounted] = useState(false);
-  const [activeView, setActiveView] = useState('home');
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [activeView, setActiveView] = useState<string>('home');
   const { fetchHistory } = useAnalysisContext();
 
   useEffect(() => {
@@ -19,7 +19,7 @@ function AppWrapper() {
     fetchHistory();
   }, []);
 
-  const viewComponents = {
+  const viewComponents: Record<string, React.ReactNode> = {
     home: (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

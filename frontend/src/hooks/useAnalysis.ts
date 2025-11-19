@@ -1,16 +1,38 @@
 import { useState, useCallback } from 'react';
 
-export function useAnalysis() {
-  const [text, setText] = useState('');
-  const [language, setLanguage] = useState('en');
-  const [result, setResult] = useState('');
-  const [history, setHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+export interface HistoryItem {
+  id: number;
+  prompt: string;
+  result: string;
+  timestamp?: string;
+}
+
+export interface UseAnalysisReturn {
+  text: string;
+  setText: (text: string) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
+  result: string;
+  history: HistoryItem[];
+  isLoading: boolean;
+  error: string;
+  fetchHistory: () => Promise<void>;
+  onAnalyze: () => Promise<void>;
+  onDeleteHistory: (id: number) => Promise<void>;
+  onLoadHistory: (item: HistoryItem) => void;
+}
+
+export function useAnalysis(): UseAnalysisReturn {
+  const [text, setText] = useState<string>('');
+  const [language, setLanguage] = useState<string>('en');
+  const [result, setResult] = useState<string>('');
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('http://localhost:8000/history');
+      const response = await fetch('/api/history');
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -34,7 +56,7 @@ export function useAnalysis() {
     setResult('');
 
     try {
-      const response = await fetch('http://localhost:8000/analyze', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,18 +77,18 @@ export function useAnalysis() {
         setResult(data.result);
         fetchHistory();
       } else {
-        throw new Error(data.error || 'Analysis failed, no specifique error information returned');
+        throw new Error(data.error || 'Analysis failed, no specific error information returned');
       }
-    } catch (e) {
+    } catch (e: any) {
       setError(e.message);
     } finally {
       setIsLoading(false);
     }
   }, [text, language]);
 
-  const handleDeleteHistory = async (id) => {
+  const handleDeleteHistory = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/history/${id}`, {
+      const response = await fetch(`/api/history/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -77,7 +99,7 @@ export function useAnalysis() {
     }
   };
 
-  const handleLoadHistory = (item) => {
+  const handleLoadHistory = (item: HistoryItem) => {
     setText(item.prompt);
     setResult(item.result);
     window.scrollTo({ top: 0, behavior: 'smooth' });

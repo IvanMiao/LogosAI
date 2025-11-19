@@ -20,15 +20,18 @@ class MultiAgentState(TypedDict):
 
 
 class TextAnalysisLangchain:
-    def __init__(self, gemini_key: str | None):
+    def __init__(self, gemini_key: str | None, model: str = "gemini-2.5-flash"):
         if not gemini_key:
             raise ValueError("Gemini API key is required.")
+        
+        # Main model for interpretation
         self.llm_flash = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model=model,
             api_key=gemini_key,
             temperature=0.3
         )
 
+        # Lightweight model for detection and correction
         self.llm_lite = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash-lite",
             api_key=gemini_key,

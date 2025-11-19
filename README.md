@@ -4,39 +4,41 @@
 
 LogosAI is an AI-powered tool designed for deep language learning, capable of analyzing complex texts ranging from news articles to philosophical works.
 
-
 ![LogosAI Screenshot](./pageUI.png)
 
 
 ## Tech Stack
 
 **Frontend:**
-React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons
+React, TypeScript, Vite, Tailwind CSS, shadcn/ui
 
 **Backend:**
-FastAPI, SQLite, Pydantic
+LangChain/LangGraph, FastAPI, PostgreSQL, SQLAlchemy, Pydantic
 
 ## Getting Started
 
-### Option 1 - Docker
+### Option 1 - Docker (Recommended)
 
-1. Copy `.env.copy` to `.env`, then add your API key to the env file
+1. Copy `.env.copy` to `.env`, then add your API key to the env file.
 
-2. Excute this command:
+2. Execute this command:
 ```bash
 docker compose up -d
 ```
 
-### Option 2 Manuel Installation
+### Option 2 - Manual Installation
 
 **Prerequisites**
 
 -   Node.js (v18 or higher)
 -   Python (v3.13 or higher)
+-   PostgreSQL (v16 or higher)
 
-1.  Copy `.env.copy` to `.env`, then add your API key to the env file
+1.  Copy `.env.copy` to `.env`, then add your API key and Database credentials.
 
 2.  **Backend Setup:**
+
+    Ensure your PostgreSQL service is running and the credentials in `.env` are correct.
 
     ```bash
     uv sync
@@ -55,8 +57,14 @@ docker compose up -d
     ```
     The frontend development server will be running at `http://localhost:5173`.
 
+## Recent Updates
+
+- **Architecture**: Refactored backend to use **Dependency Injection** and **Singleton Service** pattern for better state management and concurrency.
+- **Database**: Migrated from SQLite to **PostgreSQL** for robust data persistence.
+- **Frontend**: Migrated codebase from JavaScript to **TypeScript** for better type safety.
+
 ## TODO
 
 - [ ] Dark mode
 - [ ] Stream output
-- [ ] Agent with LangChain/LangGraph
+- [ ] Agent Refactor
