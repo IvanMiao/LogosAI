@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings as SettingsIcon, Key, Save, CheckCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+
+
 export function SettingsView() {
-  const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('gemini-2.5-flash');
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [apiKey, setApiKey] = useState<string>('');
+  const [model, setModel] = useState<string>('gemini-2.5-flash');
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     fetchSettings();
@@ -45,10 +47,10 @@ export function SettingsView() {
     setSaveSuccess(false);
 
     try {
-      const payload = {
+      const payload: { model: string; gemini_api_key?: string } = {
         model: model,
       };
-      
+
       // Only include API key if it's being updated
       if (apiKey.trim()) {
         payload.gemini_api_key = apiKey;
@@ -69,8 +71,8 @@ export function SettingsView() {
       } else {
         setError(data.error || 'Failed to save settings');
       }
-    } catch (e) {
-      setError(e.message);
+    } catch (e: any) {
+      setError(e.message || 'An error occurred');
     } finally {
       setIsSaving(false);
     }
@@ -99,7 +101,7 @@ export function SettingsView() {
                 <Key className="w-5 h-5 text-slate-700" />
                 <h3 className="text-base font-semibold text-slate-900">Gemini API Configuration</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -173,7 +175,7 @@ export function SettingsView() {
             <div className="p-5 bg-blue-50 rounded-lg border border-blue-200">
               <h3 className="text-sm font-semibold text-blue-900 mb-2">More Settings Coming Soon</h3>
               <p className="text-sm text-blue-700">
-                We're working on adding more customization options including default language preferences, 
+                We're working on adding more customization options including default language preferences,
                 history management, and analysis parameters.
               </p>
             </div>

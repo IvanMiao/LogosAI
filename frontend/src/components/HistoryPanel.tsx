@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,17 +7,18 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { History, Clock, Eye, RotateCcw, Trash2 } from 'lucide-react';
 import { formatDate, formatTime } from '@/utils/helpers';
 import { useAnalysisContext } from '@/hooks/AnalysisContext';
+import { HistoryItem } from '@/hooks/useAnalysis';
 
 
 export function HistoryPanel() {
-  
-  const { history, onLoadHistory, onDeleteHistory } = useAnalysisContext();
-  
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
-  const [expandedItems, setExpandedItems] = useState(new Set());
 
-  const toggleExpanded = (id) => {
+  const { history, onLoadHistory, onDeleteHistory } = useAnalysisContext();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [itemToDelete, setItemToDelete] = useState<HistoryItem | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (id: number) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -29,7 +30,7 @@ export function HistoryPanel() {
     });
   };
 
-  const handleDelete = (item) => {
+  const handleDelete = (item: HistoryItem) => {
     setItemToDelete(item);
     setDeleteDialogOpen(true);
   };

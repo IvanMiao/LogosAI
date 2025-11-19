@@ -56,7 +56,7 @@ export function AnalysisPanel() {
             </div>
             <Textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
               placeholder="Enter or paste your text here for analysis..."
               rows={12}
               disabled={isLoading}
