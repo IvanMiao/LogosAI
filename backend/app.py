@@ -45,7 +45,7 @@ app.add_middleware(
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
-async def get_analyse_info(request: AnalysisRequest):
+def get_analyse_info(request: AnalysisRequest):
     global agent
     try:
         if not agent:
