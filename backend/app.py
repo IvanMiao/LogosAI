@@ -1,29 +1,17 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-from workflow.agent import TextAnalysisLangchain, MultiAgentState
+from workflow.agent import MultiAgentState
 from schema.analyze_schema import AnalysisRequest, AnalysisResponse
 from schema.analyze_schema import HistoryResponse, SettingsRequest, SettingsResponse
-from dotenv import load_dotenv
 from database import init_db, get_db
 from database import History
-import os
+from service import AnalysisService, get_analysis_service
+from dotenv import load_dotenv
 
 
 load_dotenv()
 init_db()
-
-# Global settings
-settings = {
-    "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
-    "model": "gemini-2.5-flash"
-}
-
-# Use new LangChain agent system
-agent = TextAnalysisLangchain(
-    gemini_key=settings["gemini_api_key"],
-    model=settings["model"]
-) if settings["gemini_api_key"] else None
 
 app = FastAPI()
 
@@ -46,9 +34,13 @@ app.add_middleware(
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
-def get_analyse_info(request: AnalysisRequest, db: Session = Depends(get_db)):
-    global agent
+def get_analyse_info(
+    request: AnalysisRequest,
+    service: AnalysisService = Depends(get_analysis_service),
+    db: Session = Depends(get_db)
+):
     try:
+        agent = service.get_agent()
         if not agent:
             raise HTTPException(status_code=400, detail="Please configure Gemini API key in settings")
         
@@ -91,56 +83,39 @@ async def get_history(db: Session = Depends(get_db)):
 
 @app.delete("/history/{history_id}")
 async def delete_history(history_id: int, db: Session = Depends(get_db)):
-    try:
-        history = db.query(History).filter(History.id == history_id).first()
-        db.delete(history)
-        db.commit()
-        return {"success": True, "message": "History item deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    history = db.query(History).filter(History.id == history_id).first()
+    if not history:
+        raise HTTPException(status_code=404, detail="History item not found")
+
+    db.delete(history)
+    db.commit()
+    return {"success": True, "message": "History item deleted successfully"}
 
 
 @app.get("/settings", response_model=SettingsResponse)
-async def get_settings():
-    has_key = bool(settings["gemini_api_key"])
+async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
+    has_key = bool(service.settings["gemini_api_key"])
     return SettingsResponse(
-        gemini_api_key=settings["gemini_api_key"][:8] + "..." if has_key else "",
-        model=settings["model"],
+        gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
+        model=service.settings["model"],
         has_api_key=has_key,
         success=True
     )
 
 
 @app.post("/settings", response_model=SettingsResponse)
-async def update_settings(request: SettingsRequest):
-    global agent, settings
-    try:
-        # Update API key only if provided
-        if request.gemini_api_key:
-            settings["gemini_api_key"] = request.gemini_api_key
-        
-        # Always update model
-        settings["model"] = request.model
-        
-        # Reinitialize agent with new settings
-        if settings["gemini_api_key"]:
-            agent = TextAnalysisLangchain(
-                gemini_key=settings["gemini_api_key"],
-                model=settings["model"]
-            )
-        
-        has_key = bool(settings["gemini_api_key"])
-        return SettingsResponse(
-            gemini_api_key=settings["gemini_api_key"][:8] + "..." if has_key else "",
-            model=settings["model"],
-            has_api_key=has_key,
-            success=True
-        )
-    except Exception as e:
-        return SettingsResponse(
-            gemini_api_key="",
-            model="",
-            has_api_key=False,
-            success=False,
-            error=str(e)
-        )
+async def update_settings(
+    request: SettingsRequest,
+    service: AnalysisService = Depends(get_analysis_service)
+):
+    # Reinitialize agent with new settings
+    service.update_settings(request.gemini_api_key, request.model)
+
+    has_key = bool(service.settings["gemini_api_key"])
+
+    return SettingsResponse(
+        gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
+        model=service.settings["model"],
+        has_api_key=has_key,
+        success=True
+    )
