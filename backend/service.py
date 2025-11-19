@@ -23,8 +23,9 @@ class AnalysisService:
     def get_agent(self):
         return self.agent
     
-    def update_settings(self, new_key: str, new_model: str):
-        self.settings["gemini_api_key"] = new_key
+    def update_settings(self, new_key: str | None, new_model: str):
+        if new_key is not None:
+            self.settings["gemini_api_key"] = new_key
         if new_model:
             self.settings["model"] = new_model
         self._init_agent()
