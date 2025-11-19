@@ -33,7 +33,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"  # Just Nginx expose the port to outside world
+      - "3000:80"  # Only Nginx exposes the port to the outside world
     depends_on:
       - backend
     networks:

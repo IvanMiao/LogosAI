@@ -77,7 +77,7 @@ export function useAnalysis(): UseAnalysisReturn {
         setResult(data.result);
         fetchHistory();
       } else {
-        throw new Error(data.error || 'Analysis failed, no specifique error information returned');
+        throw new Error(data.error || 'Analysis failed, no specific error information returned');
       }
     } catch (e: any) {
       setError(e.message);
