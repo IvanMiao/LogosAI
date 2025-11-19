@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from workflow.agent import TextAnalysisLangchain, MultiAgentState
 from schema.analyze_schema import AnalysisRequest, AnalysisResponse
 from schema.analyze_schema import HistoryResponse, SettingsRequest, SettingsResponse
 from dotenv import load_dotenv
-from database import init_db, get_db_connection
+from database import init_db, get_db
 from database import History
 import os
 
@@ -45,7 +46,7 @@ app.add_middleware(
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
-def get_analyse_info(request: AnalysisRequest):
+def get_analyse_info(request: AnalysisRequest, db: Session = Depends(get_db)):
     global agent
     try:
         if not agent:
@@ -68,11 +69,9 @@ def get_analyse_info(request: AnalysisRequest):
             raise HTTPException(status_code=500, detail="Analysis failed - no interpretation generated")
 
         # Save to database
-        db = get_db_connection()
         history = History(prompt=request.text, result=result)
         db.add(history)
         db.commit()
-        db.close()
 
         return AnalysisResponse(result=result, success=True)
     except Exception as e:
@@ -80,12 +79,10 @@ def get_analyse_info(request: AnalysisRequest):
 
 
 @app.get("/history", response_model=HistoryResponse)
-async def get_history():
+async def get_history(db: Session = Depends(get_db)):
     try:
-        db = get_db_connection()
         rows = db.query(History).order_by(History.timestamp.desc()).all()
         history = [row.to_dict() for row in rows]
-        db.close()
 
         return HistoryResponse(history=history, success=True)
     except Exception as e:
@@ -93,13 +90,11 @@ async def get_history():
 
 
 @app.delete("/history/{history_id}")
-async def delete_history(history_id: int):
+async def delete_history(history_id: int, db: Session = Depends(get_db)):
     try:
-        db = get_db_connection()
         history = db.query(History).filter(History.id == history_id).first()
         db.delete(history)
         db.commit()
-        db.close()
         return {"success": True, "message": "History item deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
