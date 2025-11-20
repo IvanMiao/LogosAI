@@ -4,16 +4,12 @@
 
 LogosAI is an AI-powered tool designed for deep language learning, capable of analyzing complex texts ranging from news articles to philosophical works.
 
-![LogosAI Screenshot](./pageUI.png)
+![LogosAI Screenshot](./UI2.png)
 
 
 ## Tech Stack
 
-**Frontend:**
-React, TypeScript, Vite, Tailwind CSS, shadcn/ui
-
-**Backend:**
-LangChain/LangGraph, FastAPI, PostgreSQL, SQLAlchemy, Pydantic
+![LogosAI Screenshot](./UI3.png)
 
 ## Getting Started
 
