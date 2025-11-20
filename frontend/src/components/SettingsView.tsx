@@ -80,15 +80,15 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
-              <SettingsIcon className="w-5 h-5 text-slate-700" />
+            <div className="w-9 h-9 bg-secondary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
+              <SettingsIcon className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-xl text-slate-900">Settings</CardTitle>
-              <CardDescription className="text-xs mt-0.5">
+              <CardTitle className="text-xl text-foreground font-mono">Settings</CardTitle>
+              <CardDescription className="text-xs mt-0.5 font-mono">
                 Configure your Gemini API and model preferences
               </CardDescription>
             </div>
@@ -96,15 +96,15 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="p-5 bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--border)]">
               <div className="flex items-center gap-3 mb-4">
-                <Key className="w-5 h-5 text-slate-700" />
-                <h3 className="text-base font-semibold text-slate-900">Gemini API Configuration</h3>
+                <Key className="w-5 h-5 text-foreground" />
+                <h3 className="text-base font-bold text-foreground font-mono">Gemini API Configuration</h3>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-bold text-foreground mb-2 font-mono">
                     API Key {hasApiKey && <span className="text-green-600 text-xs">(Configured)</span>}
                   </label>
                   <input
@@ -112,9 +112,9 @@ export function SettingsView() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder={hasApiKey ? "Keep empty to maintain current API key" : "Enter your Gemini API key"}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm"
+                    className="w-full px-3 py-2 border-2 border-border bg-input focus:outline-none focus:ring-2 focus:ring-ring text-sm shadow-[4px_4px_0px_0px_var(--border)] font-mono"
                   />
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted-foreground font-mono">
                     {hasApiKey ? (
                       "If you need to change API key, please enter the new key"
                     ) : (
@@ -124,7 +124,7 @@ export function SettingsView() {
                           href="https://aistudio.google.com/apikey"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
+                          className="text-primary hover:underline font-bold"
                         >
                           Google AI Studio
                         </a>
@@ -134,11 +134,11 @@ export function SettingsView() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-bold text-foreground mb-2 font-mono">
                     Model
                   </label>
                   <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full border-2 border-border shadow-[4px_4px_0px_0px_var(--border)]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -149,22 +149,22 @@ export function SettingsView() {
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700">{error}</p>
+                  <div className="p-3 bg-destructive/10 border-2 border-destructive shadow-[4px_4px_0px_0px_var(--destructive)]">
+                    <p className="text-sm text-destructive font-bold font-mono">{error}</p>
                   </div>
                 )}
 
                 {saveSuccess && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                  <div className="p-3 bg-green-50 border-2 border-green-600 shadow-[4px_4px_0px_0px_#16a34a] flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <p className="text-sm text-green-700">Settings saved successfully!</p>
+                    <p className="text-sm text-green-700 font-bold font-mono">Settings saved successfully!</p>
                   </div>
                 )}
 
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                 >
                   <Save className="w-4 h-4" />
                   {isSaving ? 'Saving...' : 'Save Settings'}
@@ -172,9 +172,9 @@ export function SettingsView() {
               </div>
             </div>
 
-            <div className="p-5 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">More Settings Coming Soon</h3>
-              <p className="text-sm text-blue-700">
+            <div className="p-5 bg-accent/20 border-2 border-accent shadow-[4px_4px_0px_0px_var(--accent)]">
+              <h3 className="text-sm font-bold text-foreground mb-2 font-mono">More Settings Coming Soon</h3>
+              <p className="text-sm text-muted-foreground font-mono">
                 We're working on adding more customization options including default language preferences,
                 history management, and analysis parameters.
               </p>

@@ -45,15 +45,15 @@ export function HistoryPanel() {
 
   return (
     <>
-      <Card className="border-slate-200 shadow-sm sticky top-4">
+      <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)] sticky top-4">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
-              <History className="w-5 h-5 text-slate-700" />
+            <div className="w-9 h-9 bg-secondary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
+              <History className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-lg text-slate-900">Analysis History</CardTitle>
-              <CardDescription className="text-xs mt-0.5">
+              <CardTitle className="text-lg text-foreground font-mono">Analysis History</CardTitle>
+              <CardDescription className="text-xs mt-0.5 font-mono">
                 {history.length > 0 ? `${history.length} previous ${history.length === 1 ? 'analysis' : 'analyses'}` : 'No records'}
               </CardDescription>
             </div>
@@ -62,11 +62,11 @@ export function HistoryPanel() {
         <CardContent>
           {history.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <History className="w-8 h-8 text-slate-400" />
+              <div className="w-16 h-16 bg-muted border-2 border-border flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_var(--border)]">
+                <History className="w-8 h-8 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-slate-600 mb-1">No History Yet</p>
-              <p className="text-xs text-slate-500">Your analysis history will appear here</p>
+              <p className="text-sm font-bold text-foreground mb-1 font-mono">No History Yet</p>
+              <p className="text-xs text-muted-foreground font-mono">Your analysis history will appear here</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -75,41 +75,41 @@ export function HistoryPanel() {
                 return (
                   <div
                     key={item.id}
-                    className="border border-slate-200 rounded-lg p-3.5 bg-white hover:border-slate-300 hover:shadow-sm transition-all duration-200"
+                    className="border-2 border-border p-3.5 bg-card hover:shadow-[4px_4px_0px_0px_var(--border)] transition-all duration-200"
                   >
                     <div className="flex items-center gap-2 mb-2.5">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-xs text-slate-500 font-mono">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground font-mono">
                         {formatDate(item.timestamp)}
                       </span>
-                      <span className="text-xs text-slate-400">·</span>
-                      <span className="text-xs text-slate-500 font-mono">
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground font-mono">
                         {formatTime(item.timestamp)}
                       </span>
                     </div>
 
                     <div className="mb-3">
-                      <p className="text-sm text-slate-700 line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-foreground line-clamp-2 leading-relaxed font-mono">
                         {item.prompt}
                       </p>
                     </div>
 
                     {isExpanded && (
-                      <div className="mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="prose prose-sm max-w-none text-xs prose-slate">
+                      <div className="mb-3 p-3 bg-muted border-2 border-border">
+                        <div className="prose prose-sm max-w-none text-xs prose-slate font-mono">
                           <ReactMarkdown>{item.result}</ReactMarkdown>
                         </div>
                       </div>
                     )}
 
-                    <Separator className="my-3" />
+                    <Separator className="my-3 bg-border" />
 
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => toggleExpanded(item.id)}
-                        className="flex-1 h-8 text-xs border-slate-300 hover:bg-slate-50"
+                        className="flex-1 h-8 text-xs border-2 border-border hover:bg-accent hover:text-accent-foreground shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold"
                       >
                         <Eye className="w-3.5 h-3.5 mr-1.5" />
                         {isExpanded ? 'Collapse' : 'Expand'}
@@ -118,7 +118,7 @@ export function HistoryPanel() {
                         size="sm"
                         variant="secondary"
                         onClick={() => onLoadHistory(item)}
-                        className="flex-1 h-8 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        className="flex-1 h-8 text-xs bg-secondary border-2 border-border hover:bg-secondary/80 text-secondary-foreground shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold"
                       >
                         <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                         Restore
@@ -127,7 +127,7 @@ export function HistoryPanel() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDelete(item)}
-                        className="h-8 px-2.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 px-2.5 text-destructive hover:text-destructive-foreground hover:bg-destructive border-2 border-transparent hover:border-border hover:shadow-[2px_2px_0px_0px_var(--border)]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

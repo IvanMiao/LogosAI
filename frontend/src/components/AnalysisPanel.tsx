@@ -13,28 +13,28 @@ export function AnalysisPanel() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-slate-700" />
+              <div className="w-9 h-9 bg-secondary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
+                <FileText className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-xl text-slate-900">Text Analysis</CardTitle>
-                <CardDescription className="text-xs mt-0.5">Input your content for AI-powered analysis</CardDescription>
+                <CardTitle className="text-xl text-foreground font-mono">INPUT_ZONE</CardTitle>
+                <CardDescription className="text-xs mt-0.5 font-mono">PROVIDE_SOURCE_TEXT</CardDescription>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-700 mb-2.5 flex items-center gap-2">
+            <label className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2 font-mono">
               <Languages className="w-4 h-4" />
-              <span>Analysis Language</span>
+              <span>TARGET_LANGUAGE</span>
             </label>
             <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
-              <SelectTrigger className="w-full h-11 border-slate-300 bg-white">
+              <SelectTrigger className="w-full h-11 border-2 border-border bg-input shadow-[4px_4px_0px_0px_var(--border)]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -51,23 +51,23 @@ export function AnalysisPanel() {
 
           <div>
             <div className="flex justify-between items-center mb-2.5">
-              <label className="text-sm font-medium text-slate-700">Input Text</label>
-              <span className="text-xs text-slate-500 font-mono">{text.length} chars</span>
+              <label className="text-sm font-bold text-foreground font-mono">RAW_CONTENT</label>
+              <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 border border-border">{text.length} chars</span>
             </div>
             <Textarea
               value={text}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
-              placeholder="Enter or paste your text here for analysis..."
+              placeholder="INSERT_TEXT_DATA..."
               rows={12}
               disabled={isLoading}
-              className="resize-none text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+              className="resize-none text-sm border-2 border-border focus:ring-0 focus:border-border shadow-[4px_4px_0px_0px_var(--border)] font-mono"
             />
           </div>
 
           <Button
             onClick={onAnalyze}
             disabled={isLoading || !text.trim()}
-            className="w-full h-12 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white"
+            className="w-full h-12 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             {isLoading ? (
               <>
@@ -77,7 +77,7 @@ export function AnalysisPanel() {
             ) : (
               <>
                 <Brain className="w-5 h-5 mr-2" />
-                Start Analysis
+                INITIATE_ANALYSIS
               </>
             )}
           </Button>
@@ -85,15 +85,15 @@ export function AnalysisPanel() {
       </Card>
 
       {error && (
-        <Card className="border-red-300 bg-red-50 shadow-sm">
+        <Card className="border-2 border-destructive bg-destructive/10 shadow-[4px_4px_0px_0px_var(--destructive)]">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+              <div className="w-9 h-9 bg-destructive border-2 border-destructive-foreground flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-destructive-foreground" />
               </div>
               <div>
-                <h3 className="text-red-900 font-semibold mb-1.5">Analysis Error</h3>
-                <p className="text-red-700 text-sm leading-relaxed">{error}</p>
+                <h3 className="text-destructive-foreground font-bold mb-1.5 font-mono">Analysis Error</h3>
+                <p className="text-destructive-foreground text-sm leading-relaxed font-mono">{error}</p>
               </div>
             </div>
           </CardContent>
@@ -101,20 +101,20 @@ export function AnalysisPanel() {
       )}
 
       {result && (
-        <Card className="border-slate-200 shadow-sm">
+        <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-emerald-700" />
+              <div className="w-9 h-9 bg-accent border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
+                <FileText className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-xl text-slate-900">Analysis Results</CardTitle>
-                <CardDescription className="text-xs mt-0.5">AI-generated insights and analysis</CardDescription>
+                <CardTitle className="text-xl text-foreground font-mono">ANALYSIS_OUTPUT</CardTitle>
+                <CardDescription className="text-xs mt-0.5 font-mono">GENERATED_INSIGHTS</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-700 prose-strong:text-slate-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg">
+            <div className="prose prose-slate max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg font-mono">
               <ReactMarkdown>{result}</ReactMarkdown>
             </div>
           </CardContent>
