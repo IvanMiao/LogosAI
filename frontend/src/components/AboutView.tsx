@@ -55,7 +55,7 @@ export function AboutView() {
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">Langchain</Badge>
                       <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">FastAPI</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">SQLite</Badge>
+                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">PostgreSQL</Badge>
                       <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">Pydantic</Badge>
                     </div>
                   </div>
