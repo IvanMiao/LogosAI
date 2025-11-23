@@ -1,66 +1,73 @@
 # LogosAI
 
-[![Deploy to Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-yellow)](https://huggingface.co/spaces/IvanMiao/LogosAI)
+[![Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/IvanMiao/LogosAI)
 
-LogosAI is an AI-powered tool designed for deep language learning, capable of analyzing complex texts ranging from news articles to philosophical works.
+**LogosAI** is an advanced AI-powered platform designed for deep language learning and the rigorous analysis of complex texts. Whether you are deconstructing intricate news articles, academic papers, or dense philosophical works, LogosAI empowers you to understand sophisticated narratives with precision and depth.
 
-![LogosAI Screenshot](./UI2.png)
-
+![LogosAI Interface](./UI2.png)
 
 ## Tech Stack
 
-![LogosAI Screenshot](./UI3.png)
+LogosAI leverages a modern, type-safe, and scalable technology stack:
+
+*   **Frontend**: React, TypeScript, Tailwind CSS, Vite
+*   **Backend**: Python, FastAPI, PostgreSQL, LangChain/LangGraph
+*   **Infrastructure**: Docker, Docker Compose
+
+![LogosAI Architecture](./UI3.png)
 
 ## Getting Started
 
-### Option 1 - Docker (Recommended)
+You can run LogosAI using Docker (recommended) or set it up manually.
 
-1. Copy `.env.copy` to `.env`, then add your API key to the env file.
+### Option 1: Docker (Recommended)
 
-2. Execute this command:
-```bash
-docker compose up -d
-```
+The easiest way to get up and running.
 
-### Option 2 - Manual Installation
+1.  **Configure Environment**:
+    Copy `.env.copy` to `.env` and add your API credentials.
+
+2.  **Launch**:
+    ```bash
+    docker compose up -d
+    ```
+
+### Option 2: Manual Installation
 
 **Prerequisites**
+*   Node.js (v18+)
+*   Python (v3.13+)
+*   PostgreSQL (v16+)
 
--   Node.js (v18 or higher)
--   Python (v3.13 or higher)
--   PostgreSQL (v16 or higher)
+1.  **Configure Environment**:
+    Copy `.env.copy` to `.env` and configure your API key and Database credentials.
 
-1.  Copy `.env.copy` to `.env`, then add your API key and Database credentials.
-
-2.  **Backend Setup:**
-
-    Ensure your PostgreSQL service is running and the credentials in `.env` are correct.
+2.  **Backend Setup**:
+    Ensure PostgreSQL is running and accessible.
 
     ```bash
     uv sync
-
     cd backend
     uv run uvicorn app:app --reload
     ```
+    The backend will be available at `http://127.0.0.1:8000`.
 
-    The backend will be running at `http://127.0.0.1:8000`.
-
-3.  **Frontend Setup:**
+3.  **Frontend Setup**:
     ```bash
     cd ../frontend
     npm install
     npm run dev
     ```
-    The frontend development server will be running at `http://localhost:5173`.
+    The frontend will be available at `http://localhost:5173`.
 
 ## Recent Updates
 
-- **Architecture**: Refactored backend to use **Dependency Injection** and **Singleton Service** pattern for better state management and concurrency.
-- **Database**: Migrated from SQLite to **PostgreSQL** for robust data persistence.
-- **Frontend**: Migrated codebase from JavaScript to **TypeScript** for better type safety.
+*   **Architecture**: Implemented Dependency Injection and Singleton patterns in the backend for improved state management.
+*   **Persistence**: Migrated to **PostgreSQL** for robust data storage.
+*   **Type Safety**: Complete migration of the frontend codebase to **TypeScript**.
 
-## TODO
+## Roadmap
 
-- [ ] Dark mode
-- [ ] Stream output
-- [ ] Agent Refactor
+*   [ ] Dark Mode Support
+*   [ ] Streaming Response Output
+*   [ ] Agentic Architecture Refactor
