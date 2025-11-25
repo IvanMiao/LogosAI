@@ -13,7 +13,7 @@ backend/history.db
 **/test.md
 **/note.md
 
-.ruff_cache/
+**/.ruff_cache/
 
 AGENTS.md
 
