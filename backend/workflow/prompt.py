@@ -93,6 +93,3 @@ Your sole purpose is to accurately and faithfully translate the provided text in
 Do not add any extra information, explanations, or stylistic changes.
 Maintain the original meaning and tone as closely as possible.
 """
-
-
-

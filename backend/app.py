@@ -1,14 +1,17 @@
-from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy.orm import Session
-from fastapi.middleware.cors import CORSMiddleware
-from workflow.agent import MultiAgentState
-from schema.analyze_schema import AnalysisRequest, AnalysisResponse
-from schema.analyze_schema import HistoryResponse, SettingsRequest, SettingsResponse
-from database import init_db, get_db
-from database import History
-from service import AnalysisService, get_analysis_service
+from database import History, get_db, init_db
 from dotenv import load_dotenv
-
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from schema.analyze_schema import (
+    AnalysisRequest,
+    AnalysisResponse,
+    HistoryResponse,
+    SettingsRequest,
+    SettingsResponse,
+)
+from service import AnalysisService, get_analysis_service
+from sqlalchemy.orm import Session
+from workflow.agent import MultiAgentState
 
 load_dotenv()
 init_db()
@@ -21,7 +24,7 @@ origins = [
     "http://localhost:3000",  # Docker frontend
     "http://localhost:8080",
     "http://localhost:5173",  # Vite dev server
-    "null"
+    "null",
 ]
 
 app.add_middleware(
@@ -29,7 +32,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 
@@ -37,13 +40,13 @@ app.add_middleware(
 def get_analyse_info(
     request: AnalysisRequest,
     service: AnalysisService = Depends(get_analysis_service),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     try:
         agent = service.get_agent()
         if not agent:
             raise HTTPException(status_code=400, detail="Please configure Gemini API key in settings")
-        
+
         initial_state: MultiAgentState = {
             "messages": [],
             "text": request.text,
@@ -52,7 +55,7 @@ def get_analyse_info(
             "needs_correction": False,
             "corrected_text": None,
             "interpretation": None,
-            "user_language": request.user_language.upper()
+            "user_language": request.user_language.upper(),
         }
 
         final_state = agent.graph.invoke(initial_state)
@@ -99,14 +102,13 @@ async def get_settings(service: AnalysisService = Depends(get_analysis_service))
         gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
         model=service.settings["model"],
         has_api_key=has_key,
-        success=True
+        success=True,
     )
 
 
 @app.post("/settings", response_model=SettingsResponse)
 async def update_settings(
-    request: SettingsRequest,
-    service: AnalysisService = Depends(get_analysis_service)
+    request: SettingsRequest, service: AnalysisService = Depends(get_analysis_service)
 ):
     # Reinitialize agent with new settings
     service.update_settings(request.gemini_api_key, request.model)
@@ -117,5 +119,5 @@ async def update_settings(
         gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
         model=service.settings["model"],
         has_api_key=has_key,
-        success=True
+        success=True,
     )

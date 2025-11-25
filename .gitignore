@@ -15,3 +15,5 @@ backend/history.db
 
 .ruff_cache/
 
+AGENTS.md
+

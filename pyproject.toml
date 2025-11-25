@@ -16,3 +16,13 @@ dependencies = [
     "sqlalchemy>=2.0.42",
     "uvicorn[standard]>=0.34.3",
 ]
+
+[tool.ruff]
+line-length = 105
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/workflow/prompt.py" = ["E501"]

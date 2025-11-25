@@ -71,8 +71,8 @@ export function SettingsView() {
       } else {
         setError(data.error || 'Failed to save settings');
       }
-    } catch (e: any) {
-      setError(e.message || 'An error occurred');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'An error occurred');
     } finally {
       setIsSaving(false);
     }

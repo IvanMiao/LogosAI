@@ -30,7 +30,7 @@ export function useAnalysis(): UseAnalysisReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const response = await fetch('/api/history');
       if (response.ok) {
@@ -42,7 +42,7 @@ export function useAnalysis(): UseAnalysisReturn {
     } catch (e) {
       console.error('Failed to fetch history:', e);
     }
-  };
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -79,12 +79,12 @@ export function useAnalysis(): UseAnalysisReturn {
       } else {
         throw new Error(data.error || 'Analysis failed, no specific error information returned');
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setIsLoading(false);
     }
-  }, [text, language]);
+  }, [text, language, fetchHistory]);
 
   const handleDeleteHistory = async (id: number) => {
     try {

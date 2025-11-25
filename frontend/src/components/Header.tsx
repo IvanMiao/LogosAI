@@ -15,7 +15,7 @@ interface HeaderProps {
   onViewChange: (view: string) => void;
 }
 
-export function Header({ mounted, activeView: _activeView, onViewChange }: HeaderProps) {
+export function Header({ mounted, onViewChange }: HeaderProps) {
   return (
     <header className={`mb-8 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       <div className="bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] p-6">
