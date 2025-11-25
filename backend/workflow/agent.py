@@ -24,7 +24,9 @@ class TextAnalysisLangchain:
             raise ValueError("Gemini API key is required.")
 
         # Main model for interpretation
-        self.llm_flash = ChatGoogleGenerativeAI(model=model, api_key=gemini_key, temperature=0.3)
+        self.llm_flash = ChatGoogleGenerativeAI(
+            model=model, api_key=gemini_key, temperature=0.3
+        )
 
         # Lightweight model for detection and correction
         self.llm_lite = ChatGoogleGenerativeAI(
@@ -47,7 +49,10 @@ class TextAnalysisLangchain:
             }
 
         def correction_node(state: MultiAgentState):
-            messages = [SystemMessage(CORRECTION_SYS_PROMPT), HumanMessage(state["text"])]
+            messages = [
+                SystemMessage(CORRECTION_SYS_PROMPT),
+                HumanMessage(state["text"]),
+            ]
             response = self.llm_lite.invoke(messages)
 
             return {"corrected_text": response.content, "text": response.content}
@@ -88,7 +93,9 @@ class TextAnalysisLangchain:
         workflow.add_node("interpret", interpretation_node)
         workflow.add_edge(START, "detect")
         workflow.add_conditional_edges(
-            "detect", route_after_detection, {"correct": "correct", "interpret": "interpret"}
+            "detect",
+            route_after_detection,
+            {"correct": "correct", "interpret": "interpret"},
         )
         workflow.add_edge("correct", "interpret")
         workflow.add_edge("interpret", END)

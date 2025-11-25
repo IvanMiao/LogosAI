@@ -5,7 +5,10 @@ from workflow.agent import TextAnalysisLangchain
 
 class AnalysisService:
     def __init__(self):
-        self.settings = {"gemini_api_key": os.getenv("GEMINI_API_KEY", ""), "model": "gemini-2.5-flash"}
+        self.settings = {
+            "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
+            "model": "gemini-2.5-flash",
+        }
         self.agent = None
         self._init_agent()
 

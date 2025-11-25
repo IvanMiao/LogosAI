@@ -45,7 +45,9 @@ def get_analyse_info(
     try:
         agent = service.get_agent()
         if not agent:
-            raise HTTPException(status_code=400, detail="Please configure Gemini API key in settings")
+            raise HTTPException(
+                status_code=400, detail="Please configure Gemini API key in settings"
+            )
 
         initial_state: MultiAgentState = {
             "messages": [],
@@ -61,7 +63,9 @@ def get_analyse_info(
         final_state = agent.graph.invoke(initial_state)
         result = final_state.get("interpretation", "")
         if not result:
-            raise HTTPException(status_code=500, detail="Analysis failed - no interpretation generated")
+            raise HTTPException(
+                status_code=500, detail="Analysis failed - no interpretation generated"
+            )
 
         # Save to database
         history = History(prompt=request.text, result=result)
@@ -99,7 +103,9 @@ async def delete_history(history_id: int, db: Session = Depends(get_db)):
 async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
     has_key = bool(service.settings["gemini_api_key"])
     return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
+        gemini_api_key=service.settings["gemini_api_key"][:8] + "..."
+        if has_key
+        else "",
         model=service.settings["model"],
         has_api_key=has_key,
         success=True,
@@ -116,7 +122,9 @@ async def update_settings(
     has_key = bool(service.settings["gemini_api_key"])
 
     return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:8] + "..." if has_key else "",
+        gemini_api_key=service.settings["gemini_api_key"][:8] + "..."
+        if has_key
+        else "",
         model=service.settings["model"],
         has_api_key=has_key,
         success=True,

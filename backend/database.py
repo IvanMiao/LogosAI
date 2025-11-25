@@ -29,7 +29,9 @@ pg_host = os.getenv("POSTGRES_HOST", "localhost")
 pg_port = os.getenv("POSTGRES_PORT", "5432")
 pg_db = os.getenv("POSTGRES_DB")
 
-DATABASE_URL = f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+DATABASE_URL = (
+    f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+)
 
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10, pool_pre_ping=True)
 
