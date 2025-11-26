@@ -4,6 +4,7 @@ export interface HistoryItem {
   id: number;
   prompt: string;
   result: string;
+  target_language: string;
   timestamp?: string;
 }
 
@@ -23,6 +24,7 @@ export interface UseAnalysisReturn {
 }
 
 export function useAnalysis(): UseAnalysisReturn {
+  // Member Variables
   const [text, setText] = useState<string>('');
   const [language, setLanguage] = useState<string>('en');
   const [result, setResult] = useState<string>('');
@@ -30,6 +32,7 @@ export function useAnalysis(): UseAnalysisReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
+  // Member Functions
   const fetchHistory = useCallback(async () => {
     try {
       const response = await fetch('/api/history');
@@ -100,8 +103,10 @@ export function useAnalysis(): UseAnalysisReturn {
   };
 
   const handleLoadHistory = (item: HistoryItem) => {
+    setLanguage(item.target_language || 'en');
     setText(item.prompt);
     setResult(item.result);
+    setError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

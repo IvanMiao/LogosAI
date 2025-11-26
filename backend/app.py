@@ -68,7 +68,7 @@ def get_analyse_info(
             )
 
         # Save to database
-        history = History(prompt=request.text, result=result)
+        history = History(prompt=request.text, result=result, target_language=request.user_language)
         db.add(history)
         db.commit()
 
@@ -103,7 +103,7 @@ async def delete_history(history_id: int, db: Session = Depends(get_db)):
 async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
     has_key = bool(service.settings["gemini_api_key"])
     return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:8] + "..."
+        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
         if has_key
         else "",
         model=service.settings["model"],
@@ -122,7 +122,7 @@ async def update_settings(
     has_key = bool(service.settings["gemini_api_key"])
 
     return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:8] + "..."
+        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
         if has_key
         else "",
         model=service.settings["model"],
