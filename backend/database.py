@@ -12,7 +12,7 @@ class History(Base):
     id = Column(Integer, primary_key=True)
     prompt = Column(Text, nullable=False)
     result = Column(Text, nullable=False)
-    target_language = Column(Text, nullable=False)
+    target_language = Column(Text, nullable=False, server_default='EN')
     timestamp = Column(DateTime, server_default=func.now())
 
     def to_dict(self):
