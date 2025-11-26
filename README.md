@@ -1,10 +1,12 @@
-# LogosAI
+<div align="center">
+  <img src="./docs/LOGO.png" alt="LogosAI Logo" width="280" />
 
-[![Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/IvanMiao/LogosAI)
+  [![Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/IvanMiao/LogosAI)
+</div>
 
 **LogosAI** is an advanced AI-powered platform designed for deep language learning and the rigorous analysis of complex texts. Whether you are deconstructing intricate news articles, academic papers, or dense philosophical works, LogosAI empowers you to understand sophisticated narratives with precision and depth.
 
-![LogosAI Interface](./UI2.png)
+![LogosAI Interface](./docs/UI2.png)
 
 ## Tech Stack
 
@@ -14,7 +16,7 @@ LogosAI leverages a modern, type-safe, and scalable technology stack:
 *   **Backend**: Python, FastAPI, PostgreSQL, LangChain/LangGraph
 *   **Infrastructure**: Docker, Docker Compose
 
-![LogosAI Architecture](./UI3.png)
+![LogosAI Architecture](./docs/UI3.png)
 
 ## Getting Started
 
