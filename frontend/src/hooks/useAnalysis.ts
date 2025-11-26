@@ -103,7 +103,7 @@ export function useAnalysis(): UseAnalysisReturn {
   };
 
   const handleLoadHistory = (item: HistoryItem) => {
-    setLanguage(item.target_language || 'en');
+    setLanguage(item.target_language.toLowerCase() || 'en');
     setText(item.prompt);
     setResult(item.result);
     setError('');
