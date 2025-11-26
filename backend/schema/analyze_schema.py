@@ -18,6 +18,7 @@ class HistoryItem(BaseModel):
     id: int
     prompt: str
     result: str
+    target_language: str
     timestamp: str
 
 
