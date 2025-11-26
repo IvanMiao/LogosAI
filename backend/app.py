@@ -68,7 +68,11 @@ def get_analyse_info(
             )
 
         # Save to database
-        history = History(prompt=request.text, result=result, target_language=request.user_language)
+        history = History(
+            prompt=request.text,
+            result=result,
+            target_language=request.user_language,
+        )
         db.add(history)
         db.commit()
 
