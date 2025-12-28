@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import Column, DateTime, Integer, Text, create_engine, func
+from sqlalchemy import Column, DateTime, Integer, Text, create_engine, func, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
@@ -48,6 +48,20 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    try:
+        inspector = inspect(engine)
+        columns = [c["name"] for c in inspector.get_columns("history")]
+        if "target_language" not in columns:
+            with engine.connect() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE history ADD COLUMN target_language TEXT DEFAULT 'EN' NOT NULL"
+                    )
+                )
+                conn.commit()
+                print("Added column 'target_language' to 'history' table.")
+    except Exception as e:
+        print(f"Migration error: {e}")
 
 
 def get_db():
