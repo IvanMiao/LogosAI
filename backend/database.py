@@ -1,6 +1,15 @@
 import os
 
-from sqlalchemy import Column, DateTime, Integer, Text, create_engine, func, inspect, text
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    Text,
+    create_engine,
+    func,
+    inspect,
+    text,
+)
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 Base = declarative_base()
@@ -55,7 +64,8 @@ def init_db():
             with engine.connect() as conn:
                 conn.execute(
                     text(
-                        "ALTER TABLE history ADD COLUMN target_language TEXT DEFAULT 'EN' NOT NULL"
+                        "ALTER TABLE history ADD COLUMN target_language "
+                        "TEXT DEFAULT 'EN' NOT NULL"
                     )
                 )
                 conn.commit()
