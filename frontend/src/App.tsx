@@ -1,57 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/Header';
-import { AnalysisPanel } from '@/components/AnalysisPanel';
-import { HistoryPanel } from '@/components/HistoryPanel';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
+import { HomePage } from '@/components/HomePage';
 import { SettingsView } from '@/components/SettingsView';
 import { AboutView } from '@/components/AboutView';
-import { AnalysisProvider, useAnalysisContext } from '@/hooks/AnalysisContext';
+import { AnalysisProvider } from '@/hooks/AnalysisContext';
 
 import './App.css';
-
-
-function AppWrapper() {
-  const [mounted, setMounted] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<string>('home');
-  const { fetchHistory } = useAnalysisContext();
-
-  useEffect(() => {
-    setMounted(true);
-    fetchHistory();
-  }, [fetchHistory]);
-
-  const viewComponents: Record<string, React.ReactNode> = {
-    home: (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <AnalysisPanel />
-        </div>
-        <div className="lg:col-span-1">
-          <HistoryPanel />
-        </div>
-      </div>
-    ),
-    settings: <SettingsView />,
-    about: <AboutView />,
-  };
-
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <Header mounted={mounted} activeView={activeView} onViewChange={setActiveView} />
-
-        <main className={`transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          {viewComponents[activeView]}
-        </main>
-      </div>
-    </div>
-  );
-}
-
 
 function App() {
   return (
     <AnalysisProvider>
-      <AppWrapper />
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/settings" element={<SettingsView />} />
+            <Route path="/about" element={<AboutView />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </AnalysisProvider>
   );
 }
