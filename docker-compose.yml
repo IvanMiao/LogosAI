@@ -1,16 +1,4 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    env_file:
-      - ./.env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
-    networks:
-      - logos-ai
-    restart: unless-stopped
-
   backend:
     build:
       context: .  # Build from project root directory
@@ -22,8 +10,6 @@ services:
     volumes:
       - ./backend:/app  # Mount backend content to /app
       - ./data:/app/data
-    depends_on:
-      - postgres
     networks:
       - logos-ai
     restart: unless-stopped
@@ -39,9 +25,6 @@ services:
     networks:
       - logos-ai
     restart: unless-stopped
-
-volumes:
-  postgres_data:
 
 networks:
   logos-ai:

@@ -34,21 +34,31 @@ class History(Base):
         }
 
 
-pg_user = os.getenv("POSTGRES_USER")
-pg_password = os.getenv("POSTGRES_PASSWORD")
-pg_host = os.getenv("POSTGRES_HOST", "localhost")
-pg_port = os.getenv("POSTGRES_PORT", "5432")
-pg_db = os.getenv("POSTGRES_DB")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not all((pg_user, pg_password, pg_db)):
-    raise ValueError(
-        "Missing required PostgreSQL environment variables. "
-        "Please set POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB."
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace(
+            "postgresql://", "postgresql+psycopg2://", 1
+        )
+else:
+    pg_user = os.getenv("POSTGRES_USER")
+    pg_password = os.getenv("POSTGRES_PASSWORD")
+    pg_host = os.getenv("POSTGRES_HOST", "localhost")
+    pg_port = os.getenv("POSTGRES_PORT", "5432")
+    pg_db = os.getenv("POSTGRES_DB")
+
+    if not all((pg_user, pg_password, pg_db)):
+        raise ValueError(
+            "Missing required PostgreSQL environment variables. "
+            "Please set DATABASE_URL, or POSTGRES_USER, POSTGRES_PASSWORD, "
+            "and POSTGRES_DB."
+        )
+
+    DATABASE_URL = (
+        f"postgresql+psycopg2://{pg_user}:{pg_password}"
+        f"@{pg_host}:{pg_port}/{pg_db}"
     )
-
-DATABASE_URL = (
-    f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
-)
 
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10, pool_pre_ping=True)
 
