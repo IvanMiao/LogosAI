@@ -12,8 +12,6 @@ RUN pip install --no-cache-dir -e .
 # Copy backend code to working directory (not backend subdirectory)
 COPY backend/ ./
 
-# Note: .env file is passed via environment variables, no need to copy into image
-
 # Expose port
 EXPOSE 8000
 
