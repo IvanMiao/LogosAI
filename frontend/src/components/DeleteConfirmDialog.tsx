@@ -13,23 +13,23 @@ interface DeleteConfirmDialogProps {
 export function DeleteConfirmDialog({ open, onOpenChange, item, onConfirm }: DeleteConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-slate-200 shadow-xl">
+      <DialogContent className="sm:max-w-md bg-background border-border shadow-xl">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-destructive" />
             </div>
-            <DialogTitle className="text-xl text-slate-900 font-bold">Delete Analysis</DialogTitle>
+            <DialogTitle className="text-xl text-foreground font-bold">Delete Analysis</DialogTitle>
           </div>
-          <DialogDescription className="text-slate-600 text-sm leading-relaxed pt-2">
+          <DialogDescription className="text-muted-foreground text-sm leading-relaxed pt-2">
             This will permanently delete this analysis from your history. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         {item && (
           <div className="py-3">
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 shadow-sm">
-              <p className="text-sm font-medium text-slate-500 mb-2">Content to be deleted:</p>
-              <p className="text-sm text-slate-800 line-clamp-3 leading-relaxed">{item.prompt}</p>
+            <div className="p-4 bg-muted rounded-lg border border-border shadow-sm">
+              <p className="text-sm font-medium text-muted-foreground mb-2">Content to be deleted:</p>
+              <p className="text-sm text-foreground line-clamp-3 leading-relaxed">{item.prompt}</p>
             </div>
           </div>
         )}
@@ -37,14 +37,12 @@ export function DeleteConfirmDialog({ open, onOpenChange, item, onConfirm }: Del
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-slate-300 hover:bg-slate-50 text-slate-700 font-medium"
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Permanently

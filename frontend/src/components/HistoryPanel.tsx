@@ -83,7 +83,12 @@ export function HistoryPanel() {
 
       <DeleteConfirmDialog
         open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setItemToDelete(null);
+          }
+        }}
         item={itemToDelete}
         onConfirm={confirmDelete}
       />

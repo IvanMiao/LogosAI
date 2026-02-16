@@ -37,8 +37,8 @@ export function useSettings(): UseSettingsReturn {
           }
         }
       }
-    } catch (e) {
-      console.error('Failed to fetch settings:', e);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load settings');
     }
   };
 

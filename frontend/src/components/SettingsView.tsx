@@ -4,6 +4,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSettings } from '@/hooks/useSettings';
 
 
+function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
+  apiKey: string;
+  setApiKey: (key: string) => void;
+  hasApiKey: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-foreground mb-2 font-mono">
+        API Key {hasApiKey && <span className="text-green-600 text-xs">(Configured)</span>}
+      </label>
+      <input
+        type="password"
+        value={apiKey}
+        onChange={(e) => setApiKey(e.target.value)}
+        placeholder={hasApiKey ? "Keep empty to maintain current API key" : "Enter your Gemini API key"}
+        className="w-full px-3 py-2 border-2 border-border bg-input focus:outline-none focus:ring-2 focus:ring-ring text-sm shadow-[4px_4px_0px_0px_var(--border)] font-mono"
+      />
+      <p className="mt-1 text-xs text-muted-foreground font-mono">
+        {hasApiKey ? (
+          "If you need to change API key, please enter the new key"
+        ) : (
+          <>
+            Get your API key from{' '}
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-bold"
+            >
+              Google AI Studio
+            </a>
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+
 export function SettingsView() {
   const { apiKey, setApiKey, model, setModel, hasApiKey, isSaving, saveSuccess, error, handleSave } = useSettings();
 
@@ -32,35 +71,7 @@ export function SettingsView() {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-foreground mb-2 font-mono">
-                    API Key {hasApiKey && <span className="text-green-600 text-xs">(Configured)</span>}
-                  </label>
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={hasApiKey ? "Keep empty to maintain current API key" : "Enter your Gemini API key"}
-                    className="w-full px-3 py-2 border-2 border-border bg-input focus:outline-none focus:ring-2 focus:ring-ring text-sm shadow-[4px_4px_0px_0px_var(--border)] font-mono"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground font-mono">
-                    {hasApiKey ? (
-                      "If you need to change API key, please enter the new key"
-                    ) : (
-                      <>
-                        Get your API key from{' '}
-                        <a
-                          href="https://aistudio.google.com/apikey"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-bold"
-                        >
-                          Google AI Studio
-                        </a>
-                      </>
-                    )}
-                  </p>
-                </div>
+                <ApiKeyField apiKey={apiKey} setApiKey={setApiKey} hasApiKey={hasApiKey} />
 
                 <div>
                   <label className="block text-sm font-bold text-foreground mb-2 font-mono">Model</label>
