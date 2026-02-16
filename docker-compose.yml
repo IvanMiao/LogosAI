@@ -10,20 +10,23 @@ services:
     networks:
       - logos-ai
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   backend:
     build:
-      context: .  # Build from project root directory
+      context: .
       dockerfile: backend/Dockerfile
     expose:
       - "8000"
     env_file:
       - ./.env
-    volumes:
-      - ./backend:/app  # Mount backend content to /app
-      - ./data:/app/data
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - logos-ai
     restart: unless-stopped
@@ -33,7 +36,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"  # Only Nginx exposes the port to the outside world
+      - "3000:80"
     depends_on:
       - backend
     networks:
