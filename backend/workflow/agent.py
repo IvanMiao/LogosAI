@@ -6,6 +6,18 @@ from langgraph.graph import END, START, StateGraph
 from schema.analyze_schema import TextDerectives
 from workflow.prompt import CORRECTION_SYS_PROMPT, EXAM_SYS_PROMPT, GENERAL_PROMPT
 
+LANG_MAP = {
+    "AR": "Arabic",
+    "DE": "German",
+    "EN": "English",
+    "ES": "Spanish",
+    "FR": "French",
+    "IT": "Italian",
+    "JA": "Japanese",
+    "RU": "Russian",
+    "ZH": "Chinese",
+}
+
 
 class MultiAgentState(TypedDict):
     messages: list
@@ -58,19 +70,8 @@ class TextAnalysisLangchain:
             return {"corrected_text": response.content, "text": response.content}
 
         def interpretation_node(state: MultiAgentState):
-            lang_map = {
-                "AR": "Arabic",
-                "DE": "German",
-                "ES": "Spanish",
-                "EN": "English",
-                "FR": "French",
-                "IT": "Italian",
-                "JA": "Japanese",
-                "RU": "Russian",
-                "ZH": "Chinese",
-            }
-            learn_lang = lang_map.get(state.get("text_language", "EN"), "English")
-            user_lang = lang_map.get(state.get("user_language", "EN"), "English")
+            learn_lang = LANG_MAP.get(state.get("text_language", "EN"), "English")
+            user_lang = LANG_MAP.get(state.get("user_language", "EN"), "English")
 
             sys_prompt = GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
                 "[PROF_LANGUAGE]", user_lang
