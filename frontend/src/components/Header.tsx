@@ -21,7 +21,7 @@ export function Header({ mounted }: HeaderProps) {
       <div className="bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] p-6">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/app')}
             className="flex items-center gap-4 group transition-opacity hover:opacity-80 p-0 border-0 bg-transparent text-left"
           >
             <div className="w-12 h-12 bg-primary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
@@ -48,7 +48,7 @@ export function Header({ mounted }: HeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] rounded-none">
                 <DropdownMenuItem
-                  onClick={() => navigate('/settings')}
+                  onClick={() => navigate('/app/settings')}
                   className="gap-2 focus:bg-primary focus:text-primary-foreground rounded-none"
                 >
                   <Settings className="w-4 h-4" />
@@ -56,7 +56,7 @@ export function Header({ mounted }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
-                  onClick={() => navigate('/about')}
+                  onClick={() => navigate('/app/about')}
                   className="gap-2 focus:bg-primary focus:text-primary-foreground rounded-none"
                 >
                   <Info className="w-4 h-4" />
