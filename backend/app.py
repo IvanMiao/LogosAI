@@ -1,7 +1,9 @@
-from database import History, get_db, init_db
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
+from database import History, get_db, init_db
 from schema.analyze_schema import (
     AnalysisRequest,
     AnalysisResponse,
@@ -10,7 +12,6 @@ from schema.analyze_schema import (
     SettingsResponse,
 )
 from service import AnalysisService, get_analysis_service
-from sqlalchemy.orm import Session
 from workflow.agent import MultiAgentState
 
 load_dotenv()

@@ -13,7 +13,7 @@ COPY pyproject.toml ./
 RUN uv pip install --system --no-cache .
 
 # Copy backend code
-COPY backend/ ./
+COPY . .
 
 EXPOSE 8000
 
