@@ -1,9 +1,8 @@
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from database import History, get_db, init_db
+from database import get_db, init_db
 from schema.analyze_schema import (
     AnalysisRequest,
     AnalysisResponse,
@@ -12,9 +11,14 @@ from schema.analyze_schema import (
     SettingsResponse,
 )
 from service import AnalysisService, get_analysis_service
-from workflow.agent import MultiAgentState
+from use_cases import (
+    apply_settings,
+    delete_history_item,
+    get_history_items,
+    read_settings,
+    run_analysis,
+)
 
-load_dotenv()
 init_db()
 
 app = FastAPI()
@@ -43,94 +47,29 @@ def get_analyse_info(
     service: AnalysisService = Depends(get_analysis_service),
     db: Session = Depends(get_db),
 ):
-    try:
-        agent = service.get_agent()
-        if not agent:
-            raise HTTPException(
-                status_code=400, detail="Please configure Gemini API key in settings"
-            )
-
-        initial_state: MultiAgentState = {
-            "messages": [],
-            "text": request.text,
-            "text_language": "",
-            "genre": "",
-            "needs_correction": False,
-            "corrected_text": None,
-            "interpretation": None,
-            "user_language": request.user_language.upper(),
-        }
-
-        final_state = agent.graph.invoke(initial_state)
-        result = final_state.get("interpretation", "")
-        if not result:
-            raise HTTPException(
-                status_code=500, detail="Analysis failed - no interpretation generated"
-            )
-
-        # Save to database
-        history = History(
-            prompt=request.text,
-            result=result,
-            target_language=request.user_language,
-        )
-        db.add(history)
-        db.commit()
-
-        return AnalysisResponse(result=result, success=True)
-    except Exception as e:
-        return AnalysisResponse(result="", success=False, error=str(e))
+    return run_analysis(request, service, db)
 
 
 @app.get("/history", response_model=HistoryResponse)
 async def get_history(db: Session = Depends(get_db)):
-    try:
-        rows = db.query(History).order_by(History.timestamp.desc()).all()
-        history = [row.to_dict() for row in rows]
-
-        return HistoryResponse(history=history, success=True)
-    except Exception as e:
-        return HistoryResponse(history=[], success=False, error=str(e))
+    return get_history_items(db)
 
 
 @app.delete("/history/{history_id}")
 async def delete_history(history_id: int, db: Session = Depends(get_db)):
-    history = db.query(History).filter(History.id == history_id).first()
-    if not history:
+    if not delete_history_item(history_id, db):
         raise HTTPException(status_code=404, detail="History item not found")
 
-    db.delete(history)
-    db.commit()
     return {"success": True, "message": "History item deleted successfully"}
 
 
 @app.get("/settings", response_model=SettingsResponse)
 async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
-    has_key = bool(service.settings["gemini_api_key"])
-    return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
-        if has_key
-        else "",
-        model=service.settings["model"],
-        has_api_key=has_key,
-        success=True,
-    )
+    return read_settings(service)
 
 
 @app.post("/settings", response_model=SettingsResponse)
 async def update_settings(
     request: SettingsRequest, service: AnalysisService = Depends(get_analysis_service)
 ):
-    # Reinitialize agent with new settings
-    service.update_settings(request.gemini_api_key, request.model)
-
-    has_key = bool(service.settings["gemini_api_key"])
-
-    return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
-        if has_key
-        else "",
-        model=service.settings["model"],
-        has_api_key=has_key,
-        success=True,
-    )
+    return apply_settings(request, service)
