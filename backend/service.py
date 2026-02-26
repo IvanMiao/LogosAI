@@ -1,6 +1,10 @@
 import os
 
+from dotenv import load_dotenv
+
 from workflow.agent import TextAnalysisLangchain
+
+load_dotenv()
 
 
 class AnalysisService:

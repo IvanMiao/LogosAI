@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from sqlalchemy import (
     Column,
     DateTime,
@@ -11,6 +12,8 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+load_dotenv()
 
 Base = declarative_base()
 

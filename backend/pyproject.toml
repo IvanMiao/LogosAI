@@ -17,6 +17,23 @@ dependencies = [
     "uvicorn[standard]>=0.34.3",
 ]
 
+[project.scripts]
+logosai = "cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+py-modules = ["app", "cli", "database", "service", "use_cases"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["schema*", "workflow*"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py313"
