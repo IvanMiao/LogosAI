@@ -62,6 +62,39 @@ The easiest way to get up and running.
     ```
     The frontend will be available at `http://localhost:5173`.
 
+### CLI (All Core Features)
+
+You can use LogosAI without the frontend via a single CLI in `backend/`:
+
+```bash
+cd backend
+uv sync
+uv run logosai --help
+```
+
+Common commands:
+
+```bash
+# Analyze text
+uv run logosai analyze --text "Votre texte ici" --lang en
+
+# Analyze file
+uv run logosai analyze --file ./sample.txt --lang zh
+
+# History
+uv run logosai history list --limit 10
+uv run logosai history show 3
+uv run logosai history delete 3
+
+# Settings
+uv run logosai settings show
+uv run logosai settings set --api-key "$GEMINI_API_KEY"
+uv run logosai settings set --model gemini-2.5-pro
+
+# Project info
+uv run logosai about
+```
+
 ## Recent Updates
 
 *   **Architecture**: Implemented Dependency Injection and Singleton patterns in the backend for improved state management.
