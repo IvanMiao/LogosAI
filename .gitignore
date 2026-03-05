@@ -1,13 +1,13 @@
-.venv/
-
 **/.vscode
 
 L_docs/
 
-node_modules/
+**/node_modules/
+**/dist
 **/.env
 backend/history.db
 
+**/.venv/
 **/__pycache__/
 
 **/test.md
