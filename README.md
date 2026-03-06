@@ -24,15 +24,16 @@ You can run LogosAI using Docker (recommended) or set it up manually.
 
 ### Option 1: Docker (Recommended)
 
-The easiest way to get up and running.
+The backend now serves the built frontend directly, so Docker only starts FastAPI and PostgreSQL.
 
 1.  **Configure Environment**:
     Copy `.env.copy` to `.env` and add your API credentials.
 
 2.  **Launch**:
     ```bash
-    docker compose up -d
+    docker compose up --build -d
     ```
+    The application will be available at `http://localhost:3000`.
 
 ### Option 2: Manual Installation
 
@@ -61,6 +62,7 @@ The easiest way to get up and running.
     npm run dev
     ```
     The frontend will be available at `http://localhost:5173`.
+    Vite proxies `/api/*` requests to the FastAPI server on `http://127.0.0.1:8000`, so no nginx is required in development either.
 
 ## Recent Updates
 
