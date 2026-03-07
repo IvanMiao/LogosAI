@@ -3,6 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,20 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 FRONTEND_DIST_DIR = Path(__file__).resolve().parent / "frontend_dist"
 FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
+LONG_CACHE_SUFFIXES = {
+    ".js",
+    ".css",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".svg",
+    ".webp",
+    ".avif",
+    ".woff",
+    ".woff2",
+}
 
 # FastAPI Documentation: CORS (Cross-Origin Resource Sharing)
 origins = [
@@ -41,6 +56,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @api_router.post("/analyze", response_model=AnalysisResponse)
@@ -161,6 +177,13 @@ def resolve_frontend_asset(path: str) -> Path | None:
     return None
 
 
+def build_asset_response(asset: Path) -> FileResponse:
+    response = FileResponse(asset)
+    if asset.suffix.lower() in LONG_CACHE_SUFFIXES:
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
+
+
 @app.get("/", include_in_schema=False)
 async def serve_frontend_index():
     if not FRONTEND_INDEX_FILE.exists():
@@ -169,16 +192,24 @@ async def serve_frontend_index():
             detail="Frontend bundle not found. Run `npm run dev` for local frontend development.",
         )
 
-    return FileResponse(FRONTEND_INDEX_FILE)
+    response = FileResponse(FRONTEND_INDEX_FILE)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_frontend_app(full_path: str):
     asset = resolve_frontend_asset(full_path)
     if asset:
-        return FileResponse(asset)
+        return build_asset_response(asset)
+
+    # Missing asset-like paths should 404 instead of returning index.html.
+    if Path(full_path).suffix:
+        raise HTTPException(status_code=404, detail="Not found")
 
     if FRONTEND_INDEX_FILE.exists():
-        return FileResponse(FRONTEND_INDEX_FILE)
+        response = FileResponse(FRONTEND_INDEX_FILE)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
     raise HTTPException(status_code=404, detail="Not found")
