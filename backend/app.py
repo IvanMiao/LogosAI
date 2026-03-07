@@ -189,7 +189,10 @@ async def serve_frontend_index():
     if not FRONTEND_INDEX_FILE.exists():
         raise HTTPException(
             status_code=404,
-            detail="Frontend bundle not found. Run `npm run dev` for local frontend development.",
+            detail=(
+                "Frontend bundle not found. "
+                "Run `npm run dev` for local frontend development."
+            ),
         )
 
     response = FileResponse(FRONTEND_INDEX_FILE)
