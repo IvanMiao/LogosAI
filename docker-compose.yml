@@ -5,10 +5,6 @@ services:
       - ./.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
-    networks:
-      - logos-ai
     restart: unless-stopped
     healthcheck:
       test:
@@ -22,34 +18,16 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    expose:
-      - "8000"
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "3000:8000"
     env_file:
       - ./.env
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - logos-ai
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - logos-ai
     restart: unless-stopped
 
 volumes:
   postgres_data:
-
-networks:
-  logos-ai:
-    driver: bridge

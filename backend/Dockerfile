@@ -1,19 +1,32 @@
-# Backend Dockerfile
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install uv for fast dependency resolution
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy only dependency spec first (layer cache)
-COPY pyproject.toml ./
+COPY backend/pyproject.toml backend/uv.lock ./
+RUN uv export \
+    --format requirements.txt \
+    --frozen \
+    --no-dev \
+    --no-hashes \
+    --no-emit-project \
+    -o requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
-# Install dependencies
-RUN uv pip install --system --no-cache .
+COPY backend/ ./
 
-# Copy backend code
-COPY . .
+COPY --from=frontend-builder /frontend/dist ./frontend_dist
 
 EXPOSE 8000
 
