@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,18 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 
 export function AnalysisPanel() {
   const { text, setText, language, setLanguage, result, isLoading, streamStage, error, onAnalyze } = useAnalysisContext();
+  const outputRef = useRef<HTMLDivElement | null>(null);
+  const showResultCard = isLoading || result.length > 0;
+
+  useEffect(() => {
+    if (!isLoading) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [isLoading]);
 
   return (
     <div className="space-y-6">
@@ -105,7 +117,11 @@ export function AnalysisPanel() {
         </Card>
       )}
 
-      {result && <ResultCard result={result} />}
+      {showResultCard && (
+        <div ref={outputRef}>
+          <ResultCard result={result} isStreaming={isLoading} />
+        </div>
+      )}
     </div>
   );
 }
