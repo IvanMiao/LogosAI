@@ -13,11 +13,7 @@ program
 	.option("--file <path>", "Read text from file")
 	.option("--lang <language>", "user language: en, fr, zh")
 	.option("--json", "Output as JSON")
-	.action((options) => {
-		// print them
-		// console.log(`text: ${options.text}`);
-		// console.log(`file: ${options.file}`);
-		// end log
+	.action(async (options) => {
 		const lang = parseLang(options.lang);
 
 		if (options.text && options.file) {
@@ -29,9 +25,9 @@ program
 			process.exit(1);
 		}
 		if (options.text) {
-			analyzeText(options.text, lang);
+			await analyzeText(options.text, lang);
 		} else if (options.file) {
-			analyzeFile(options.file, lang);
+			await analyzeFile(options.file, lang);
 		}
 	})
 
