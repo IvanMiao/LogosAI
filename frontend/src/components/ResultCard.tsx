@@ -6,12 +6,19 @@ import { FileText, Copy, Check } from 'lucide-react';
 
 interface ResultCardProps {
   result: string;
+  isStreaming?: boolean;
 }
 
-export function ResultCard({ result }: ResultCardProps) {
+export function ResultCard({ result, isStreaming = false }: ResultCardProps) {
   const [isCopied, setIsCopied] = useState(false);
+  const hasResult = result.trim().length > 0;
+  const isPreparingStream = isStreaming && !hasResult;
 
   const handleCopy = async () => {
+    if (!hasResult) {
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(result);
       setIsCopied(true);
@@ -31,13 +38,16 @@ export function ResultCard({ result }: ResultCardProps) {
             </div>
             <div>
               <CardTitle className="text-xl text-foreground font-mono">ANALYSIS_OUTPUT</CardTitle>
-              <CardDescription className="text-xs mt-0.5 font-mono">GENERATED_INSIGHTS</CardDescription>
+              <CardDescription className="text-xs mt-0.5 font-mono">
+                {isStreaming ? 'STREAMING_LIVE_OUTPUT' : 'GENERATED_INSIGHTS'}
+              </CardDescription>
             </div>
           </div>
           <Button
             variant="secondary"
             size="sm"
             onClick={handleCopy}
+            disabled={!hasResult}
             className="h-9 border-2 border-border shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-mono"
           >
             {isCopied ? (
@@ -55,9 +65,23 @@ export function ResultCard({ result }: ResultCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="prose prose-slate max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg font-mono">
-          <ReactMarkdown>{result}</ReactMarkdown>
-        </div>
+        {isPreparingStream ? (
+          <div className="space-y-3 font-mono">
+            <p className="text-sm text-muted-foreground">Waiting for first chunk...</p>
+            <div className="h-4 w-2/3 animate-pulse bg-muted border border-border" />
+            <div className="h-4 w-full animate-pulse bg-muted border border-border" />
+            <div className="h-4 w-5/6 animate-pulse bg-muted border border-border" />
+          </div>
+        ) : (
+          <div className="prose prose-slate max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg font-mono">
+            <ReactMarkdown>{result}</ReactMarkdown>
+            {isStreaming && (
+              <p className="text-primary">
+                <span className="inline-block animate-pulse">▋</span>
+              </p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
