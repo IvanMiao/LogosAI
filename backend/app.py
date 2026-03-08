@@ -1,10 +1,12 @@
+import json
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from schema.analyze_schema import (
     AnalysisRequest,
@@ -89,6 +91,69 @@ def get_analyse_info(
         return AnalysisResponse(result=result, success=True)
     except Exception as e:
         return AnalysisResponse(result="", success=False, error=str(e))
+
+
+def to_sse_event(event: str, data: dict[str, Any]) -> str:
+    payload = json.dumps(data, ensure_ascii=False)
+    return f"event: {event}\ndata: {payload}\n\n"
+
+
+@api_router.post("/analyze/stream")
+async def stream_analyse_info(
+    request: AnalysisRequest,
+    service: AnalysisService = Depends(get_analysis_service),
+):
+    agent = service.get_agent()
+    if not agent:
+        raise HTTPException(
+            status_code=400, detail="Please configure Gemini API key in settings"
+        )
+
+    async def event_generator():
+        final_result = ""
+        yield ": stream-start\n\n"
+
+        try:
+            async for event in agent.analyze_stream(
+                request.text, request.user_language
+            ):
+                event_type = event.get("event")
+
+                if event_type == "stage":
+                    stage = event.get("stage", "")
+                    if stage:
+                        yield to_sse_event("stage", {"stage": stage})
+                    continue
+
+                if event_type == "chunk":
+                    delta = event.get("delta", "")
+                    if delta:
+                        final_result += delta
+                        yield to_sse_event("chunk", {"delta": delta})
+                    continue
+
+                if event_type == "done":
+                    result = event.get("result", "").strip()
+                    if result:
+                        final_result = result
+
+            if not final_result:
+                raise ValueError("Analysis failed - no interpretation generated")
+
+            yield to_sse_event("done", {"result": final_result})
+        except Exception as e:
+            yield to_sse_event("error", {"message": str(e)})
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 
 @api_router.get("/settings", response_model=SettingsResponse)

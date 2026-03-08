@@ -7,9 +7,14 @@ import { Brain, FileText, Loader2, AlertCircle, Languages } from 'lucide-react';
 import { useAnalysisContext } from '@/hooks/AnalysisContext';
 import { ResultCard } from '@/components/ResultCard';
 
+const STREAM_STAGE_LABEL: Record<string, string> = {
+  detect: 'Detecting language and genre...',
+  correct: 'Correcting source text...',
+  interpret: 'Streaming interpretation...',
+};
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, error, onAnalyze } = useAnalysisContext();
+  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, onAnalyze } = useAnalysisContext();
 
   return (
     <div className="space-y-6">
@@ -72,7 +77,7 @@ export function AnalysisPanel() {
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Analyzing...
+                {STREAM_STAGE_LABEL[streamStage] ?? 'Analyzing...'}
               </>
             ) : (
               <>

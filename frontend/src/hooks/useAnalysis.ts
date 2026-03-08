@@ -1,6 +1,60 @@
 import { useState, useCallback } from 'react';
 
 const STORAGE_KEY = 'logosai_history';
+const STREAM_FLUSH_INTERVAL_MS = 40;
+
+type StreamStage = 'detect' | 'correct' | 'interpret';
+
+interface ParsedSseEvent {
+  event: string;
+  data: string;
+}
+
+interface StreamStagePayload {
+  stage: StreamStage;
+}
+
+interface StreamChunkPayload {
+  delta: string;
+}
+
+interface StreamDonePayload {
+  result: string;
+}
+
+interface StreamErrorPayload {
+  message: string;
+}
+
+function parseSseBlock(block: string): ParsedSseEvent | null {
+  const lines = block.split('\n');
+  let eventName = 'message';
+  const dataLines: string[] = [];
+
+  for (const line of lines) {
+    if (!line || line.startsWith(':')) {
+      continue;
+    }
+
+    if (line.startsWith('event:')) {
+      eventName = line.slice('event:'.length).trim();
+      continue;
+    }
+
+    if (line.startsWith('data:')) {
+      dataLines.push(line.slice('data:'.length).trimStart());
+    }
+  }
+
+  if (!dataLines.length) {
+    return null;
+  }
+
+  return {
+    event: eventName,
+    data: dataLines.join('\n'),
+  };
+}
 
 export interface HistoryItem {
   id: number;
@@ -18,6 +72,7 @@ export interface UseAnalysisReturn {
   result: string;
   history: HistoryItem[];
   isLoading: boolean;
+  streamStage: string;
   error: string;
   fetchHistory: () => Promise<void>;
   onAnalyze: () => Promise<void>;
@@ -45,6 +100,7 @@ export function useAnalysis(): UseAnalysisReturn {
   const [result, setResult] = useState<string>('');
   const [history, setHistory] = useState<HistoryItem[]>(loadHistory);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
 
   // Member Functions
@@ -67,11 +123,13 @@ export function useAnalysis(): UseAnalysisReturn {
     setIsLoading(true);
     setError('');
     setResult('');
+    setStreamStage('');
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: {
+          Accept: 'text/event-stream',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -81,31 +139,118 @@ export function useAnalysis(): UseAnalysisReturn {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP Error! Status: ${response.status}`);
+        let message = `HTTP Error! Status: ${response.status}`;
+        try {
+          const errorData = (await response.json()) as { detail?: string };
+          if (errorData.detail) {
+            message = errorData.detail;
+          }
+        } catch {
+          // Ignore JSON parse failure and fallback to status code message.
+        }
+        throw new Error(message);
       }
 
-      const data = await response.json();
-
-      if (data.success) {
-        setResult(data.result);
-
-        const newItem: HistoryItem = {
-          id: Date.now(),
-          prompt: text,
-          result: data.result,
-          target_language: language,
-          timestamp: new Date().toISOString(),
-        };
-        const updated = [newItem, ...loadHistory()];
-        saveHistory(updated);
-        setHistory(updated);
-      } else {
-        throw new Error(data.error || 'Analysis failed, no specific error information returned');
+      if (!response.body) {
+        throw new Error('Streaming is not supported by the browser response');
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let pendingChunk = '';
+      let finalResult = '';
+      let hasDoneEvent = false;
+      let lastFlushAt = performance.now();
+
+      const flushPendingChunk = () => {
+        if (!pendingChunk) {
+          return;
+        }
+        const chunk = pendingChunk;
+        pendingChunk = '';
+        setResult((previous) => previous + chunk);
+      };
+
+      const handleSseEvent = (parsedEvent: ParsedSseEvent) => {
+        if (parsedEvent.event === 'stage') {
+          const payload = JSON.parse(parsedEvent.data) as StreamStagePayload;
+          setStreamStage(payload.stage);
+          return;
+        }
+
+        if (parsedEvent.event === 'chunk') {
+          const payload = JSON.parse(parsedEvent.data) as StreamChunkPayload;
+          pendingChunk += payload.delta;
+
+          if (performance.now() - lastFlushAt >= STREAM_FLUSH_INTERVAL_MS) {
+            flushPendingChunk();
+            lastFlushAt = performance.now();
+          }
+          return;
+        }
+
+        if (parsedEvent.event === 'done') {
+          const payload = JSON.parse(parsedEvent.data) as StreamDonePayload;
+          hasDoneEvent = true;
+          finalResult = payload.result;
+          return;
+        }
+
+        if (parsedEvent.event === 'error') {
+          const payload = JSON.parse(parsedEvent.data) as StreamErrorPayload;
+          throw new Error(payload.message || 'Streaming analysis failed');
+        }
+      };
+
+      const consumeBuffer = () => {
+        let boundaryIndex = buffer.indexOf('\n\n');
+        while (boundaryIndex !== -1) {
+          const block = buffer.slice(0, boundaryIndex);
+          buffer = buffer.slice(boundaryIndex + 2);
+          const parsedEvent = parseSseBlock(block);
+          if (parsedEvent) {
+            handleSseEvent(parsedEvent);
+          }
+          boundaryIndex = buffer.indexOf('\n\n');
+        }
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true }).replace(/\r/g, '');
+        consumeBuffer();
+      }
+
+      buffer += decoder.decode().replace(/\r/g, '');
+      consumeBuffer();
+      flushPendingChunk();
+
+      if (!hasDoneEvent) {
+        throw new Error('Stream ended unexpectedly before completion');
+      }
+
+      setResult(finalResult);
+
+      const newItem: HistoryItem = {
+        id: Date.now(),
+        prompt: text,
+        result: finalResult,
+        target_language: language,
+        timestamp: new Date().toISOString(),
+      };
+      const updated = [newItem, ...loadHistory()];
+      saveHistory(updated);
+      setHistory(updated);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setIsLoading(false);
+      setStreamStage('');
     }
   }, [text, language]);
 
@@ -135,6 +280,7 @@ export function useAnalysis(): UseAnalysisReturn {
     result,
     history,
     isLoading,
+    streamStage,
     error,
     fetchHistory,
     onAnalyze: handleAnalyze,
