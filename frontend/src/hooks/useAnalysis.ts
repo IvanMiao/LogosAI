@@ -26,7 +26,7 @@ interface StreamErrorPayload {
   message: string;
 }
 
-function parseSseBlock(block: string): ParsedSseEvent | null {
+export function parseSseBlock(block: string): ParsedSseEvent | null {
   const lines = block.split('\n');
   let eventName = 'message';
   const dataLines: string[] = [];
