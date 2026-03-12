@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+const STORAGE_KEY = 'logosai_history';
+
 export interface HistoryItem {
   id: number;
   prompt: string;
@@ -23,27 +25,35 @@ export interface UseAnalysisReturn {
   onLoadHistory: (item: HistoryItem) => void;
 }
 
+function loadHistory(): HistoryItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as HistoryItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(items: HistoryItem[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
 export function useAnalysis(): UseAnalysisReturn {
   // Member Variables
   const [text, setText] = useState<string>('');
   const [language, setLanguage] = useState<string>('en');
   const [result, setResult] = useState<string>('');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>(loadHistory);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
   // Member Functions
   const fetchHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/history');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setHistory(data.history);
-        }
-      }
+      const items = loadHistory();
+      setHistory(items);
     } catch (e) {
-      console.error('Failed to fetch history:', e);
+      console.error('Failed to load history:', e);
     }
   }, []);
 
@@ -78,7 +88,17 @@ export function useAnalysis(): UseAnalysisReturn {
 
       if (data.success) {
         setResult(data.result);
-        fetchHistory();
+
+        const newItem: HistoryItem = {
+          id: Date.now(),
+          prompt: text,
+          result: data.result,
+          target_language: language,
+          timestamp: new Date().toISOString(),
+        };
+        const updated = [newItem, ...loadHistory()];
+        saveHistory(updated);
+        setHistory(updated);
       } else {
         throw new Error(data.error || 'Analysis failed, no specific error information returned');
       }
@@ -87,16 +107,13 @@ export function useAnalysis(): UseAnalysisReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [text, language, fetchHistory]);
+  }, [text, language]);
 
   const handleDeleteHistory = async (id: number) => {
     try {
-      const response = await fetch(`/api/history/${id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        fetchHistory();
-      }
+      const updated = loadHistory().filter((item) => item.id !== id);
+      saveHistory(updated);
+      setHistory(updated);
     } catch (e) {
       console.error('Failed to delete history:', e);
     }
