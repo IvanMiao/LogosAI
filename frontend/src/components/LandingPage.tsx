@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, Search, Shield } from 'lucide-react';
+import { Brain, Zap, Languages, BookOpen } from 'lucide-react';
 
 export function LandingPage() {
     const navigate = useNavigate();
@@ -33,7 +33,7 @@ export function LandingPage() {
                     </div>
 
                     <p className="max-w-2xl text-lg sm:text-xl text-muted-foreground mt-8 leading-relaxed font-bold">
-                        Unleash the power of advanced language models to dissect, understand, and extract insights from your texts. No fluff. Just raw processing power.
+                        Paste any complex text, from news articles to academic papers to literary works, and get detailed linguistic breakdowns powered by AI. Built for advanced language learners and deep readers.
                     </p>
 
                     <button
@@ -50,26 +50,26 @@ export function LandingPage() {
 
                     <div className="bg-card border-4 border-border p-8 shadow-[6px_6px_0px_0px_var(--border)] hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_var(--border)] transition-all group">
                         <div className="w-14 h-14 bg-primary border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_var(--border)] mb-6 group-hover:scale-110 transition-transform">
-                            <Brain className="w-8 h-8 text-primary-foreground" />
+                            <Languages className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Semantic Core</h3>
-                        <p className="text-muted-foreground font-medium">Dive deep into meaning. Our engine extracts the underlying semantic structures of complex documents.</p>
+                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Any Language</h3>
+                        <p className="text-muted-foreground font-medium">Automatic language detection and OCR error correction. Paste text in any language and get accurate analysis instantly.</p>
                     </div>
 
                     <div className="bg-card border-4 border-border p-8 shadow-[6px_6px_0px_0px_var(--border)] hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_var(--border)] transition-all group">
                         <div className="w-14 h-14 bg-secondary border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_var(--border)] mb-6 group-hover:scale-110 transition-transform">
-                            <Search className="w-8 h-8 text-secondary-foreground text-black" />
+                            <Brain className="w-8 h-8 text-secondary-foreground text-black" />
                         </div>
-                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Entity Extraction</h3>
-                        <p className="text-muted-foreground font-medium">Automatically identify and categorize key entities, relationships, and concepts across massive text corpora.</p>
+                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Deep Breakdown</h3>
+                        <p className="text-muted-foreground font-medium">Get detailed linguistic analysis covering grammar, vocabulary, nuance, and context, tailored for advanced learners tackling real-world texts.</p>
                     </div>
 
                     <div className="bg-card border-4 border-border p-8 shadow-[6px_6px_0px_0px_var(--border)] hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_var(--border)] transition-all group">
                         <div className="w-14 h-14 bg-accent border-2 border-border flex items-center justify-center shadow-[4px_4px_0px_0px_var(--border)] mb-6 group-hover:scale-110 transition-transform">
-                            <Shield className="w-8 h-8 text-accent-foreground text-black" />
+                            <BookOpen className="w-8 h-8 text-accent-foreground text-black" />
                         </div>
-                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Local & Secure</h3>
-                        <p className="text-muted-foreground font-medium">Your data stays yours. Enterprise-grade security ensures your textual analysis remains completely confidential.</p>
+                        <h3 className="text-2xl font-black uppercase mb-4 text-card-foreground">Complex Texts</h3>
+                        <p className="text-muted-foreground font-medium">Designed for challenging material like philosophical essays, academic papers, and dense news articles, not just textbook exercises.</p>
                     </div>
 
                 </div>
