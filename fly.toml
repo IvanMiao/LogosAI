@@ -1,17 +1,24 @@
-app = "logosai"
-primary_region = "cdg"
+# fly.toml app configuration file generated for logosai on 2026-03-12T14:41:36+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'logosai'
+primary_region = 'cdg'
 
 [build]
-  dockerfile = "backend/Dockerfile"
+  dockerfile = 'backend/Dockerfile'
 
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
+
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 512
