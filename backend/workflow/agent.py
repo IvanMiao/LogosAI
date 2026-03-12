@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from typing import Optional, TypedDict
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -47,6 +48,101 @@ class TextAnalysisLangchain:
         )
 
         self.graph = self._make_workflow()
+
+    @staticmethod
+    def _content_to_text(content: object) -> str:
+        if isinstance(content, str):
+            return content
+
+        if isinstance(content, list):
+            fragments: list[str] = []
+            for item in content:
+                if isinstance(item, str):
+                    fragments.append(item)
+                    continue
+
+                if isinstance(item, dict):
+                    text = item.get("text")
+                    if isinstance(text, str):
+                        fragments.append(text)
+                    continue
+
+                text = getattr(item, "text", None)
+                if isinstance(text, str):
+                    fragments.append(text)
+
+            return "".join(fragments)
+
+        return ""
+
+    async def analyze_stream(
+        self, text: str, user_language: str
+    ) -> AsyncIterator[dict[str, str]]:
+        state: MultiAgentState = {
+            "messages": [],
+            "text": text,
+            "text_language": "",
+            "genre": "",
+            "needs_correction": False,
+            "corrected_text": None,
+            "interpretation": None,
+            "user_language": user_language.upper(),
+        }
+
+        yield {"event": "stage", "stage": "detect"}
+        detection_messages = [
+            SystemMessage(EXAM_SYS_PROMPT),
+            HumanMessage(state["text"]),
+        ]
+        structured_llm = self.llm_lite.with_structured_output(TextDerectives)
+        directives = await structured_llm.ainvoke(detection_messages)
+
+        state["text_language"] = directives.language
+        state["genre"] = directives.genre
+        state["needs_correction"] = directives.correction_needed
+
+        if state["needs_correction"]:
+            yield {"event": "stage", "stage": "correct"}
+            correction_messages = [
+                SystemMessage(CORRECTION_SYS_PROMPT),
+                HumanMessage(state["text"]),
+            ]
+            corrected_response = await self.llm_lite.ainvoke(correction_messages)
+            corrected_text = self._content_to_text(corrected_response.content).strip()
+            if corrected_text:
+                state["corrected_text"] = corrected_text
+                state["text"] = corrected_text
+
+        yield {"event": "stage", "stage": "interpret"}
+        learn_lang = LANG_MAP.get(state["text_language"], "English")
+        user_lang = LANG_MAP.get(state["user_language"], "English")
+        sys_prompt = GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
+            "[PROF_LANGUAGE]", user_lang
+        )
+        interpretation_messages = (
+            SystemMessage(sys_prompt),
+            HumanMessage(state["text"]),
+        )
+
+        chunks: list[str] = []
+        async for chunk in self.llm_flash.astream(interpretation_messages):
+            delta = self._content_to_text(chunk.content)
+            if not delta:
+                continue
+            chunks.append(delta)
+            yield {"event": "chunk", "delta": delta}
+
+        result = "".join(chunks).strip()
+        if not result:
+            fallback = await self.llm_flash.ainvoke(interpretation_messages)
+            result = self._content_to_text(fallback.content).strip()
+            if result:
+                yield {"event": "chunk", "delta": result}
+
+        if not result:
+            raise ValueError("Analysis failed - no interpretation generated")
+
+        yield {"event": "done", "result": result}
 
     def _make_workflow(self):
         def detection_node(state: MultiAgentState):
