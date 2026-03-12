@@ -5,13 +5,10 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
 
-from database import History, get_db, init_db
 from schema.analyze_schema import (
     AnalysisRequest,
     AnalysisResponse,
-    HistoryResponse,
     SettingsRequest,
     SettingsResponse,
 )
@@ -19,7 +16,6 @@ from service import AnalysisService, get_analysis_service
 from workflow.agent import MultiAgentState
 
 load_dotenv()
-init_db()
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -63,7 +59,6 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def get_analyse_info(
     request: AnalysisRequest,
     service: AnalysisService = Depends(get_analysis_service),
-    db: Session = Depends(get_db),
 ):
     try:
         agent = service.get_agent()
@@ -90,40 +85,9 @@ def get_analyse_info(
                 status_code=500, detail="Analysis failed - no interpretation generated"
             )
 
-        # Save to database
-        history = History(
-            prompt=request.text,
-            result=result,
-            target_language=request.user_language,
-        )
-        db.add(history)
-        db.commit()
-
         return AnalysisResponse(result=result, success=True)
     except Exception as e:
         return AnalysisResponse(result="", success=False, error=str(e))
-
-
-@api_router.get("/history", response_model=HistoryResponse)
-async def get_history(db: Session = Depends(get_db)):
-    try:
-        rows = db.query(History).order_by(History.timestamp.desc()).all()
-        history = [row.to_dict() for row in rows]
-
-        return HistoryResponse(history=history, success=True)
-    except Exception as e:
-        return HistoryResponse(history=[], success=False, error=str(e))
-
-
-@api_router.delete("/history/{history_id}")
-async def delete_history(history_id: int, db: Session = Depends(get_db)):
-    history = db.query(History).filter(History.id == history_id).first()
-    if not history:
-        raise HTTPException(status_code=404, detail="History item not found")
-
-    db.delete(history)
-    db.commit()
-    return {"success": True, "message": "History item deleted successfully"}
 
 
 @api_router.get("/settings", response_model=SettingsResponse)
