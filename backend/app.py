@@ -42,6 +42,7 @@ origins = [
     "http://localhost:3000",  # Docker frontend
     "http://localhost:8080",
     "http://localhost:5173",  # Vite dev server
+    "https://logosai.fly.dev",
     "null",
 ]
 
