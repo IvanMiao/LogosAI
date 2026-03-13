@@ -75,6 +75,7 @@ export interface UseAnalysisReturn {
   streamStage: string;
   error: string;
   hasApiKey: boolean;
+  refreshApiKeyStatus: () => void;
   fetchHistory: () => Promise<void>;
   onAnalyze: () => Promise<void>;
   onDeleteHistory: (id: number) => Promise<void>;
@@ -105,7 +106,7 @@ export function useAnalysis(): UseAnalysisReturn {
   const [error, setError] = useState<string>('');
   const [hasApiKey, setHasApiKey] = useState<boolean>(true);
 
-  useEffect(() => {
+  const refreshApiKeyStatus = useCallback(() => {
     fetch('/api/settings')
       .then((res) => res.json())
       .then((data: { success: boolean; has_api_key: boolean }) => {
@@ -113,8 +114,12 @@ export function useAnalysis(): UseAnalysisReturn {
           setHasApiKey(data.has_api_key);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
+
+  useEffect(() => {
+    refreshApiKeyStatus();
+  }, [refreshApiKeyStatus]);
 
   // Member Functions
   const fetchHistory = useCallback(async () => {
@@ -296,6 +301,7 @@ export function useAnalysis(): UseAnalysisReturn {
     streamStage,
     error,
     hasApiKey,
+    refreshApiKeyStatus,
     fetchHistory,
     onAnalyze: handleAnalyze,
     onDeleteHistory: handleDeleteHistory,

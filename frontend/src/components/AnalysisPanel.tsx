@@ -15,9 +15,13 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 };
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, onAnalyze } = useAnalysisContext();
+  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, refreshApiKeyStatus, onAnalyze } = useAnalysisContext();
   const outputRef = useRef<HTMLDivElement | null>(null);
   const showResultCard = isLoading || result.length > 0;
+
+  useEffect(() => {
+    refreshApiKeyStatus();
+  }, [refreshApiKeyStatus]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -32,13 +36,15 @@ export function AnalysisPanel() {
   return (
     <div className="space-y-6">
       {!hasApiKey && (
-        <Card className="border-2 border-yellow-500 bg-yellow-500/10 shadow-[4px_4px_0px_0px_var(--border)]">
+        <Card className="bg-yellow-400 border-4 border-border shadow-[4px_4px_0px_0px_var(--border)] rounded-none">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <KeyRound className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-              <p className="text-sm font-mono">
+              <div className="w-8 h-8 bg-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_var(--border)]">
+                <KeyRound className="w-5 h-5 text-yellow-400" />
+              </div>
+              <p className="text-sm font-mono font-bold text-black">
                 API key not configured.{' '}
-                <Link to="/app/settings" className="underline font-bold hover:text-yellow-700">
+                <Link to="/app/settings" className="underline hover:bg-black hover:text-white px-1 transition-colors">
                   Go to Settings
                 </Link>{' '}
                 to add your Gemini API key before analyzing.
@@ -101,7 +107,7 @@ export function AnalysisPanel() {
 
           <Button
             onClick={onAnalyze}
-            disabled={isLoading || !text.trim()}
+            disabled={isLoading || !text.trim() || !hasApiKey}
             className="w-full h-12 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             {isLoading ? (
