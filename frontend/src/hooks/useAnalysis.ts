@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const STORAGE_KEY = 'logosai_history';
 const STREAM_FLUSH_INTERVAL_MS = 40;
@@ -74,6 +74,7 @@ export interface UseAnalysisReturn {
   isLoading: boolean;
   streamStage: string;
   error: string;
+  hasApiKey: boolean;
   fetchHistory: () => Promise<void>;
   onAnalyze: () => Promise<void>;
   onDeleteHistory: (id: number) => Promise<void>;
@@ -102,6 +103,18 @@ export function useAnalysis(): UseAnalysisReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data: { success: boolean; has_api_key: boolean }) => {
+        if (data.success) {
+          setHasApiKey(data.has_api_key);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Member Functions
   const fetchHistory = useCallback(async () => {
@@ -282,6 +295,7 @@ export function useAnalysis(): UseAnalysisReturn {
     isLoading,
     streamStage,
     error,
+    hasApiKey,
     fetchHistory,
     onAnalyze: handleAnalyze,
     onDeleteHistory: handleDeleteHistory,

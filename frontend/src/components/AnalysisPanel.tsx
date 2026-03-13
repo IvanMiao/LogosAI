@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, FileText, Loader2, AlertCircle, Languages } from 'lucide-react';
+import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound } from 'lucide-react';
 import { useAnalysisContext } from '@/hooks/AnalysisContext';
 import { ResultCard } from '@/components/ResultCard';
 
@@ -14,7 +15,7 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 };
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, onAnalyze } = useAnalysisContext();
+  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, onAnalyze } = useAnalysisContext();
   const outputRef = useRef<HTMLDivElement | null>(null);
   const showResultCard = isLoading || result.length > 0;
 
@@ -30,6 +31,23 @@ export function AnalysisPanel() {
 
   return (
     <div className="space-y-6">
+      {!hasApiKey && (
+        <Card className="border-2 border-yellow-500 bg-yellow-500/10 shadow-[4px_4px_0px_0px_var(--border)]">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <KeyRound className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+              <p className="text-sm font-mono">
+                API key not configured.{' '}
+                <Link to="/app/settings" className="underline font-bold hover:text-yellow-700">
+                  Go to Settings
+                </Link>{' '}
+                to add your Gemini API key before analyzing.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
