@@ -15,7 +15,7 @@ from schema.analyze_schema import (
     SettingsResponse,
 )
 from service import AnalysisService, get_analysis_service
-from workflow.agent import MultiAgentState
+from workflow.agent import create_initial_state
 
 load_dotenv()
 
@@ -70,16 +70,7 @@ def get_analyse_info(
                 status_code=400, detail="Please configure Gemini API key in settings"
             )
 
-        initial_state: MultiAgentState = {
-            "messages": [],
-            "text": request.text,
-            "text_language": "",
-            "genre": "",
-            "needs_correction": False,
-            "corrected_text": None,
-            "interpretation": None,
-            "user_language": request.user_language.upper(),
-        }
+        initial_state = create_initial_state(request.text, request.user_language)
 
         final_state = agent.graph.invoke(initial_state)
         result = final_state.get("interpretation", "")
@@ -156,8 +147,7 @@ async def stream_analyse_info(
 
 
 
-@api_router.get("/settings", response_model=SettingsResponse)
-async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
+def _build_settings_response(service: AnalysisService) -> SettingsResponse:
     has_key = bool(service.settings["gemini_api_key"])
     return SettingsResponse(
         gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
@@ -167,25 +157,19 @@ async def get_settings(service: AnalysisService = Depends(get_analysis_service))
         has_api_key=has_key,
         success=True,
     )
+
+
+@api_router.get("/settings", response_model=SettingsResponse)
+async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
+    return _build_settings_response(service)
 
 
 @api_router.post("/settings", response_model=SettingsResponse)
 async def update_settings(
     request: SettingsRequest, service: AnalysisService = Depends(get_analysis_service)
 ):
-    # Reinitialize agent with new settings
     service.update_settings(request.gemini_api_key, request.model)
-
-    has_key = bool(service.settings["gemini_api_key"])
-
-    return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
-        if has_key
-        else "",
-        model=service.settings["model"],
-        has_api_key=has_key,
-        success=True,
-    )
+    return _build_settings_response(service)
 
 
 app.include_router(api_router)

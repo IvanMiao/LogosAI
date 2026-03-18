@@ -32,6 +32,27 @@ class MultiAgentState(TypedDict):
     interpretation: Optional[str]
 
 
+def create_initial_state(text: str, user_language: str) -> MultiAgentState:
+    return {
+        "messages": [],
+        "text": text,
+        "text_language": "",
+        "genre": "",
+        "needs_correction": False,
+        "corrected_text": None,
+        "interpretation": None,
+        "user_language": user_language.upper(),
+    }
+
+
+def build_analysis_prompt(text_language: str, user_language: str) -> str:
+    learn_lang = LANG_MAP.get(text_language, "English")
+    user_lang = LANG_MAP.get(user_language, "English")
+    return GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
+        "[PROF_LANGUAGE]", user_lang
+    )
+
+
 class TextAnalysisLangchain:
     def __init__(self, gemini_key: str | None, model: str = "gemini-2.5-flash"):
         if not gemini_key:
@@ -78,16 +99,7 @@ class TextAnalysisLangchain:
     async def analyze_stream(
         self, text: str, user_language: str
     ) -> AsyncIterator[dict[str, str]]:
-        state: MultiAgentState = {
-            "messages": [],
-            "text": text,
-            "text_language": "",
-            "genre": "",
-            "needs_correction": False,
-            "corrected_text": None,
-            "interpretation": None,
-            "user_language": user_language.upper(),
-        }
+        state = create_initial_state(text, user_language)
 
         yield {"event": "stage", "stage": "detect"}
         detection_messages = [
@@ -114,10 +126,8 @@ class TextAnalysisLangchain:
                 state["text"] = corrected_text
 
         yield {"event": "stage", "stage": "interpret"}
-        learn_lang = LANG_MAP.get(state["text_language"], "English")
-        user_lang = LANG_MAP.get(state["user_language"], "English")
-        sys_prompt = GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
-            "[PROF_LANGUAGE]", user_lang
+        sys_prompt = build_analysis_prompt(
+            state["text_language"], state["user_language"]
         )
         interpretation_messages = (
             SystemMessage(sys_prompt),
@@ -167,13 +177,10 @@ class TextAnalysisLangchain:
             return {"corrected_text": response.content, "text": response.content}
 
         def interpretation_node(state: MultiAgentState):
-            learn_lang = LANG_MAP.get(state.get("text_language", "EN"), "English")
-            user_lang = LANG_MAP.get(state.get("user_language", "EN"), "English")
-
-            sys_prompt = GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
-                "[PROF_LANGUAGE]", user_lang
+            sys_prompt = build_analysis_prompt(
+                state.get("text_language", "EN"),
+                state.get("user_language", "EN"),
             )
-
             messages = (SystemMessage(sys_prompt), HumanMessage(state["text"]))
             response = self.llm_flash.invoke(messages)
 
