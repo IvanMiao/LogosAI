@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSseBlock } from './useAnalysis';
+import { parseSseBlock } from './parseSse';
 
 describe('parseSseBlock', () => {
   it('parses a stage event', () => {
