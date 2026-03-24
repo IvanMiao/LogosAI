@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Clock, Eye, RotateCcw, Trash2 } from 'lucide-react';
-import { formatDate, formatTime } from '@/utils/helpers';
+import { formatDate, formatTime } from '@/lib/helpers';
 import { HistoryItem } from '@/hooks/useAnalysis';
 
 interface HistoryListItemProps {

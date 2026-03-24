@@ -3,6 +3,7 @@
 **/.vscode
 
 L_docs/
+docs/plans/
 
 node_modules/
 **/.env

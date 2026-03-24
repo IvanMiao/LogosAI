@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '@/components/Header';
-import { useAnalysisContext } from '@/hooks/AnalysisContext';
+import { useAnalysisContext } from '@/context/AnalysisContext';
 
 export function Layout() {
   const [mounted, setMounted] = useState<boolean>(false);

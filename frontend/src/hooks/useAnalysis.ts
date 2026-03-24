@@ -6,7 +6,7 @@ import {
   type StreamChunkPayload,
   type StreamDonePayload,
   type StreamErrorPayload,
-} from './parseSse';
+} from '@/lib/parseSse';
 import { useHistory, type HistoryItem } from './useHistory';
 
 const STREAM_FLUSH_INTERVAL_MS = 40;

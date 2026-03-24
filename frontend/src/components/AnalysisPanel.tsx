@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound } from 'lucide-react';
-import { useAnalysisContext } from '@/hooks/AnalysisContext';
+import { useAnalysisContext } from '@/context/AnalysisContext';
 import { ResultCard } from '@/components/ResultCard';
 
 const STREAM_STAGE_LABEL: Record<string, string> = {
