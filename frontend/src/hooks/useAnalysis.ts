@@ -55,24 +55,25 @@ export function useAnalysis(): UseAnalysisReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(
+    () => !!localStorage.getItem('logosai_api_key'),
+  );
 
   const { history, fetchHistory, deleteHistory, addHistory } = useHistory();
 
   const refreshApiKeyStatus = useCallback(() => {
-    fetch('/api/settings')
-      .then((res) => res.json())
-      .then((data: { success: boolean; has_api_key: boolean }) => {
-        if (data.success) {
-          setHasApiKey(data.has_api_key);
-        }
-      })
-      .catch(() => { });
+    setHasApiKey(!!localStorage.getItem('logosai_api_key'));
   }, []);
 
   useEffect(() => {
-    refreshApiKeyStatus();
-  }, [refreshApiKeyStatus]);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'logosai_api_key') {
+        setHasApiKey(!!e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -87,13 +88,17 @@ export function useAnalysis(): UseAnalysisReturn {
     setStreamStage('');
 
     try {
+      const storedKey = localStorage.getItem('logosai_api_key') ?? '';
+      const storedModel = localStorage.getItem('logosai_model') ?? 'gemini-2.5-flash';
+
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
           'Content-Type': 'application/json',
+          'X-Gemini-Key': storedKey,
         },
-        body: JSON.stringify({ text, user_language: language }),
+        body: JSON.stringify({ text, user_language: language, model: storedModel }),
       });
 
       if (!response.ok) {

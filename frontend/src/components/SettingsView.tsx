@@ -18,7 +18,7 @@ function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
         type="password"
         value={apiKey}
         onChange={(e) => setApiKey(e.target.value)}
-        placeholder={hasApiKey ? "Keep empty to maintain current API key" : "Enter your Gemini API key"}
+        placeholder={hasApiKey ? "Enter new key to replace current one" : "Enter your Gemini API key"}
         className="w-full px-3 py-2 border-2 border-border bg-input focus:outline-none focus:ring-2 focus:ring-ring text-sm shadow-[4px_4px_0px_0px_var(--border)] font-mono"
       />
       <p className="mt-1 text-xs text-muted-foreground font-mono">
