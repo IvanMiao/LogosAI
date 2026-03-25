@@ -9,7 +9,18 @@ import {
 } from '@/lib/parseSse';
 import { useHistory, type HistoryItem } from './useHistory';
 
+const STORAGE_KEY_API = 'logosai_api_key';
+const STORAGE_KEY_MODEL = 'logosai_model';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const STREAM_FLUSH_INTERVAL_MS = 40;
+
+function readStored(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export type { HistoryItem };
 
@@ -56,18 +67,18 @@ export function useAnalysis(): UseAnalysisReturn {
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [hasApiKey, setHasApiKey] = useState<boolean>(
-    () => !!localStorage.getItem('logosai_api_key'),
+    () => !!readStored(STORAGE_KEY_API, ''),
   );
 
   const { history, fetchHistory, deleteHistory, addHistory } = useHistory();
 
   const refreshApiKeyStatus = useCallback(() => {
-    setHasApiKey(!!localStorage.getItem('logosai_api_key'));
+    setHasApiKey(!!readStored(STORAGE_KEY_API, ''));
   }, []);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'logosai_api_key') {
+      if (e.key === STORAGE_KEY_API) {
         setHasApiKey(!!e.newValue);
       }
     };
@@ -88,8 +99,8 @@ export function useAnalysis(): UseAnalysisReturn {
     setStreamStage('');
 
     try {
-      const storedKey = localStorage.getItem('logosai_api_key') ?? '';
-      const storedModel = localStorage.getItem('logosai_model') ?? 'gemini-2.5-flash';
+      const storedKey = readStored(STORAGE_KEY_API, '');
+      const storedModel = readStored(STORAGE_KEY_MODEL, DEFAULT_MODEL);
 
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
