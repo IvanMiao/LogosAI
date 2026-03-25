@@ -1,39 +1,28 @@
-import os
+import hashlib
+from collections import OrderedDict
 
 from llm.agent import TextAnalysisLangchain
 
-
-class AnalysisService:
-    def __init__(self):
-        self.settings = {
-            "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
-            "model": "gemini-2.5-flash",
-        }
-        self.agent = None
-        self._init_agent()
-
-    def _init_agent(self):
-        if self.settings["gemini_api_key"]:
-            self.agent = TextAnalysisLangchain(
-                gemini_key=self.settings["gemini_api_key"], model=self.settings["model"]
-            )
-        else:
-            self.agent = None
-
-    def get_agent(self):
-        return self.agent
-
-    def update_settings(self, new_key: str | None, new_model: str):
-        if new_key and new_key.strip():
-            self.settings["gemini_api_key"] = new_key
-        if new_model:
-            self.settings["model"] = new_model
-        self._init_agent()
-        return self.settings
+_MAX_CACHED_AGENTS = 8
+_agent_cache: OrderedDict[tuple[str, str], TextAnalysisLangchain] = OrderedDict()
 
 
-_analysis_service_instance = AnalysisService()
+def get_agent(api_key: str, model: str) -> TextAnalysisLangchain:
+    """Return a cached agent or create a new one.
 
+    Cache is keyed on (sha256(api_key), model) so raw keys are never stored.
+    """
+    key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+    cache_key = (key_hash, model)
 
-def get_analysis_service():
-    return _analysis_service_instance
+    if cache_key in _agent_cache:
+        _agent_cache.move_to_end(cache_key)
+        return _agent_cache[cache_key]
+
+    agent = TextAnalysisLangchain(gemini_key=api_key, model=model)
+    _agent_cache[cache_key] = agent
+
+    while len(_agent_cache) > _MAX_CACHED_AGENTS:
+        _agent_cache.popitem(last=False)
+
+    return agent
