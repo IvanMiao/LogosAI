@@ -35,7 +35,6 @@ origins = [
     "http://localhost:8080",
     "http://localhost:5173",  # Vite dev server
     "https://logosai.fly.dev",
-    "null",
 ]
 
 app.add_middleware(

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Key, Save, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Key, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -18,7 +18,7 @@ function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
         type="password"
         value={apiKey}
         onChange={(e) => setApiKey(e.target.value)}
-        placeholder={hasApiKey ? "Keep empty to maintain current API key" : "Enter your Gemini API key"}
+        placeholder={hasApiKey ? "Enter new key to replace current one" : "Enter your Gemini API key"}
         className="w-full px-3 py-2 border-2 border-border bg-input focus:outline-none focus:ring-2 focus:ring-ring text-sm shadow-[4px_4px_0px_0px_var(--border)] font-mono"
       />
       <p className="mt-1 text-xs text-muted-foreground font-mono">
@@ -44,7 +44,7 @@ function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
 
 
 export function SettingsView() {
-  const { apiKey, setApiKey, model, setModel, hasApiKey, isSaving, saveSuccess, error, handleSave } = useSettings();
+  const { apiKey, setApiKey, model, setModel, hasApiKey, isSaving, saveSuccess, error, handleSave, handleClearApiKey } = useSettings();
 
   return (
     <div className="space-y-6">
@@ -99,14 +99,25 @@ export function SettingsView() {
                   </div>
                 )}
 
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save Settings'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? 'Saving...' : 'Save Settings'}
+                  </button>
+                  {hasApiKey && (
+                    <button
+                      onClick={handleClearApiKey}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clear API Key
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

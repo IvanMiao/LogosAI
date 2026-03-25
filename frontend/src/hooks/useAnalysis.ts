@@ -9,7 +9,18 @@ import {
 } from '@/lib/parseSse';
 import { useHistory, type HistoryItem } from './useHistory';
 
+const STORAGE_KEY_API = 'logosai_api_key';
+const STORAGE_KEY_MODEL = 'logosai_model';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 const STREAM_FLUSH_INTERVAL_MS = 40;
+
+function readStored(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export type { HistoryItem };
 
@@ -55,24 +66,25 @@ export function useAnalysis(): UseAnalysisReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(
+    () => !!readStored(STORAGE_KEY_API, ''),
+  );
 
   const { history, fetchHistory, deleteHistory, addHistory } = useHistory();
 
   const refreshApiKeyStatus = useCallback(() => {
-    fetch('/api/settings')
-      .then((res) => res.json())
-      .then((data: { success: boolean; has_api_key: boolean }) => {
-        if (data.success) {
-          setHasApiKey(data.has_api_key);
-        }
-      })
-      .catch(() => { });
+    setHasApiKey(!!readStored(STORAGE_KEY_API, ''));
   }, []);
 
   useEffect(() => {
-    refreshApiKeyStatus();
-  }, [refreshApiKeyStatus]);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_API) {
+        setHasApiKey(!!e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -87,13 +99,17 @@ export function useAnalysis(): UseAnalysisReturn {
     setStreamStage('');
 
     try {
+      const storedKey = readStored(STORAGE_KEY_API, '');
+      const storedModel = readStored(STORAGE_KEY_MODEL, DEFAULT_MODEL);
+
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
           'Content-Type': 'application/json',
+          'X-Gemini-Key': storedKey,
         },
-        body: JSON.stringify({ text, user_language: language }),
+        body: JSON.stringify({ text, user_language: language, model: storedModel }),
       });
 
       if (!response.ok) {
