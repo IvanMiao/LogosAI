@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, FileText, Loader2, AlertCircle, Languages } from 'lucide-react';
-import { useAnalysisContext } from '@/hooks/AnalysisContext';
+import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound } from 'lucide-react';
+import { useAnalysisContext } from '@/context/AnalysisContext';
 import { ResultCard } from '@/components/ResultCard';
 
 const STREAM_STAGE_LABEL: Record<string, string> = {
@@ -14,9 +15,13 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 };
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, onAnalyze } = useAnalysisContext();
+  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, refreshApiKeyStatus, onAnalyze } = useAnalysisContext();
   const outputRef = useRef<HTMLDivElement | null>(null);
   const showResultCard = isLoading || result.length > 0;
+
+  useEffect(() => {
+    refreshApiKeyStatus();
+  }, [refreshApiKeyStatus]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -30,6 +35,25 @@ export function AnalysisPanel() {
 
   return (
     <div className="space-y-6">
+      {!hasApiKey && (
+        <Card className="bg-yellow-400 border-4 border-border shadow-[4px_4px_0px_0px_var(--border)] rounded-none">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-black flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_var(--border)]">
+                <KeyRound className="w-5 h-5 text-yellow-400" />
+              </div>
+              <p className="text-sm font-mono font-bold text-black">
+                API key not configured.{' '}
+                <Link to="/app/settings" className="underline hover:bg-black hover:text-white px-1 transition-colors">
+                  Go to Settings
+                </Link>{' '}
+                to add your Gemini API key before analyzing.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader className="space-y-3 pb-4">
           <div className="flex items-center justify-between">
@@ -83,7 +107,7 @@ export function AnalysisPanel() {
 
           <Button
             onClick={onAnalyze}
-            disabled={isLoading || !text.trim()}
+            disabled={isLoading || !text.trim() || !hasApiKey}
             className="w-full h-12 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             {isLoading ? (

@@ -1,30 +1,16 @@
-import json
 from pathlib import Path
-from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
-from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
 
-from database import History, get_db, init_db
-from schema.analyze_schema import (
-    AnalysisRequest,
-    AnalysisResponse,
-    HistoryResponse,
-    SettingsRequest,
-    SettingsResponse,
-)
-from service import AnalysisService, get_analysis_service
-from workflow.agent import MultiAgentState
+from routers.routes import api_router
 
 load_dotenv()
-init_db()
 
 app = FastAPI()
-api_router = APIRouter(prefix="/api")
 FRONTEND_DIST_DIR = Path(__file__).resolve().parent / "frontend_dist"
 FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 LONG_CACHE_SUFFIXES = {
@@ -48,6 +34,7 @@ origins = [
     "http://localhost:3000",  # Docker frontend
     "http://localhost:8080",
     "http://localhost:5173",  # Vite dev server
+    "https://logosai.fly.dev",
     "null",
 ]
 
@@ -59,181 +46,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-
-@api_router.post("/analyze", response_model=AnalysisResponse)
-def get_analyse_info(
-    request: AnalysisRequest,
-    service: AnalysisService = Depends(get_analysis_service),
-    db: Session = Depends(get_db),
-):
-    try:
-        agent = service.get_agent()
-        if not agent:
-            raise HTTPException(
-                status_code=400, detail="Please configure Gemini API key in settings"
-            )
-
-        initial_state: MultiAgentState = {
-            "messages": [],
-            "text": request.text,
-            "text_language": "",
-            "genre": "",
-            "needs_correction": False,
-            "corrected_text": None,
-            "interpretation": None,
-            "user_language": request.user_language.upper(),
-        }
-
-        final_state = agent.graph.invoke(initial_state)
-        result = final_state.get("interpretation", "")
-        if not result:
-            raise HTTPException(
-                status_code=500, detail="Analysis failed - no interpretation generated"
-            )
-
-        # Save to database
-        history = History(
-            prompt=request.text,
-            result=result,
-            target_language=request.user_language,
-        )
-        db.add(history)
-        db.commit()
-
-        return AnalysisResponse(result=result, success=True)
-    except Exception as e:
-        return AnalysisResponse(result="", success=False, error=str(e))
-
-
-def to_sse_event(event: str, data: dict[str, Any]) -> str:
-    payload = json.dumps(data, ensure_ascii=False)
-    return f"event: {event}\ndata: {payload}\n\n"
-
-
-@api_router.post("/analyze/stream")
-async def stream_analyse_info(
-    request: AnalysisRequest,
-    service: AnalysisService = Depends(get_analysis_service),
-    db: Session = Depends(get_db),
-):
-    agent = service.get_agent()
-    if not agent:
-        raise HTTPException(
-            status_code=400, detail="Please configure Gemini API key in settings"
-        )
-
-    async def event_generator():
-        final_result = ""
-        yield ": stream-start\n\n"
-
-        try:
-            async for event in agent.analyze_stream(
-                request.text, request.user_language
-            ):
-                event_type = event.get("event")
-
-                if event_type == "stage":
-                    stage = event.get("stage", "")
-                    if stage:
-                        yield to_sse_event("stage", {"stage": stage})
-                    continue
-
-                if event_type == "chunk":
-                    delta = event.get("delta", "")
-                    if delta:
-                        final_result += delta
-                        yield to_sse_event("chunk", {"delta": delta})
-                    continue
-
-                if event_type == "done":
-                    result = event.get("result", "").strip()
-                    if result:
-                        final_result = result
-
-            if not final_result:
-                raise ValueError("Analysis failed - no interpretation generated")
-
-            history = History(
-                prompt=request.text,
-                result=final_result,
-                target_language=request.user_language.upper(),
-            )
-            db.add(history)
-            db.commit()
-            db.refresh(history)
-
-            yield to_sse_event(
-                "done", {"result": final_result, "history_id": history.id}
-            )
-        except Exception as e:
-            db.rollback()
-            yield to_sse_event("error", {"message": str(e)})
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache, no-transform",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
-
-
-@api_router.get("/history", response_model=HistoryResponse)
-async def get_history(db: Session = Depends(get_db)):
-    try:
-        rows = db.query(History).order_by(History.timestamp.desc()).all()
-        history = [row.to_dict() for row in rows]
-
-        return HistoryResponse(history=history, success=True)
-    except Exception as e:
-        return HistoryResponse(history=[], success=False, error=str(e))
-
-
-@api_router.delete("/history/{history_id}")
-async def delete_history(history_id: int, db: Session = Depends(get_db)):
-    history = db.query(History).filter(History.id == history_id).first()
-    if not history:
-        raise HTTPException(status_code=404, detail="History item not found")
-
-    db.delete(history)
-    db.commit()
-    return {"success": True, "message": "History item deleted successfully"}
-
-
-@api_router.get("/settings", response_model=SettingsResponse)
-async def get_settings(service: AnalysisService = Depends(get_analysis_service)):
-    has_key = bool(service.settings["gemini_api_key"])
-    return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
-        if has_key
-        else "",
-        model=service.settings["model"],
-        has_api_key=has_key,
-        success=True,
-    )
-
-
-@api_router.post("/settings", response_model=SettingsResponse)
-async def update_settings(
-    request: SettingsRequest, service: AnalysisService = Depends(get_analysis_service)
-):
-    # Reinitialize agent with new settings
-    service.update_settings(request.gemini_api_key, request.model)
-
-    has_key = bool(service.settings["gemini_api_key"])
-
-    return SettingsResponse(
-        gemini_api_key=service.settings["gemini_api_key"][:4] + "..."
-        if has_key
-        else "",
-        model=service.settings["model"],
-        has_api_key=has_key,
-        success=True,
-    )
-
 
 app.include_router(api_router)
 

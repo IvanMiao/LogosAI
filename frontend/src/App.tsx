@@ -4,7 +4,7 @@ import { HomePage } from '@/components/HomePage';
 import { SettingsView } from '@/components/SettingsView';
 import { AboutView } from '@/components/AboutView';
 import { LandingPage } from '@/components/LandingPage';
-import { AnalysisProvider } from '@/hooks/AnalysisContext';
+import { AnalysisProvider } from '@/context/AnalysisContext';
 
 import './App.css';
 
