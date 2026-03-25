@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
-from workflow.agent import TextAnalysisLangchain
+from llm.agent import TextAnalysisLangchain
 
 
 @dataclass

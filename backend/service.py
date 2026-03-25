@@ -1,6 +1,6 @@
 import os
 
-from workflow.agent import TextAnalysisLangchain
+from llm.agent import TextAnalysisLangchain
 
 
 class AnalysisService:
