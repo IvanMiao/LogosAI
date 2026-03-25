@@ -14,6 +14,7 @@ export interface UseSettingsReturn {
   saveSuccess: boolean;
   error: string;
   handleSave: () => Promise<void>;
+  handleClearApiKey: () => void;
 }
 
 function readStored(key: string, fallback: string): string {
@@ -73,6 +74,14 @@ export function useSettings(): UseSettingsReturn {
     }
   }, [apiKey, model, hasApiKey]);
 
+  const handleClearApiKey = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY_API);
+    } catch { /* ignored */ }
+    setHasApiKey(false);
+    setApiKey('');
+  }, []);
+
   return {
     apiKey, setApiKey,
     model, setModel,
@@ -81,5 +90,6 @@ export function useSettings(): UseSettingsReturn {
     saveSuccess,
     error,
     handleSave,
+    handleClearApiKey,
   };
 }
