@@ -1,7 +1,9 @@
 import json
 
 import pytest
+from fastapi.testclient import TestClient
 
+from app import app
 from tests.helpers import make_fake_agent
 
 
@@ -114,13 +116,13 @@ class TestStreamEndpoint:
         done = next(e for e in events if e["event"] == "done")
         assert done["data"]["result"] == "Hello world"
 
-    def test_stream_without_api_key_returns_400(self, client, fake_service):
-        fake_service.agent = None
-        resp = client.post(
+    def test_stream_without_api_key_returns_401(self):
+        bare_client = TestClient(app)
+        resp = bare_client.post(
             "/api/analyze/stream",
             json={"text": "test", "user_language": "EN"},
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 401
 
     def test_stream_error_yields_error_event(self, client, fake_agent):
         async def failing_stream(_text, _lang):
