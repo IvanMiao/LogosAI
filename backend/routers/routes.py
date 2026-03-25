@@ -9,6 +9,8 @@ from service import get_agent
 
 api_router = APIRouter(prefix="/api")
 
+_ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro"}
+
 
 def _require_agent(
     api_key: str | None,
@@ -18,6 +20,11 @@ def _require_agent(
         raise HTTPException(
             status_code=401,
             detail="Missing Gemini API key. Configure it in Settings.",
+        )
+    if model not in _ALLOWED_MODELS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported model. Allowed: {', '.join(sorted(_ALLOWED_MODELS))}",
         )
     return get_agent(api_key.strip(), model)
 
