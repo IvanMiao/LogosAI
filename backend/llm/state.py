@@ -42,6 +42,7 @@ def create_initial_state(text: str, user_language: str) -> MultiAgentState:
 def build_analysis_prompt(text_language: str, user_language: str) -> str:
     learn_lang = LANG_MAP.get(text_language, "English")
     user_lang = LANG_MAP.get(user_language, "English")
+
     return GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
         "[PROF_LANGUAGE]", user_lang
     )

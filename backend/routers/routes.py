@@ -5,7 +5,6 @@ from llm.agent import TextAnalysisLangchain
 from llm.state import create_initial_state
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
-from service import get_agent
 
 api_router = APIRouter(prefix="/api")
 
@@ -26,7 +25,7 @@ def _require_agent(
             status_code=422,
             detail=f"Unsupported model. Allowed: {', '.join(sorted(_ALLOWED_MODELS))}",
         )
-    return get_agent(api_key.strip(), model)
+    return TextAnalysisLangchain(gemini_key=api_key.strip(), model=model)
 
 
 @api_router.post("/analyze", response_model=AnalysisResponse)
