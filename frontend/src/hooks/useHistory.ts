@@ -26,7 +26,7 @@ export function saveHistory(items: HistoryItem[]): void {
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>(loadHistory);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback( () => {
     try {
       const items = loadHistory();
       setHistory(items);
@@ -35,7 +35,7 @@ export function useHistory() {
     }
   }, []);
 
-  const deleteHistory = async (id: number) => {
+  const deleteHistory = (id: number) => {
     try {
       const updated = loadHistory().filter((item) => item.id !== id);
       saveHistory(updated);

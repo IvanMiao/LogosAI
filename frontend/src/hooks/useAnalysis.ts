@@ -36,9 +36,9 @@ export interface UseAnalysisReturn {
   error: string;
   hasApiKey: boolean;
   refreshApiKeyStatus: () => void;
-  fetchHistory: () => Promise<void>;
+  fetchHistory: () => void;
   onAnalyze: () => Promise<void>;
-  onDeleteHistory: (id: number) => Promise<void>;
+  onDeleteHistory: (id: number) => void;
   onLoadHistory: (item: HistoryItem) => void;
 }
 

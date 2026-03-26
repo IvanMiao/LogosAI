@@ -14,5 +14,5 @@ def fake_agent():
 
 @pytest.fixture()
 def client(fake_agent):
-    with patch("routers.routes.get_agent", return_value=fake_agent):
+    with patch("routers.routes._require_agent", return_value=fake_agent):
         yield TestClient(app, headers={"X-Gemini-Key": "test-key"})
