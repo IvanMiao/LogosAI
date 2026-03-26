@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   parseSseBlock,
   type ParsedSseEvent,
@@ -9,20 +9,15 @@ import {
 } from '@/lib/parseSse';
 import { useHistory, type HistoryItem } from './useHistory';
 
-const STORAGE_KEY_API = 'logosai_api_key';
-const STORAGE_KEY_MODEL = 'logosai_model';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
-function readStored(key: string, fallback: string): string {
-  try {
-    return localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export type { HistoryItem };
+
+export interface UseAnalysisOptions {
+  apiKey: string;
+  hasApiKey: boolean;
+  model: string;
+}
 
 export interface UseAnalysisReturn {
   text: string;
@@ -35,8 +30,6 @@ export interface UseAnalysisReturn {
   streamStage: string;
   error: string;
   hasApiKey: boolean;
-  refreshApiKeyStatus: () => void;
-  fetchHistory: () => void;
   onAnalyze: () => Promise<void>;
   onDeleteHistory: (id: number) => void;
   onLoadHistory: (item: HistoryItem) => void;
@@ -59,36 +52,29 @@ function consumeSseStream(
   return buffer;
 }
 
-export function useAnalysis(): UseAnalysisReturn {
+export function useAnalysis({
+  apiKey,
+  hasApiKey,
+  model,
+}: UseAnalysisOptions): UseAnalysisReturn {
   const [text, setText] = useState<string>('');
   const [language, setLanguage] = useState<string>('en');
   const [result, setResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [hasApiKey, setHasApiKey] = useState<boolean>(
-    () => !!readStored(STORAGE_KEY_API, ''),
-  );
 
-  const { history, fetchHistory, deleteHistory, addHistory } = useHistory();
-
-  const refreshApiKeyStatus = useCallback(() => {
-    setHasApiKey(!!readStored(STORAGE_KEY_API, ''));
-  }, []);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_API) {
-        setHasApiKey(!!e.newValue);
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  const { history, deleteHistory, addHistory } = useHistory();
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
       setError('Please enter a text');
+      setResult('');
+      return;
+    }
+
+    if (!hasApiKey) {
+      setError('Missing Gemini API key. Configure it in Settings.');
       setResult('');
       return;
     }
@@ -99,17 +85,14 @@ export function useAnalysis(): UseAnalysisReturn {
     setStreamStage('');
 
     try {
-      const storedKey = readStored(STORAGE_KEY_API, '');
-      const storedModel = readStored(STORAGE_KEY_MODEL, DEFAULT_MODEL);
-
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
           'Content-Type': 'application/json',
-          'X-Gemini-Key': storedKey,
+          'X-Gemini-Key': apiKey,
         },
-        body: JSON.stringify({ text, user_language: language, model: storedModel }),
+        body: JSON.stringify({ text, user_language: language, model }),
       });
 
       if (!response.ok) {
@@ -146,7 +129,7 @@ export function useAnalysis(): UseAnalysisReturn {
       setIsLoading(false);
       setStreamStage('');
     }
-  }, [text, language, addHistory]);
+  }, [text, language, addHistory, apiKey, hasApiKey, model]);
 
   const handleLoadHistory = (item: HistoryItem) => {
     setLanguage(item.target_language.toLowerCase() || 'en');
@@ -167,8 +150,6 @@ export function useAnalysis(): UseAnalysisReturn {
     streamStage,
     error,
     hasApiKey,
-    refreshApiKeyStatus,
-    fetchHistory,
     onAnalyze: handleAnalyze,
     onDeleteHistory: deleteHistory,
     onLoadHistory: handleLoadHistory,

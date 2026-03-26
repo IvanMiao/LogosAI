@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings as SettingsIcon, Key, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsContext } from '@/context/SettingsContext';
 
 
 function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
@@ -44,7 +44,7 @@ function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
 
 
 export function SettingsView() {
-  const { apiKey, setApiKey, model, setModel, hasApiKey, isSaving, saveSuccess, error, handleSave, handleClearApiKey } = useSettings();
+  const { apiKey, setApiKey, model, setModel, hasApiKey, isSaving, saveSuccess, error, handleSave, handleClearApiKey } = useSettingsContext();
 
   return (
     <div className="space-y-6">

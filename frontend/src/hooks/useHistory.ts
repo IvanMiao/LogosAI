@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 const STORAGE_KEY = 'logosai_history';
 
@@ -26,15 +26,6 @@ export function saveHistory(items: HistoryItem[]): void {
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>(loadHistory);
 
-  const fetchHistory = useCallback( () => {
-    try {
-      const items = loadHistory();
-      setHistory(items);
-    } catch (e) {
-      console.error('Failed to load history:', e);
-    }
-  }, []);
-
   const deleteHistory = (id: number) => {
     try {
       const updated = loadHistory().filter((item) => item.id !== id);
@@ -51,5 +42,5 @@ export function useHistory() {
     setHistory(updated);
   };
 
-  return { history, fetchHistory, deleteHistory, addHistory };
+  return { history, deleteHistory, addHistory };
 }

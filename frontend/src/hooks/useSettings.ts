@@ -7,13 +7,14 @@ const DEFAULT_MODEL = 'gemini-2.5-flash';
 export interface UseSettingsReturn {
   apiKey: string;
   setApiKey: (key: string) => void;
+  savedApiKey: string;
   model: string;
   setModel: (model: string) => void;
   hasApiKey: boolean;
   isSaving: boolean;
   saveSuccess: boolean;
   error: string;
-  handleSave: () => Promise<void>;
+  handleSave: () => void;
   handleClearApiKey: () => void;
 }
 
@@ -27,17 +28,20 @@ function readStored(key: string, fallback: string): string {
 
 export function useSettings(): UseSettingsReturn {
   const [apiKey, setApiKey] = useState<string>('');
+  const [savedApiKey, setSavedApiKey] = useState<string>(() =>
+    readStored(STORAGE_KEY_API, ''),
+  );
   const [model, setModel] = useState<string>(() => readStored(STORAGE_KEY_MODEL, DEFAULT_MODEL));
-  const [hasApiKey, setHasApiKey] = useState<boolean>(() => !!readStored(STORAGE_KEY_API, ''));
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const hasApiKey = savedApiKey.trim().length > 0;
 
   // Sync across tabs
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY_API) {
-        setHasApiKey(!!e.newValue);
+        setSavedApiKey(e.newValue ?? '');
       }
       if (e.key === STORAGE_KEY_MODEL) {
         setModel(e.newValue ?? DEFAULT_MODEL);
@@ -47,7 +51,7 @@ export function useSettings(): UseSettingsReturn {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(() => {
     if (!hasApiKey && !apiKey.trim()) {
       setError('Please enter your Gemini API key');
       return;
@@ -58,9 +62,11 @@ export function useSettings(): UseSettingsReturn {
     setSaveSuccess(false);
 
     try {
-      if (apiKey.trim()) {
-        localStorage.setItem(STORAGE_KEY_API, apiKey.trim());
-        setHasApiKey(true);
+      const nextApiKey = apiKey.trim();
+
+      if (nextApiKey) {
+        localStorage.setItem(STORAGE_KEY_API, nextApiKey);
+        setSavedApiKey(nextApiKey);
       }
       localStorage.setItem(STORAGE_KEY_MODEL, model);
 
@@ -78,12 +84,13 @@ export function useSettings(): UseSettingsReturn {
     try {
       localStorage.removeItem(STORAGE_KEY_API);
     } catch { /* ignored */ }
-    setHasApiKey(false);
+    setSavedApiKey('');
     setApiKey('');
   }, []);
 
   return {
     apiKey, setApiKey,
+    savedApiKey,
     model, setModel,
     hasApiKey,
     isSaving,

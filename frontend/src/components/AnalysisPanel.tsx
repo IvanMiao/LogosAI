@@ -15,13 +15,9 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 };
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, refreshApiKeyStatus, onAnalyze } = useAnalysisContext();
+  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, onAnalyze } = useAnalysisContext();
   const outputRef = useRef<HTMLDivElement | null>(null);
   const showResultCard = isLoading || result.length > 0;
-
-  useEffect(() => {
-    refreshApiKeyStatus();
-  }, [refreshApiKeyStatus]);
 
   useEffect(() => {
     if (!isLoading) {
