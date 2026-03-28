@@ -2,6 +2,7 @@
   <img src="./docs/LOGO.png" alt="LogosAI Logo" width="280" />
 
   [![Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/IvanMiao/LogosAI)
+[![gitcgr](https://gitcgr.com/badge/IvanMiao/LogosAI.svg)](https://gitcgr.com/IvanMiao/LogosAI)
 </div>
 
 **LogosAI** is an advanced AI-powered platform designed for deep language learning and the rigorous analysis of complex texts. Whether you are deconstructing intricate news articles, academic papers, or dense philosophical works, LogosAI empowers you to understand sophisticated narratives with precision and depth.
