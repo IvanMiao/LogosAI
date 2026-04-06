@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 
 from llm.prompts import CORRECTION_SYS_PROMPT, EXAM_SYS_PROMPT
 from llm.state import MultiAgentState, build_analysis_prompt, create_initial_state
+from llm.vocabulary import extract_vocabulary_items
 from schemas.analyze import TextDerectives
 
 
@@ -25,6 +26,21 @@ class TextAnalysisLangchain:
         )
 
         self.graph = self._make_workflow()
+
+    def extract_learning_vocabulary(
+        self,
+        text: str,
+        max_items: int = 10,
+        user_language: str = "EN",
+    ) -> list[dict[str, str]]:
+        if not text.strip():
+            return []
+        return extract_vocabulary_items(
+            self.llm_lite,
+            text=text,
+            max_items=max_items,
+            user_language=user_language,
+        )
 
     @staticmethod
     def _content_to_text(content: object) -> str:
@@ -52,9 +68,18 @@ class TextAnalysisLangchain:
 
         return ""
 
+    def _check_limit(self, text: str) -> bool:
+        LIMIT = 200000
+        if (len(text) > LIMIT):
+            return False
+        return True
+
     async def analyze_stream(
         self, text: str, user_language: str
     ) -> AsyncIterator[dict[str, str]]:
+        if not (self._check_limit(text)):
+            text = self._summarize(text)
+
         state = create_initial_state(text, user_language)
 
         yield {"event": "stage", "stage": "detect"}

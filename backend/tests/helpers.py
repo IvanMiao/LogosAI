@@ -16,19 +16,35 @@ def make_fake_agent(
     needs_correction: bool = False,
     corrected_text: str = "corrected",
     chunks: list[str] | None = None,
+    vocabulary_items: list[dict[str, str]] | None = None,
 ) -> TextAnalysisLangchain:
     """Build a TextAnalysisLangchain with fully mocked LLMs."""
     if chunks is None:
         chunks = ["Hello", " world"]
+    if vocabulary_items is None:
+        vocabulary_items = [
+            {
+                "term": "dévoiler",
+                "sentence": "Le gouvernement a dévoilé une série de mesures.",
+                "context_meaning": "公布（政策或信息）",
+                "dictionary_meaning": "揭示，揭露",
+            }
+        ]
 
     agent = object.__new__(TextAnalysisLangchain)
 
     # --- llm_lite: detection (structured output) + correction ---
-    structured_mock = AsyncMock()
-    structured_mock.ainvoke.return_value = MagicMock(
+    structured_mock = MagicMock()
+    structured_mock.ainvoke = AsyncMock(return_value=MagicMock(
         language=language,
         genre=genre,
         correction_needed=needs_correction,
+    ))
+    structured_mock.invoke.return_value = MagicMock(
+        items=[
+            MagicMock(model_dump=MagicMock(return_value=item))
+            for item in vocabulary_items
+        ]
     )
 
     lite_mock = MagicMock()

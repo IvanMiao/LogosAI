@@ -5,6 +5,11 @@ from llm.agent import TextAnalysisLangchain
 from llm.state import create_initial_state
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
+from schemas.vocabulary import (
+    VocabularyEntry,
+    VocabularyExtractionRequest,
+    VocabularyExtractionResponse,
+)
 
 api_router = APIRouter(prefix="/api")
 
@@ -101,3 +106,25 @@ async def stream_analyse_info(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@api_router.post(
+    "/vocabulary/extract", response_model=VocabularyExtractionResponse
+)
+def extract_vocabulary(
+    request: VocabularyExtractionRequest,
+    x_gemini_key: str | None = Header(None),
+):
+    try:
+        agent = _require_agent(x_gemini_key, request.model)
+        items = agent.extract_learning_vocabulary(
+            request.text,
+            max_items=request.max_items,
+            user_language=request.user_language,
+        )
+        vocabulary_items = [VocabularyEntry(**item) for item in items]
+        return VocabularyExtractionResponse(items=vocabulary_items, success=True)
+    except HTTPException:
+        raise
+    except Exception as e:
+        return VocabularyExtractionResponse(items=[], success=False, error=str(e))
