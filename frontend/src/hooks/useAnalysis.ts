@@ -8,6 +8,12 @@ import {
   type StreamErrorPayload,
 } from '@/lib/parseSse';
 import { useHistory, type HistoryItem } from './useHistory';
+import {
+  useVocabularyNotebook,
+  type VocabularyApiItem,
+  type VocabularyNotebookEntry,
+  type VocabularyReviewStatus,
+} from './useVocabularyNotebook';
 
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
@@ -30,6 +36,13 @@ export interface UseAnalysisReturn {
   streamStage: string;
   error: string;
   hasApiKey: boolean;
+  extractVocabularyEnabled: boolean;
+  setExtractVocabularyEnabled: (enabled: boolean) => void;
+  vocabularyNotebook: VocabularyNotebookEntry[];
+  onDeleteVocabulary: (id: string) => void;
+  onClearVocabulary: () => void;
+  onSetVocabularyReviewStatus: (id: string, reviewStatus: VocabularyReviewStatus) => void;
+  onSetVocabularyNote: (id: string, note: string) => void;
   onAnalyze: () => Promise<void>;
   onDeleteHistory: (id: number) => void;
   onLoadHistory: (item: HistoryItem) => void;
@@ -63,8 +76,61 @@ export function useAnalysis({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamStage, setStreamStage] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [extractVocabularyEnabled, setExtractVocabularyEnabled] = useState<boolean>(false);
 
   const { history, deleteHistory, addHistory } = useHistory();
+  const {
+    entries: vocabularyNotebook,
+    addVocabularyEntries,
+    removeVocabularyEntry,
+    clearVocabularyEntries,
+    setVocabularyReviewStatus,
+    setVocabularyNote,
+  } = useVocabularyNotebook();
+
+  const requestVocabularyExtraction = useCallback(
+    async (sourceText: string, learnerLanguage: string): Promise<VocabularyApiItem[]> => {
+      const response = await fetch('/api/vocabulary/extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Gemini-Key': apiKey,
+        },
+        body: JSON.stringify({
+          text: sourceText,
+          max_items: 10,
+          user_language: learnerLanguage.toUpperCase(),
+          model,
+        }),
+      });
+
+      if (!response.ok) {
+        let message = `Vocabulary API failed with status ${response.status}`;
+        try {
+          const errorData = (await response.json()) as { detail?: string };
+          if (errorData.detail) {
+            message = errorData.detail;
+          }
+        } catch {
+          // Ignore parse errors and keep fallback message.
+        }
+        throw new Error(message);
+      }
+
+      const payload = (await response.json()) as {
+        success: boolean;
+        error?: string;
+        items: VocabularyApiItem[];
+      };
+
+      if (!payload.success) {
+        throw new Error(payload.error || 'Vocabulary extraction failed');
+      }
+
+      return payload.items;
+    },
+    [apiKey, model],
+  );
 
   const handleAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -123,13 +189,36 @@ export function useAnalysis({
         target_language: language,
         timestamp: new Date().toISOString(),
       });
+
+      if (extractVocabularyEnabled) {
+        try {
+          const vocabularyItems = await requestVocabularyExtraction(text, language);
+          addVocabularyEntries(vocabularyItems);
+        } catch (vocabularyError) {
+          const vocabularyMessage =
+            vocabularyError instanceof Error
+              ? vocabularyError.message
+              : String(vocabularyError);
+          setError(`Analysis completed, but vocabulary extraction failed: ${vocabularyMessage}`);
+        }
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setIsLoading(false);
       setStreamStage('');
     }
-  }, [text, language, addHistory, apiKey, hasApiKey, model]);
+  }, [
+    text,
+    language,
+    addHistory,
+    apiKey,
+    hasApiKey,
+    model,
+    extractVocabularyEnabled,
+    requestVocabularyExtraction,
+    addVocabularyEntries,
+  ]);
 
   const handleLoadHistory = (item: HistoryItem) => {
     setLanguage(item.target_language.toLowerCase() || 'en');
@@ -150,6 +239,13 @@ export function useAnalysis({
     streamStage,
     error,
     hasApiKey,
+    extractVocabularyEnabled,
+    setExtractVocabularyEnabled,
+    vocabularyNotebook,
+    onDeleteVocabulary: removeVocabularyEntry,
+    onClearVocabulary: clearVocabularyEntries,
+    onSetVocabularyReviewStatus: setVocabularyReviewStatus,
+    onSetVocabularyNote: setVocabularyNote,
     onAnalyze: handleAnalyze,
     onDeleteHistory: deleteHistory,
     onLoadHistory: handleLoadHistory,

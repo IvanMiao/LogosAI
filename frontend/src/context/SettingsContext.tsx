@@ -1,7 +1,6 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useSettings, type UseSettingsReturn } from '@/hooks/useSettings';
-
-const SettingsContext = createContext<UseSettingsReturn | null>(null);
+import type { ReactNode } from 'react';
+import { useSettings } from '@/hooks/useSettings';
+import { SettingsContext } from '@/context/settingsContextStore';
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const settings = useSettings();
@@ -11,14 +10,4 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       {children}
     </SettingsContext.Provider>
   );
-}
-
-export function useSettingsContext(): UseSettingsReturn {
-  const context = useContext(SettingsContext);
-
-  if (!context) {
-    throw new Error('useSettingsContext must be within a SettingsProvider');
-  }
-
-  return context;
 }

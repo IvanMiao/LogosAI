@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound } from 'lucide-react';
-import { useAnalysisContext } from '@/context/AnalysisContext';
+import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound, BookOpen, Check } from 'lucide-react';
+import { useAnalysisContext } from '@/context/useAnalysisContext';
 import { ResultCard } from '@/components/ResultCard';
 
 const STREAM_STAGE_LABEL: Record<string, string> = {
@@ -15,7 +15,20 @@ const STREAM_STAGE_LABEL: Record<string, string> = {
 };
 
 export function AnalysisPanel() {
-  const { text, setText, language, setLanguage, result, isLoading, streamStage, error, hasApiKey, onAnalyze } = useAnalysisContext();
+  const {
+    text,
+    setText,
+    language,
+    setLanguage,
+    result,
+    isLoading,
+    streamStage,
+    error,
+    hasApiKey,
+    extractVocabularyEnabled,
+    setExtractVocabularyEnabled,
+    onAnalyze,
+  } = useAnalysisContext();
   const outputRef = useRef<HTMLDivElement | null>(null);
   const showResultCard = isLoading || result.length > 0;
 
@@ -99,6 +112,30 @@ export function AnalysisPanel() {
               disabled={isLoading}
               className="resize-none text-sm border-2 border-border focus:ring-0 focus:border-border shadow-[4px_4px_0px_0px_var(--border)] font-mono"
             />
+          </div>
+
+          <div
+            onClick={() => {
+              if (!isLoading) setExtractVocabularyEnabled(!extractVocabularyEnabled);
+            }}
+            className={`
+              inline-flex items-center gap-3 px-3 py-2 border-2 cursor-pointer transition-all duration-200 select-none group w-fit
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+              ${extractVocabularyEnabled 
+                  ? 'bg-primary border-primary text-primary-foreground shadow-[2px_2px_0px_0px_hsl(var(--primary))] translate-x-[-1px] translate-y-[-1px]' 
+                  : 'bg-secondary border-border hover:bg-accent text-foreground shadow-[2px_2px_0px_0px_var(--border)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-[1px_1px_0px_0px_var(--border)]'
+              }
+            `}
+          >
+            <div className={`flex items-center justify-center w-4 h-4 border-2 ${extractVocabularyEnabled ? 'bg-primary-foreground text-primary border-primary-foreground' : 'bg-background border-border text-transparent'} transition-colors`}>
+              <Check className="w-3 h-3" strokeWidth={3} />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4" />
+              <span className="text-xs font-bold font-mono tracking-tight">
+                AUTO_EXTRACT_VOCABULARY
+              </span>
+            </div>
           </div>
 
           <Button

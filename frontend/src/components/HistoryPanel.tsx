@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { History } from 'lucide-react';
-import { useAnalysisContext } from '@/context/AnalysisContext';
+import { useAnalysisContext } from '@/context/useAnalysisContext';
 import { HistoryItem } from '@/hooks/useAnalysis';
 import { HistoryListItem } from '@/components/HistoryListItem';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';

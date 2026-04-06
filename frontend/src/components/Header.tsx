@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { Brain, Menu, Settings, Info } from 'lucide-react';
+import { Brain, Menu, Settings, Info, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
   mounted: boolean;
@@ -47,6 +47,14 @@ export function Header({ mounted }: HeaderProps) {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] rounded-none">
+                <DropdownMenuItem
+                  onClick={() => navigate('/app/notebook')}
+                  className="gap-2 focus:bg-primary focus:text-primary-foreground rounded-none"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Notebook</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={() => navigate('/app/settings')}
                   className="gap-2 focus:bg-primary focus:text-primary-foreground rounded-none"
