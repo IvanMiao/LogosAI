@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings as SettingsIcon, Key, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSettingsContext } from '@/context/SettingsContext';
+import { useSettingsContext } from '@/context/useSettingsContext';
 
 
 function ApiKeyField({ apiKey, setApiKey, hasApiKey }: {
