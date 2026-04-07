@@ -25,12 +25,31 @@ export interface UseAnalysisReturn {
   language: string;
   setLanguage: (lang: string) => void;
   result: string;
-  history: HistoryItem[];
   isLoading: boolean;
   streamStage: string;
   error: string;
   hasApiKey: boolean;
   onAnalyze: () => Promise<void>;
+  history: HistoryItem[];
+  onDeleteHistory: (id: number) => void;
+  onLoadHistory: (item: HistoryItem) => void;
+}
+
+export interface AnalysisContextValue {
+  text: string;
+  setText: (text: string) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
+  result: string;
+  isLoading: boolean;
+  streamStage: string;
+  error: string;
+  hasApiKey: boolean;
+  onAnalyze: () => Promise<void>;
+}
+
+export interface AnalysisHistoryContextValue {
+  history: HistoryItem[];
   onDeleteHistory: (id: number) => void;
   onLoadHistory: (item: HistoryItem) => void;
 }
@@ -131,13 +150,13 @@ export function useAnalysis({
     }
   }, [text, language, addHistory, apiKey, hasApiKey, model]);
 
-  const handleLoadHistory = (item: HistoryItem) => {
+  const handleLoadHistory = useCallback((item: HistoryItem) => {
     setLanguage(item.target_language.toLowerCase() || 'en');
     setText(item.prompt);
     setResult(item.result);
     setError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   return {
     text,
