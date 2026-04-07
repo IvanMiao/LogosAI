@@ -2,7 +2,7 @@ import { type ReactNode, useMemo } from 'react';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { AnalysisContext } from '@/context/analysis-context';
 import { AnalysisHistoryContext } from '@/context/analysis-history-context';
-import { useSettingsContext } from '@/context/useSettingsContext';
+import { useSettingsContext } from '@/context/SettingsContext';
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const { savedApiKey, hasApiKey, model } = useSettingsContext();
