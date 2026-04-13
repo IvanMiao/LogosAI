@@ -23,8 +23,8 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./*"]
     }
   },
-  "include": ["src"],
+  "include": ["app", "client-api", "components", "pages", "tests", "types", "utils", "index.tsx"],
 }
