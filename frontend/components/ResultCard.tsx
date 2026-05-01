@@ -73,7 +73,7 @@ export function ResultCard({ result, isStreaming = false }: ResultCardProps) {
             <div className="h-4 w-5/6 animate-pulse bg-muted border border-border" />
           </div>
         ) : (
-          <div className="prose prose-slate max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg font-mono">
+          <div aria-live={isStreaming ? 'off' : 'polite'} className="prose prose-slate max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg font-mono">
             <ReactMarkdown>{result}</ReactMarkdown>
             {isStreaming && (
               <p className="text-primary">

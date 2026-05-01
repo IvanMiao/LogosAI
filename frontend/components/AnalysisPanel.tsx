@@ -55,6 +55,9 @@ export function AnalysisPanel({
 
   return (
     <div className="space-y-6">
+      <div aria-live="polite" className="sr-only">
+        {isLoading ? streamStageLabel : ''}
+      </div>
       {!hasApiKey && (
         <Card className="bg-yellow-400 border-4 border-border shadow-[4px_4px_0px_0px_var(--border)] rounded-none">
           <CardContent className="py-4">
@@ -121,7 +124,7 @@ export function AnalysisPanel({
               placeholder="INSERT_TEXT_DATA..."
               rows={12}
               disabled={isLoading}
-              className="resize-none text-sm border-2 border-border focus:ring-0 focus:border-border shadow-[4px_4px_0px_0px_var(--border)] font-mono"
+              className="resize-none text-sm border-2 border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shadow-[4px_4px_0px_0px_var(--border)] font-mono"
             />
           </div>
 
@@ -146,7 +149,7 @@ export function AnalysisPanel({
       </Card>
 
       {error && (
-        <Card className="border-2 border-destructive bg-destructive/10 shadow-[4px_4px_0px_0px_var(--destructive)]">
+        <Card role="alert" className="border-2 border-destructive bg-destructive/10 shadow-[4px_4px_0px_0px_var(--destructive)]">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 bg-destructive border-2 border-destructive-foreground flex items-center justify-center flex-shrink-0">

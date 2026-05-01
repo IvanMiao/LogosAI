@@ -60,6 +60,7 @@ export function HistoryListItem({ item, isExpanded, onToggleExpand, onRestore, o
           size="sm"
           variant="ghost"
           onClick={onDelete}
+          aria-label="Delete this analysis"
           className="h-8 px-2.5 text-destructive hover:text-destructive-foreground hover:bg-destructive border-2 border-transparent hover:border-border hover:shadow-[2px_2px_0px_0px_var(--border)]"
         >
           <Trash2 className="w-3.5 h-3.5" />

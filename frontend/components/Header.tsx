@@ -42,7 +42,7 @@ export function Header({ mounted }: HeaderProps) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-9 h-9 border-2 border-border bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+                <button aria-label="Open menu" className="w-9 h-9 border-2 border-border bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
                   <Menu className="w-5 h-5 text-foreground" />
                 </button>
               </DropdownMenuTrigger>
