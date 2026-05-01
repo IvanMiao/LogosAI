@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings as SettingsIcon, Key, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,6 +63,8 @@ export function SettingsPage({ settings }: SettingsPageProps) {
     clearApiKey,
   } = settings;
 
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
   const handleModelChange = (value: string) => {
     setModel(value as AnalysisModel);
   };
@@ -119,25 +122,48 @@ export function SettingsPage({ settings }: SettingsPageProps) {
                   </div>
                 )}
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={saveSettings}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving ? 'Saving...' : 'Save Settings'}
-                  </button>
-                  {hasApiKey && (
+                {clearConfirmOpen ? (
+                  <div className="p-3 border-2 border-destructive bg-destructive/5 shadow-[2px_2px_0px_0px_var(--destructive)]">
+                    <p className="text-sm font-bold text-foreground font-mono mb-3">
+                      Remove your saved API key? You'll need to re-enter it to use analysis features.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { clearApiKey(); setClearConfirmOpen(false); }}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold bg-destructive text-destructive-foreground border-2 border-border shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all font-mono"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Confirm Clear
+                      </button>
+                      <button
+                        onClick={() => setClearConfirmOpen(false)}
+                        className="px-3 py-1.5 text-sm font-bold border-2 border-border bg-secondary hover:bg-secondary/80 shadow-[2px_2px_0px_0px_var(--border)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all font-mono"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={clearApiKey}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                      onClick={saveSettings}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Clear API Key
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Saving...' : 'Save Settings'}
                     </button>
-                  )}
-                </div>
+                    {hasApiKey && (
+                      <button
+                        onClick={() => setClearConfirmOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-destructive text-destructive-foreground text-sm font-bold hover:bg-destructive/90 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Clear API Key
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
