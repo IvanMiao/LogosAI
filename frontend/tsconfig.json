@@ -26,5 +26,5 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["app", "client-api", "components", "pages", "tests", "types", "utils", "index.tsx"],
+  "include": ["app", "client-api", "components", "features", "pages", "tests", "types", "utils", "index.tsx"],
 }

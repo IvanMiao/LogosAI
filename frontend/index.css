@@ -137,6 +137,11 @@
   background: #94a3b8;
 }
 
+.reader-surface {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 /* Markdown prose styles for ReactMarkdown */
 .prose {
   color: #334155;

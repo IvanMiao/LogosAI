@@ -15,6 +15,7 @@ export interface StreamAnalysisRequest {
   model: string;
   text: string;
   userLanguage: string;
+  signal?: AbortSignal;
 }
 
 export interface StreamAnalysisCallbacks {
@@ -33,6 +34,7 @@ export async function streamAnalysis(
       'Content-Type': 'application/json',
       'X-Gemini-Key': request.apiKey,
     },
+    signal: request.signal,
     body: JSON.stringify({
       text: request.text,
       user_language: request.userLanguage,

@@ -72,5 +72,4 @@ The backend now serves the built frontend directly, so Docker only starts FastAP
 
 ## Roadmap
 
-*   [ ] Dark Mode Support
-*   [ ] Agentic Architecture Refactor
+See the concise implementation roadmap in [docs/ROADMAP.md](./docs/ROADMAP.md).

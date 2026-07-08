@@ -1,0 +1,89 @@
+import type { AnalysisModel } from '@/types';
+import type { HistoryItem } from '@/types';
+import type { TextAnchor } from '@/features/anchors';
+import type { Artifact } from '@/features/artifacts';
+import type { AnchorSkill } from '@/client-api/anchorApi';
+import type { DocumentParagraph } from './workspace.helpers';
+
+export type DocumentSourceType = 'paste' | 'file' | 'history';
+export type ReaderFontFamily = 'serif' | 'sans' | 'mono';
+
+export interface WorkspacePageProps {
+  apiKey: string;
+  hasApiKey: boolean;
+  model: AnalysisModel;
+}
+
+export type ApiKeyStatusTone = 'ready' | 'missing';
+
+export interface WorkspaceViewModel {
+  apiKeyStatusLabel: string;
+  apiKeyStatusTone: ApiKeyStatusTone;
+  modelLabel: string;
+}
+
+export interface WorkspaceDocument {
+  id: string;
+  title: string;
+  text: string;
+  sourceType: DocumentSourceType;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReaderPreferences {
+  fontFamily: ReaderFontFamily;
+  fontSize: number;
+  lineSpacing: number;
+}
+
+export interface ImportState {
+  pasteText: string;
+  importError: string;
+}
+
+export interface SelectionToolbarPlacement {
+  top: number;
+  left: number;
+}
+
+export type AnchorMarkStatus = 'active' | 'draft' | 'saved';
+
+export interface WorkspaceController {
+  viewModel: WorkspaceViewModel;
+  activeDocument: WorkspaceDocument | null;
+  activeAnchor: TextAnchor | null;
+  anchors: TextAnchor[];
+  activeAnchorId: string | null;
+  activeArtifacts: Artifact[];
+  activeArtifact: Artifact | null;
+  pastArtifacts: Artifact[];
+  noteDraftContent: string;
+  anchorMarkStatusById: Record<string, AnchorMarkStatus>;
+  history: HistoryItem[];
+  importState: ImportState;
+  readerPreferences: ReaderPreferences;
+  selectionToolbarPlacement: SelectionToolbarPlacement | null;
+  setPasteText: (text: string) => void;
+  importPastedText: () => void;
+  importTextFile: (file: File | null) => Promise<void>;
+  createSelectionAnchor: (
+    selectedText: string,
+    placement: SelectionToolbarPlacement,
+  ) => void;
+  setActiveAnchorId: (anchorId: string) => void;
+  updateNoteDraft: (content: string) => void;
+  runExplainForActiveAnchor: () => Promise<void>;
+  runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
+  runCloseReadDocument: () => Promise<void>;
+  runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
+  stopArtifact: (artifact: Artifact) => void;
+  retryArtifact: (artifact: Artifact) => Promise<void>;
+  openHistoryAsDocument: (item: HistoryItem) => void;
+  deleteHistoryItem: (id: number) => void;
+  updateReaderPreference: <Key extends keyof ReaderPreferences>(
+    key: Key,
+    value: ReaderPreferences[Key],
+  ) => void;
+  clearDocument: () => void;
+}
