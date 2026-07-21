@@ -93,12 +93,18 @@ export function AnalysisPanel({
         </CardHeader>
         <CardContent className="space-y-5">
           <div>
-            <label className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2 font-mono">
+            <label
+              htmlFor="analysis-target-language"
+              className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2 font-mono"
+            >
               <Languages className="w-4 h-4" />
               <span>TARGET_LANGUAGE</span>
             </label>
             <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
-              <SelectTrigger className="w-full h-11 border-2 border-border bg-input shadow-[4px_4px_0px_0px_var(--border)]">
+              <SelectTrigger
+                id="analysis-target-language"
+                className="w-full h-11 border-2 border-border bg-input shadow-[4px_4px_0px_0px_var(--border)]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -115,10 +121,16 @@ export function AnalysisPanel({
 
           <div>
             <div className="flex justify-between items-center mb-2.5">
-              <label className="text-sm font-bold text-foreground font-mono">RAW_CONTENT</label>
+              <label
+                htmlFor="analysis-source-text"
+                className="text-sm font-bold text-foreground font-mono"
+              >
+                RAW_CONTENT
+              </label>
               <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 border border-border">{text.length} chars</span>
             </div>
             <Textarea
+              id="analysis-source-text"
               value={text}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
               placeholder="INSERT_TEXT_DATA..."
