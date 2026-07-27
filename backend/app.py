@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 
+from monitoring import init_error_monitoring
 from routers.routes import api_router
 
 load_dotenv()
+init_error_monitoring()
 
 app = FastAPI()
 FRONTEND_DIST_DIR = Path(__file__).resolve().parent / "frontend_dist"

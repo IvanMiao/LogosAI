@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from llm.agent import TextAnalysisLangchain
 from llm.state import create_initial_state
+from monitoring import capture_exception
 from observability.factory import get_observability_client
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
@@ -116,6 +117,10 @@ def get_analyse_info(
     except HTTPException:
         raise
     except Exception as e:
+        capture_exception(
+            e,
+            tags={"endpoint": "analyze", "model": request.model},
+        )
         return AnalysisResponse(result="", success=False, error=str(e))
 
 
@@ -159,6 +164,10 @@ async def stream_analyse_info(
 
             yield to_sse_event("done", {"result": final_result})
         except Exception as e:
+            capture_exception(
+                e,
+                tags={"endpoint": "analyze.stream", "model": request.model},
+            )
             yield to_sse_event("error", {"message": str(e)})
 
     return StreamingResponse(
@@ -291,6 +300,15 @@ def _stream_anchor_skill(
                 ),
             )
         except Exception as e:
+            capture_exception(
+                e,
+                tags={
+                    "endpoint": "anchors.run",
+                    "model": request.model,
+                    "skill": skill,
+                    "trace_id": trace_id,
+                },
+            )
             _observability.finish_trace(
                 trace_id,
                 "error",

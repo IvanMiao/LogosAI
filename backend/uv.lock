@@ -580,6 +580,7 @@ dependencies = [
     { name = "langchain-google-genai" },
     { name = "psycopg2-binary" },
     { name = "python-dotenv" },
+    { name = "sentry-sdk" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -600,6 +601,7 @@ requires-dist = [
     { name = "langchain-google-genai", specifier = ">=3.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "sentry-sdk", specifier = ">=2.39.0" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.3" },
 ]

@@ -110,7 +110,9 @@ class TestAnchorExplainEndpoint:
             raise RuntimeError("LLM exploded")
 
         fake_agent.analyze_stream = failing_stream
-        resp = client.post("/api/anchors/explain", json=anchor_request())
+        with patch("routers.routes.capture_exception") as capture_exception:
+            resp = client.post("/api/anchors/explain", json=anchor_request())
+
         events = parse_sse_events(resp.text)
         error = next(event for event in events if event["event"] == "error")
 
@@ -118,6 +120,7 @@ class TestAnchorExplainEndpoint:
         assert error["data"]["request_id"].startswith("request-")
         assert error["data"]["trace_id"].startswith("trace-")
         assert "LLM exploded" in error["data"]["message"]
+        capture_exception.assert_called_once()
 
     def test_done_result_equals_joined_chunks(self, client):
         resp = client.post("/api/anchors/explain", json=anchor_request())
