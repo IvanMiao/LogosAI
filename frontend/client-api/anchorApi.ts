@@ -2,6 +2,10 @@ import type { AnalysisStreamStage, AnalysisModel } from '@/types';
 import type { TextAnchor } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
 import {
+  RemoteApiError,
+  reportUnexpectedApiError,
+} from '@/client-api/apiError';
+import {
   consumeSseBuffer,
   type ParsedSseEvent,
 } from '@/utils/parseSse';
@@ -56,6 +60,18 @@ export async function runAnchorSkill(
   request: RunAnchorExplainRequest,
   callbacks: AnchorExplainCallbacks,
 ): Promise<AnchorExplainResult> {
+  try {
+    return await requestAnchorSkill(request, callbacks);
+  } catch (error) {
+    reportUnexpectedApiError(error, 'run_anchor_skill');
+    throw error;
+  }
+}
+
+async function requestAnchorSkill(
+  request: RunAnchorExplainRequest,
+  callbacks: AnchorExplainCallbacks,
+): Promise<AnchorExplainResult> {
   const skill = request.skill ?? 'explain';
   const response = await fetch('/api/anchors/run', {
     method: 'POST',
@@ -85,7 +101,7 @@ export async function runAnchorSkill(
   });
 
   if (!response.ok) {
-    throw new Error(await readApiError(response));
+    throw new RemoteApiError(await readApiError(response));
   }
 
   if (!response.body) {
@@ -143,7 +159,7 @@ async function readAnchorStream(
     }
 
     if (event.event === 'error') {
-      throw new Error(payload.message || 'Anchored explain failed');
+      throw new RemoteApiError(payload.message || 'Anchored explain failed');
     }
   };
 

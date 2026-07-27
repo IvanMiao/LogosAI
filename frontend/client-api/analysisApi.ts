@@ -1,5 +1,9 @@
 import type { AnalysisStreamStage } from '@/types';
 import {
+  RemoteApiError,
+  reportUnexpectedApiError,
+} from '@/client-api/apiError';
+import {
   consumeSseBuffer,
   type ParsedSseEvent,
   type StreamChunkPayload,
@@ -27,6 +31,18 @@ export async function streamAnalysis(
   request: StreamAnalysisRequest,
   callbacks: StreamAnalysisCallbacks,
 ): Promise<string> {
+  try {
+    return await requestAnalysisStream(request, callbacks);
+  } catch (error) {
+    reportUnexpectedApiError(error, 'stream_analysis');
+    throw error;
+  }
+}
+
+async function requestAnalysisStream(
+  request: StreamAnalysisRequest,
+  callbacks: StreamAnalysisCallbacks,
+): Promise<string> {
   const response = await fetch('/api/analyze/stream', {
     method: 'POST',
     headers: {
@@ -43,7 +59,7 @@ export async function streamAnalysis(
   });
 
   if (!response.ok) {
-    throw new Error(await readApiError(response));
+    throw new RemoteApiError(await readApiError(response));
   }
 
   if (!response.body) {
@@ -117,7 +133,7 @@ async function readAnalysisStream(
 
     if (event.event === 'error') {
       const payload = JSON.parse(event.data) as StreamErrorPayload;
-      throw new Error(payload.message || 'Streaming analysis failed');
+      throw new RemoteApiError(payload.message || 'Streaming analysis failed');
     }
   };
 
