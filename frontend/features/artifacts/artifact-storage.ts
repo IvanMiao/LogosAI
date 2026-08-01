@@ -42,6 +42,27 @@ function isArtifactStorageState(value: unknown): value is ArtifactStorageState {
   return artifactsAreValid && tasksAreValid;
 }
 
+function recoverInterruptedState(state: ArtifactStorageState): ArtifactStorageState {
+  const artifactsByAnchorId = Object.fromEntries(
+    Object.entries(state.artifactsByAnchorId).map(([anchorId, artifacts]) => [
+      anchorId,
+      artifacts.map((artifact) => (
+        artifact.status === 'running'
+          ? { ...artifact, status: 'stopped' as const }
+          : artifact
+      )),
+    ]),
+  );
+  const tasksByRequestId = Object.fromEntries(
+    Object.entries(state.tasksByRequestId).map(([requestId, task]) => [
+      requestId,
+      task.status === 'running' ? { ...task, status: 'stopped' as const } : task,
+    ]),
+  );
+
+  return { artifactsByAnchorId, tasksByRequestId };
+}
+
 export function readStoredArtifacts(): ArtifactStorageState {
   try {
     const rawValue = localStorage.getItem(ARTIFACT_STORAGE_KEY);
@@ -50,10 +71,10 @@ export function readStoredArtifacts(): ArtifactStorageState {
       return EMPTY_ARTIFACT_STORAGE;
     }
 
-    return {
+    return recoverInterruptedState({
       artifactsByAnchorId: parsedValue.artifactsByAnchorId,
       tasksByRequestId: parsedValue.tasksByRequestId ?? {},
-    };
+    });
   } catch {
     return EMPTY_ARTIFACT_STORAGE;
   }

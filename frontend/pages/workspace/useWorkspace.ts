@@ -18,9 +18,10 @@ import {
   getActiveArtifact,
   getArtifactsForAnchor,
   getNoteDraft,
-  getPastArtifacts,
   prependArtifact,
   readStoredArtifacts,
+  removeArtifact,
+  removeArtifactsForAnchor,
   updateArtifact,
   upsertNoteDraft,
   writeStoredArtifacts,
@@ -33,8 +34,10 @@ import {
   isSupportedTextFile,
 } from './workspace.helpers';
 import {
+  readStoredAnalysisLanguage,
   readStoredDocument,
   readStoredReaderPreferences,
+  writeStoredAnalysisLanguage,
   writeStoredDocument,
   writeStoredReaderPreferences,
 } from './workspace-storage';
@@ -44,6 +47,7 @@ import {
 } from '@/utils/historyStorage';
 import type {
   AnchorMarkStatus,
+  AnalysisLanguage,
   ImportState,
   ReaderPreferences,
   SelectionToolbarPlacement,
@@ -94,18 +98,12 @@ function getAnchorMarkStatusById({
   }, {});
 }
 
-function formatModelLabel(model: WorkspacePageProps['model']): string {
-  return model.replace('gemini-', 'Gemini ');
-}
-
 function buildWorkspaceViewModel({
   hasApiKey,
-  model,
-}: Pick<WorkspacePageProps, 'hasApiKey' | 'model'>): WorkspaceViewModel {
+}: Pick<WorkspacePageProps, 'hasApiKey'>): WorkspaceViewModel {
   return {
     apiKeyStatusLabel: hasApiKey ? 'API key ready' : 'API key missing',
     apiKeyStatusTone: hasApiKey ? 'ready' : 'missing',
-    modelLabel: formatModelLabel(model),
   };
 }
 
@@ -158,18 +156,22 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const [readerPreferences, setReaderPreferences] = useState<ReaderPreferences>(
     () => readStoredReaderPreferences(),
   );
+  const [analysisLanguage, setAnalysisLanguage] = useState<AnalysisLanguage>(
+    () => readStoredAnalysisLanguage(),
+  );
   const [anchorStorage, setAnchorStorage] = useState<AnchorStorageState>(
     () => readStoredAnchors(),
   );
   const [artifactStorage, setArtifactStorage] = useState<ArtifactStorageState>(
     () => readStoredArtifacts(),
   );
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [selectionToolbarPlacement, setSelectionToolbarPlacement] =
     useState<SelectionToolbarPlacement | null>(null);
 
   const viewModel = useMemo(
-    () => buildWorkspaceViewModel({ hasApiKey, model }),
-    [hasApiKey, model],
+    () => buildWorkspaceViewModel({ hasApiKey }),
+    [hasApiKey],
   );
   const activeAnchor = getActiveAnchor(
     anchorStorage.anchorsById,
@@ -178,9 +180,15 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   );
   const anchors = getAnchorsForDocument(anchorStorage.anchorsById, activeDocument?.id);
   const activeArtifacts = getArtifactsForAnchor(artifactStorage, activeAnchor?.id ?? null);
-  const activeArtifact = getActiveArtifact(activeArtifacts);
-  const pastArtifacts = getPastArtifacts(activeArtifacts);
+  const selectedArtifact = activeArtifacts.find((artifact) => artifact.id === selectedArtifactId);
+  const activeArtifact = selectedArtifact ?? getActiveArtifact(activeArtifacts);
   const noteDraftContent = getNoteDraft(activeArtifacts)?.content ?? '';
+  const artifactCountByAnchorId = Object.fromEntries(
+    anchors.map((anchor) => [
+      anchor.id,
+      getArtifactsForAnchor(artifactStorage, anchor.id).length,
+    ]),
+  );
   const anchorMarkStatusById = getAnchorMarkStatusById({
     anchors,
     activeAnchorId: anchorStorage.activeAnchorId,
@@ -215,6 +223,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     setActiveDocument(document);
     writeStoredDocument(document);
     setSelectionToolbarPlacement(null);
+    setSelectedArtifactId(null);
 
     if (document?.id !== activeDocument?.id) {
       writeAnchors({ anchorsById: {}, activeAnchorId: null });
@@ -270,6 +279,11 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     });
   };
 
+  const updateAnalysisLanguage = (language: AnalysisLanguage) => {
+    setAnalysisLanguage(language);
+    writeStoredAnalysisLanguage(language);
+  };
+
   const createSelectionAnchor = (
     selectedText: string,
     placement: SelectionToolbarPlacement,
@@ -297,6 +311,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
 
     writeAnchors(nextState);
     setSelectionToolbarPlacement(placement);
+    setSelectedArtifactId(null);
   };
 
   const setActiveAnchorId = (anchorId: string) => {
@@ -310,6 +325,59 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       activeAnchorId: anchorId,
     });
     setSelectionToolbarPlacement(null);
+    setSelectedArtifactId(null);
+  };
+
+  const dismissSelectionToolbar = () => {
+    setSelectionToolbarPlacement(null);
+  };
+
+  const selectArtifact = (artifactId: string) => {
+    if (activeArtifacts.some((artifact) => artifact.id === artifactId)) {
+      setSelectedArtifactId(artifactId);
+    }
+  };
+
+  const abortTasksFor = (matchesTask: (artifactId: string, anchorId: string) => boolean) => {
+    for (const task of Object.values(artifactStorage.tasksByRequestId)) {
+      if (matchesTask(task.artifactId, task.anchorId)) {
+        runningTasksRef.current[task.requestId]?.abort();
+      }
+    }
+  };
+
+  const deleteArtifact = (artifactId: string) => {
+    abortTasksFor((taskArtifactId) => taskArtifactId === artifactId);
+    writeArtifacts(removeArtifact(artifactStorage, artifactId));
+    setSelectedArtifactId((currentId) => currentId === artifactId ? null : currentId);
+  };
+
+  const deleteAnchor = (anchorId: string) => {
+    if (!anchorStorage.anchorsById[anchorId]) {
+      return;
+    }
+
+    abortTasksFor((_, taskAnchorId) => taskAnchorId === anchorId);
+    const nextAnchorsById = { ...anchorStorage.anchorsById };
+    delete nextAnchorsById[anchorId];
+    writeAnchors({
+      anchorsById: nextAnchorsById,
+      activeAnchorId: anchorStorage.activeAnchorId === anchorId
+        ? null
+        : anchorStorage.activeAnchorId,
+    });
+    writeArtifacts(removeArtifactsForAnchor(artifactStorage, anchorId));
+    setSelectionToolbarPlacement(null);
+    setSelectedArtifactId(null);
+  };
+
+  const clearActiveAnchor = () => {
+    writeAnchors({
+      anchorsById: anchorStorage.anchorsById,
+      activeAnchorId: null,
+    });
+    setSelectionToolbarPlacement(null);
+    setSelectedArtifactId(null);
   };
 
   const activateAnchor = (anchor: TextAnchor) => {
@@ -321,6 +389,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       activeAnchorId: anchor.id,
     });
     setSelectionToolbarPlacement(null);
+    setSelectedArtifactId(null);
   };
 
   const updateNoteDraft = (content: string) => {
@@ -386,7 +455,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           apiKey,
           model,
           text,
-          userLanguage: 'EN',
+          userLanguage: analysisLanguage,
           signal: abortController.signal,
         },
         {
@@ -452,7 +521,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           document: activeDocument,
           anchor,
           skill,
-          userLanguage: 'EN',
+          userLanguage: analysisLanguage,
           signal: abortController.signal,
         },
         {
@@ -603,18 +672,24 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activeAnchorId: anchorStorage.activeAnchorId,
     activeArtifacts,
     activeArtifact,
-    pastArtifacts,
+    artifactCountByAnchorId,
     noteDraftContent,
     anchorMarkStatusById,
     history,
     importState,
     readerPreferences,
+    analysisLanguage,
     selectionToolbarPlacement,
     setPasteText,
     importPastedText,
     importTextFile,
     createSelectionAnchor,
+    dismissSelectionToolbar,
     setActiveAnchorId,
+    selectArtifact,
+    deleteArtifact,
+    deleteAnchor,
+    clearActiveAnchor,
     updateNoteDraft,
     runExplainForActiveAnchor,
     runAnchorSkillForActiveAnchor,
@@ -625,6 +700,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     openHistoryAsDocument,
     deleteHistoryItem,
     updateReaderPreference,
+    updateAnalysisLanguage,
     clearDocument,
   };
 }

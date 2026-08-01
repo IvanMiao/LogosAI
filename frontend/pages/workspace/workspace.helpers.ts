@@ -73,9 +73,9 @@ export function formatDocumentMeta(document: WorkspaceDocument): string {
   const wordCount = document.text.trim().split(/\s+/).filter(Boolean).length;
   const sourceLabelByType: Record<WorkspaceDocument['sourceType'], string> = {
     file: 'Local file',
-    history: 'Legacy history',
+    history: 'History',
     paste: 'Pasted text',
   };
   const sourceLabel = sourceLabelByType[document.sourceType];
-  return `${sourceLabel} · ${wordCount} words · ${document.text.length} chars`;
+  return `${sourceLabel} · ${wordCount} words`;
 }

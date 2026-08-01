@@ -161,6 +161,10 @@ Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同�
 2. Model eval：grounding、selection focus、目标语言、帮助程度、context sufficiency 和禁止行为。
 3. Human review：使用真实阅读文本判断帮助是否解决阅读阻力。
 
+Workspace 已被测试保护的交互旅程以
+[Workspace Journey UX Contract](ux/workspace-journey-contract.md) 为评审参考。该文档与
+`frontend/tests/workspace/workspaceJourney.test.tsx` 必须在同一次变更中同步更新。
+
 ## 已废止的旧结论
 
 以下旧方案不再具有实施授权：

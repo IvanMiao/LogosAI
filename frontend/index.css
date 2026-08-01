@@ -6,6 +6,28 @@
   --shadow-hard-sm: 2px 2px 0px 0px var(--border);
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
 :root {
   /* Neo-Brutalism Palette */
   --background: #f0f0f0;
@@ -247,6 +269,36 @@
 
 .prose a:hover {
   color: #334155;
+}
+
+.close-reading-prose > :first-child {
+  margin-top: 0;
+}
+
+.close-reading-prose p {
+  margin-top: 0.9em;
+  margin-bottom: 0.9em;
+  line-height: inherit;
+}
+
+.close-reading-prose h1 {
+  color: #171717;
+  font-size: 1.375em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.close-reading-prose h2 {
+  color: #171717;
+  font-size: 1.1875em;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.close-reading-prose h3 {
+  color: #171717;
+  font-size: 1.0625em;
+  font-weight: 700;
 }
 
 /* Small prose for history panel */

@@ -166,6 +166,45 @@ export function appendArtifactContent(
   }));
 }
 
+export function removeArtifact(
+  storage: ArtifactStorageState,
+  artifactId: string,
+): ArtifactStorageState {
+  const artifactsByAnchorId = Object.fromEntries(
+    Object.entries(storage.artifactsByAnchorId)
+      .map(([anchorId, artifacts]) => [
+        anchorId,
+        artifacts.filter((artifact) => artifact.id !== artifactId),
+      ] as const)
+      .filter(([, artifacts]) => artifacts.length > 0),
+  );
+  const tasksByRequestId = Object.fromEntries(
+    Object.entries(storage.tasksByRequestId).filter(([, task]) => (
+      task.artifactId !== artifactId
+    )),
+  );
+
+  return { artifactsByAnchorId, tasksByRequestId };
+}
+
+export function removeArtifactsForAnchor(
+  storage: ArtifactStorageState,
+  anchorId: string,
+): ArtifactStorageState {
+  const artifactsByAnchorId = Object.fromEntries(
+    Object.entries(storage.artifactsByAnchorId).filter(([storedAnchorId]) => (
+      storedAnchorId !== anchorId
+    )),
+  );
+  const tasksByRequestId = Object.fromEntries(
+    Object.entries(storage.tasksByRequestId).filter(([, task]) => (
+      task.anchorId !== anchorId
+    )),
+  );
+
+  return { artifactsByAnchorId, tasksByRequestId };
+}
+
 export function createStreamingArtifact({
   documentId,
   anchorId,

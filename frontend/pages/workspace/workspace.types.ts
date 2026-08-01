@@ -7,6 +7,7 @@ import type { DocumentParagraph } from './workspace.helpers';
 
 export type DocumentSourceType = 'paste' | 'file' | 'history';
 export type ReaderFontFamily = 'serif' | 'sans' | 'mono';
+export type AnalysisLanguage = 'zh' | 'en' | 'fr' | 'de' | 'es' | 'it' | 'ja';
 
 export interface WorkspacePageProps {
   apiKey: string;
@@ -19,7 +20,6 @@ export type ApiKeyStatusTone = 'ready' | 'missing';
 export interface WorkspaceViewModel {
   apiKeyStatusLabel: string;
   apiKeyStatusTone: ApiKeyStatusTone;
-  modelLabel: string;
 }
 
 export interface WorkspaceDocument {
@@ -33,6 +33,7 @@ export interface WorkspaceDocument {
 
 export interface ReaderPreferences {
   fontFamily: ReaderFontFamily;
+  closeReadingFontFamily: ReaderFontFamily;
   fontSize: number;
   lineSpacing: number;
 }
@@ -57,12 +58,13 @@ export interface WorkspaceController {
   activeAnchorId: string | null;
   activeArtifacts: Artifact[];
   activeArtifact: Artifact | null;
-  pastArtifacts: Artifact[];
+  artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   history: HistoryItem[];
   importState: ImportState;
   readerPreferences: ReaderPreferences;
+  analysisLanguage: AnalysisLanguage;
   selectionToolbarPlacement: SelectionToolbarPlacement | null;
   setPasteText: (text: string) => void;
   importPastedText: () => void;
@@ -71,7 +73,12 @@ export interface WorkspaceController {
     selectedText: string,
     placement: SelectionToolbarPlacement,
   ) => void;
+  dismissSelectionToolbar: () => void;
   setActiveAnchorId: (anchorId: string) => void;
+  selectArtifact: (artifactId: string) => void;
+  deleteArtifact: (artifactId: string) => void;
+  deleteAnchor: (anchorId: string) => void;
+  clearActiveAnchor: () => void;
   updateNoteDraft: (content: string) => void;
   runExplainForActiveAnchor: () => Promise<void>;
   runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
@@ -85,5 +92,6 @@ export interface WorkspaceController {
     key: Key,
     value: ReaderPreferences[Key],
   ) => void;
+  updateAnalysisLanguage: (language: AnalysisLanguage) => void;
   clearDocument: () => void;
 }

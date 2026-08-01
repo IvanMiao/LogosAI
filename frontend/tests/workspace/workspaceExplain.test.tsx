@@ -46,6 +46,9 @@ function WorkspaceHarness() {
       >
         Explain
       </button>
+      <button type="button" onClick={() => workspace.updateAnalysisLanguage('fr')}>
+        Analyze in French
+      </button>
     </div>
   );
 }
@@ -86,8 +89,11 @@ describe('workspace anchored explain flow', () => {
     await screen.findByText('Active: beta');
     const anchorAId = readStoredAnchors().activeAnchorId;
 
+    await user.click(screen.getByRole('button', { name: 'Analyze in French' }));
     await user.click(screen.getByRole('button', { name: 'Explain' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    const request = vi.mocked(fetch).mock.calls[0]?.[1];
+    expect(JSON.parse(String(request?.body))).toMatchObject({ user_language: 'fr' });
 
     await act(async () => {
       enqueueSse('stage', {

@@ -7,6 +7,8 @@ export {
   getNoteDraft,
   getPastArtifacts,
   prependArtifact,
+  removeArtifact,
+  removeArtifactsForAnchor,
   updateArtifact,
   upsertNoteDraft,
 } from './artifact-core';
