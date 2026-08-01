@@ -3,10 +3,7 @@ from pathlib import Path
 from typing import Any
 
 DATASET_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "docs"
-    / "evals"
-    / "workspace_alpha.jsonl"
+    Path(__file__).resolve().parents[2] / "docs" / "evals" / "workspace_alpha.jsonl"
 )
 REQUIRED_FIELDS = {
     "source_text",

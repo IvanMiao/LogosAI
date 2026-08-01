@@ -21,10 +21,12 @@ def parse_sse_events(raw: str) -> list[dict]:
             elif line.startswith("data:"):
                 data_lines.append(line[len("data:") :].strip())
         if data_lines:
-            events.append({
-                "event": event_name,
-                "data": json.loads("\n".join(data_lines)),
-            })
+            events.append(
+                {
+                    "event": event_name,
+                    "data": json.loads("\n".join(data_lines)),
+                }
+            )
     return events
 
 
@@ -83,9 +85,7 @@ class TestAnchorExplainEndpoint:
 
         events = parse_sse_events(resp.text)
         stages = [
-            event["data"]["stage"]
-            for event in events
-            if event["event"] == "stage"
+            event["data"]["stage"] for event in events if event["event"] == "stage"
         ]
         assert stages == ["detect", "correct", "interpret"]
 
@@ -126,9 +126,7 @@ class TestAnchorExplainEndpoint:
         resp = client.post("/api/anchors/explain", json=anchor_request())
         events = parse_sse_events(resp.text)
         chunks = [
-            event["data"]["delta"]
-            for event in events
-            if event["event"] == "chunk"
+            event["data"]["delta"] for event in events if event["event"] == "chunk"
         ]
         done = next(event for event in events if event["event"] == "done")
 
