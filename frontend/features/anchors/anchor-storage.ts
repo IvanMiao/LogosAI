@@ -5,6 +5,7 @@ const ANCHOR_STORAGE_KEY = 'logosai.workspace.anchors:v1';
 const EMPTY_ANCHOR_STORAGE: AnchorStorageState = {
   anchorsById: {},
   activeAnchorId: null,
+  activeAnchorIdByDocumentId: {},
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -34,9 +35,17 @@ function isAnchorStorageState(value: unknown): value is AnchorStorageState {
     return false;
   }
 
+  const activeIdsAreValid = value.activeAnchorIdByDocumentId === undefined || (
+    isRecord(value.activeAnchorIdByDocumentId)
+    && Object.values(value.activeAnchorIdByDocumentId).every((activeId) => (
+      typeof activeId === 'string' || activeId === null
+    ))
+  );
+
   return (
     (typeof value.activeAnchorId === 'string' || value.activeAnchorId === null)
     && Object.values(value.anchorsById).every(isTextAnchor)
+    && activeIdsAreValid
   );
 }
 

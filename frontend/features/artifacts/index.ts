@@ -9,6 +9,7 @@ export {
   prependArtifact,
   removeArtifact,
   removeArtifactsForAnchor,
+  removeArtifactsForDocument,
   updateArtifact,
   upsertNoteDraft,
 } from './artifact-core';

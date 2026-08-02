@@ -1,9 +1,12 @@
 export {
   createAnchorFromRange,
   createAnchorFromSelection,
+  getActiveAnchorIdForDocument,
   hashAnchorQuote,
   normalizeAnchorQuote,
+  removeAnchorsForDocument,
   resolveAnchor,
+  setActiveAnchorForDocument,
 } from './anchor-core';
 export {
   readStoredAnchors,

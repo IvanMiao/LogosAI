@@ -1,4 +1,9 @@
-import type { AnchorScope, ResolvedAnchor, TextAnchor } from './anchor.types';
+import type {
+  AnchorScope,
+  AnchorStorageState,
+  ResolvedAnchor,
+  TextAnchor,
+} from './anchor.types';
 
 interface CreateAnchorInput {
   documentId: string;
@@ -157,4 +162,55 @@ export function createAnchorFromRange({
     endOffset,
     createdAt: new Date().toISOString(),
   };
+}
+
+export function getActiveAnchorIdForDocument(
+  storage: AnchorStorageState,
+  documentId: string | undefined,
+): string | null {
+  if (!documentId) {
+    return null;
+  }
+
+  const storedId = storage.activeAnchorIdByDocumentId?.[documentId];
+  if (storedId && storage.anchorsById[storedId]?.documentId === documentId) {
+    return storedId;
+  }
+
+  const legacyAnchor = storage.activeAnchorId
+    ? storage.anchorsById[storage.activeAnchorId]
+    : undefined;
+  return legacyAnchor?.documentId === documentId ? legacyAnchor.id : null;
+}
+
+export function setActiveAnchorForDocument(
+  storage: AnchorStorageState,
+  documentId: string,
+  anchorId: string | null,
+): AnchorStorageState {
+  return {
+    ...storage,
+    activeAnchorId: anchorId,
+    activeAnchorIdByDocumentId: {
+      ...storage.activeAnchorIdByDocumentId,
+      [documentId]: anchorId,
+    },
+  };
+}
+
+export function removeAnchorsForDocument(
+  storage: AnchorStorageState,
+  documentId: string,
+): AnchorStorageState {
+  const anchorsById = Object.fromEntries(
+    Object.entries(storage.anchorsById).filter(([, anchor]) => anchor.documentId !== documentId),
+  );
+  const activeAnchorIdByDocumentId = { ...storage.activeAnchorIdByDocumentId };
+  delete activeAnchorIdByDocumentId[documentId];
+  const activeAnchorId = storage.activeAnchorId
+    && storage.anchorsById[storage.activeAnchorId]?.documentId === documentId
+    ? null
+    : storage.activeAnchorId;
+
+  return { anchorsById, activeAnchorId, activeAnchorIdByDocumentId };
 }

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   createAnchorFromSelection,
+  getActiveAnchorIdForDocument,
   normalizeAnchorQuote,
+  setActiveAnchorForDocument,
   resolveAnchor,
 } from '@/features/anchors';
 
@@ -51,5 +53,38 @@ describe('anchor core', () => {
     });
 
     expect(anchor ? resolveAnchor(anchor, 'Alpha delta gamma.') : null).toBeNull();
+  });
+
+  it('remembers a different active anchor for each document', () => {
+    const firstAnchor = createAnchorFromSelection({
+      documentId: 'document-1',
+      documentText: 'Alpha beta.',
+      selectedText: 'Alpha',
+    });
+    const secondAnchor = createAnchorFromSelection({
+      documentId: 'document-2',
+      documentText: 'Gamma delta.',
+      selectedText: 'Gamma',
+    });
+    expect(firstAnchor).not.toBeNull();
+    expect(secondAnchor).not.toBeNull();
+    if (!firstAnchor || !secondAnchor) {
+      return;
+    }
+
+    const storage = setActiveAnchorForDocument(
+      setActiveAnchorForDocument({
+        anchorsById: {
+          [firstAnchor.id]: firstAnchor,
+          [secondAnchor.id]: secondAnchor,
+        },
+        activeAnchorId: null,
+      }, 'document-1', firstAnchor.id),
+      'document-2',
+      secondAnchor.id,
+    );
+
+    expect(getActiveAnchorIdForDocument(storage, 'document-1')).toBe(firstAnchor.id);
+    expect(getActiveAnchorIdForDocument(storage, 'document-2')).toBe(secondAnchor.id);
   });
 });

@@ -205,6 +205,30 @@ export function removeArtifactsForAnchor(
   return { artifactsByAnchorId, tasksByRequestId };
 }
 
+export function removeArtifactsForDocument(
+  storage: ArtifactStorageState,
+  documentId: string,
+): ArtifactStorageState {
+  const artifactsByAnchorId = Object.fromEntries(
+    Object.entries(storage.artifactsByAnchorId)
+      .map(([anchorId, artifacts]) => [
+        anchorId,
+        artifacts.filter((artifact) => artifact.documentId !== documentId),
+      ] as const)
+      .filter(([, artifacts]) => artifacts.length > 0),
+  );
+  const retainedArtifactIds = new Set(
+    Object.values(artifactsByAnchorId).flat().map((artifact) => artifact.id),
+  );
+  const tasksByRequestId = Object.fromEntries(
+    Object.entries(storage.tasksByRequestId).filter(([, task]) => (
+      retainedArtifactIds.has(task.artifactId)
+    )),
+  );
+
+  return { artifactsByAnchorId, tasksByRequestId };
+}
+
 export function createStreamingArtifact({
   documentId,
   anchorId,

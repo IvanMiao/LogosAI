@@ -25,6 +25,7 @@ export function createWorkspaceDocument(
     sourceType,
     createdAt: now,
     updatedAt: now,
+    lastOpenedAt: now,
   };
 }
 

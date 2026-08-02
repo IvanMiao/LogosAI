@@ -59,6 +59,7 @@ export type AnchorMarkStatus = 'active' | 'draft' | 'saved';
 export interface WorkspaceController {
   viewModel: WorkspaceViewModel;
   activeDocument: WorkspaceDocument | null;
+  documents: WorkspaceDocument[];
   activeAnchor: TextAnchor | null;
   anchors: TextAnchor[];
   activeAnchorId: string | null;
@@ -68,6 +69,7 @@ export interface WorkspaceController {
   noteDraftContent: string;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   history: HistoryItem[];
+  workspaceError: string;
   importState: ImportState;
   readerPreferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
@@ -92,6 +94,10 @@ export interface WorkspaceController {
   runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
   stopArtifact: (artifact: Artifact) => void;
   retryArtifact: (artifact: Artifact) => Promise<void>;
+  openDocument: (documentId: string) => void;
+  renameDocument: (documentId: string, title: string) => void;
+  deleteDocument: (documentId: string) => void;
+  startNewDocument: () => void;
   openHistoryAsDocument: (item: HistoryItem) => void;
   deleteHistoryItem: (id: number) => void;
   updateReaderPreference: <Key extends keyof ReaderPreferences>(

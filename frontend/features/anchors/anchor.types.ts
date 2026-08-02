@@ -21,4 +21,5 @@ export interface ResolvedAnchor {
 export interface AnchorStorageState {
   anchorsById: Record<string, TextAnchor>;
   activeAnchorId: string | null;
+  activeAnchorIdByDocumentId?: Record<string, string | null>;
 }

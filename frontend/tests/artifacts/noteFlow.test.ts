@@ -5,6 +5,7 @@ import {
   getNoteDraft,
   removeArtifact,
   removeArtifactsForAnchor,
+  removeArtifactsForDocument,
   upsertNoteDraft,
 } from '@/features/artifacts';
 
@@ -110,6 +111,26 @@ describe('note artifact flow', () => {
     });
 
     const nextStorage = removeArtifactsForAnchor(secondStorage, 'anchor-1');
+
+    expect(getArtifactsForAnchor(nextStorage, 'anchor-1')).toEqual([]);
+    expect(getArtifactsForAnchor(nextStorage, 'anchor-2')).toHaveLength(1);
+  });
+
+  it('removes only outputs belonging to a deleted document', () => {
+    const firstStorage = upsertNoteDraft({
+      storage: createEmptyArtifactStorage(),
+      documentId: 'document-1',
+      anchorId: 'anchor-1',
+      content: 'First document note',
+    });
+    const secondStorage = upsertNoteDraft({
+      storage: firstStorage,
+      documentId: 'document-2',
+      anchorId: 'anchor-2',
+      content: 'Second document note',
+    });
+
+    const nextStorage = removeArtifactsForDocument(secondStorage, 'document-1');
 
     expect(getArtifactsForAnchor(nextStorage, 'anchor-1')).toEqual([]);
     expect(getArtifactsForAnchor(nextStorage, 'anchor-2')).toHaveLength(1);
