@@ -3,9 +3,11 @@ import type {
   ReaderFontFamily,
   ReaderPreferences,
   WorkspaceDocument,
+  WorkspaceDocumentLibrary,
 } from './workspace.types';
 
-const DOCUMENT_STORAGE_KEY = 'logosai.workspace.document:v1';
+const LEGACY_DOCUMENT_STORAGE_KEY = 'logosai.workspace.document:v1';
+const DOCUMENT_LIBRARY_STORAGE_KEY = 'logosai.workspace.documentLibrary:v2';
 const READER_PREFERENCES_STORAGE_KEY = 'logosai.workspace.readerPreferences:v1';
 const ANALYSIS_LANGUAGE_STORAGE_KEY = 'logosai.workspace.analysisLanguage:v1';
 const CLOSE_READING_SOURCE_WIDTH_KEY = 'logosai.workspace.closeReadingSourceWidth:v1';
@@ -23,7 +25,7 @@ export const DEFAULT_READER_PREFERENCES: ReaderPreferences = {
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isWorkspaceDocument(value: unknown): value is WorkspaceDocument {
@@ -38,7 +40,43 @@ function isWorkspaceDocument(value: unknown): value is WorkspaceDocument {
     && typeof value.sourceType === 'string'
     && typeof value.createdAt === 'string'
     && typeof value.updatedAt === 'string'
+    && (value.lastOpenedAt === undefined || typeof value.lastOpenedAt === 'string')
   );
+}
+
+function normalizeDocumentLibrary(value: unknown): WorkspaceDocumentLibrary | null {
+  if (!isRecord(value) || !isRecord(value.documentsById)) {
+    return null;
+  }
+
+  const documents = Object.values(value.documentsById);
+  if (!documents.every(isWorkspaceDocument)) {
+    return null;
+  }
+
+  const activeDocumentId = typeof value.activeDocumentId === 'string'
+    && isWorkspaceDocument(value.documentsById[value.activeDocumentId])
+    ? value.activeDocumentId
+    : null;
+
+  return {
+    activeDocumentId,
+    documentsById: value.documentsById as Record<string, WorkspaceDocument>,
+  };
+}
+
+export function createEmptyDocumentLibrary(): WorkspaceDocumentLibrary {
+  return { activeDocumentId: null, documentsById: {} };
+}
+
+export function getActiveDocument(
+  library: WorkspaceDocumentLibrary,
+): WorkspaceDocument | null {
+  if (!library.activeDocumentId) {
+    return null;
+  }
+
+  return library.documentsById[library.activeDocumentId] ?? null;
 }
 
 function isReaderFontFamily(value: unknown): value is ReaderFontFamily {
@@ -86,9 +124,9 @@ function normalizeCloseReadingSourceWidth(value: number): number {
   return Math.round(clampedValue * 10) / 10;
 }
 
-export function readStoredDocument(): WorkspaceDocument | null {
+function readLegacyDocument(): WorkspaceDocument | null {
   try {
-    const rawValue = localStorage.getItem(DOCUMENT_STORAGE_KEY);
+    const rawValue = localStorage.getItem(LEGACY_DOCUMENT_STORAGE_KEY);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     return isWorkspaceDocument(parsedValue) ? parsedValue : null;
   } catch {
@@ -96,16 +134,55 @@ export function readStoredDocument(): WorkspaceDocument | null {
   }
 }
 
+export function writeStoredDocumentLibrary(library: WorkspaceDocumentLibrary): boolean {
+  try {
+    localStorage.setItem(DOCUMENT_LIBRARY_STORAGE_KEY, JSON.stringify(library));
+    localStorage.removeItem(LEGACY_DOCUMENT_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readStoredDocumentLibrary(): WorkspaceDocumentLibrary {
+  try {
+    const rawValue = localStorage.getItem(DOCUMENT_LIBRARY_STORAGE_KEY);
+    const parsedValue = rawValue ? JSON.parse(rawValue) : null;
+    const storedLibrary = normalizeDocumentLibrary(parsedValue);
+    if (storedLibrary) {
+      return storedLibrary;
+    }
+  } catch {
+    // Fall through to the legacy document migration.
+  }
+
+  const legacyDocument = readLegacyDocument();
+  if (!legacyDocument) {
+    return createEmptyDocumentLibrary();
+  }
+
+  const migratedLibrary = {
+    activeDocumentId: legacyDocument.id,
+    documentsById: { [legacyDocument.id]: legacyDocument },
+  };
+  writeStoredDocumentLibrary(migratedLibrary);
+  return migratedLibrary;
+}
+
+export function readStoredDocument(): WorkspaceDocument | null {
+  return getActiveDocument(readStoredDocumentLibrary());
+}
+
 export function writeStoredDocument(document: WorkspaceDocument | null): void {
   try {
-    if (!document) {
-      localStorage.removeItem(DOCUMENT_STORAGE_KEY);
-      return;
+    localStorage.removeItem(DOCUMENT_LIBRARY_STORAGE_KEY);
+    if (document) {
+      localStorage.setItem(LEGACY_DOCUMENT_STORAGE_KEY, JSON.stringify(document));
+    } else {
+      localStorage.removeItem(LEGACY_DOCUMENT_STORAGE_KEY);
     }
-
-    localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(document));
   } catch {
-    // Storage can fail in private browsing or when quota is exhausted.
+    // This compatibility helper is only used to seed legacy document state.
   }
 }
 

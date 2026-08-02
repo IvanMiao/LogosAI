@@ -29,6 +29,12 @@ export interface WorkspaceDocument {
   sourceType: DocumentSourceType;
   createdAt: string;
   updatedAt: string;
+  lastOpenedAt?: string;
+}
+
+export interface WorkspaceDocumentLibrary {
+  activeDocumentId: string | null;
+  documentsById: Record<string, WorkspaceDocument>;
 }
 
 export interface ReaderPreferences {

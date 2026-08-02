@@ -5,13 +5,17 @@ import {
   DEFAULT_READER_PREFERENCES,
   MAX_CLOSE_READING_SOURCE_WIDTH,
   MIN_CLOSE_READING_SOURCE_WIDTH,
+  createEmptyDocumentLibrary,
+  getActiveDocument,
   readStoredAnalysisLanguage,
   readStoredCloseReadingSourceWidth,
   readStoredDocument,
+  readStoredDocumentLibrary,
   readStoredReaderPreferences,
   writeStoredAnalysisLanguage,
   writeStoredCloseReadingSourceWidth,
   writeStoredDocument,
+  writeStoredDocumentLibrary,
   writeStoredReaderPreferences,
 } from '@/pages/workspace/workspace-storage';
 import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
@@ -34,6 +38,43 @@ describe('workspace storage', () => {
     writeStoredDocument(document);
 
     expect(readStoredDocument()).toEqual(document);
+  });
+
+  it('persists multiple documents and restores the selected document', () => {
+    const secondDocument = {
+      ...document,
+      id: 'document-second',
+      title: 'Second document',
+    };
+    writeStoredDocumentLibrary({
+      activeDocumentId: secondDocument.id,
+      documentsById: {
+        [document.id]: document,
+        [secondDocument.id]: secondDocument,
+      },
+    });
+
+    const library = readStoredDocumentLibrary();
+
+    expect(Object.keys(library.documentsById)).toHaveLength(2);
+    expect(getActiveDocument(library)).toEqual(secondDocument);
+  });
+
+  it('migrates the legacy active document into the document library', () => {
+    writeStoredDocument(document);
+
+    expect(readStoredDocumentLibrary()).toEqual({
+      activeDocumentId: document.id,
+      documentsById: { [document.id]: document },
+    });
+    expect(localStorage.getItem('logosai.workspace.document:v1')).toBeNull();
+    expect(localStorage.getItem('logosai.workspace.documentLibrary:v2')).not.toBeNull();
+  });
+
+  it('falls back to an empty library for invalid stored data', () => {
+    localStorage.setItem('logosai.workspace.documentLibrary:v2', '{"documentsById":[]}');
+
+    expect(readStoredDocumentLibrary()).toEqual(createEmptyDocumentLibrary());
   });
 
   it('removes the active document when null is written', () => {
