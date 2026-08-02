@@ -4,5 +4,5 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "3000:8000"
+      - "${LOGOSAI_PORT:-3000}:8000"
     restart: unless-stopped

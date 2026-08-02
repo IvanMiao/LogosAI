@@ -68,6 +68,12 @@ docker compose up --build
 
 Open `http://localhost:3000`. The Compose file starts one FastAPI container;
 the image builds the frontend and FastAPI serves the resulting static bundle.
+If port `3000` is already in use, select another host port without changing
+the container configuration:
+
+```bash
+LOGOSAI_PORT=3001 docker compose up --build
+```
 
 ## Error Monitoring
 
