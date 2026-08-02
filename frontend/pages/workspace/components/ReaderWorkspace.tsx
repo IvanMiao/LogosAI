@@ -33,6 +33,7 @@ interface ReaderWorkspaceProps {
   onStartNote: () => void;
   onClearActiveAnchor: () => void;
   onRetryArtifact: (artifact: Artifact) => void;
+  onOpenLibrary: () => void;
 }
 
 export function ReaderWorkspace({
@@ -47,6 +48,7 @@ export function ReaderWorkspace({
   onStartNote,
   onClearActiveAnchor,
   onRetryArtifact,
+  onOpenLibrary,
 }: ReaderWorkspaceProps): ReactElement {
   const panels = useWorkspacePanels({
     isDesktopViewport,
@@ -206,6 +208,8 @@ export function ReaderWorkspace({
         onAnalysisLanguageChange={workspace.updateAnalysisLanguage}
         onContextPanelToggle={panels.togglePanel}
         onClearDocument={workspace.clearDocument}
+        onOpenLibrary={onOpenLibrary}
+        onRenameDocument={(title) => workspace.renameDocument(activeDocument.id, title)}
       />
       {isDesktopViewport ? (
         <>

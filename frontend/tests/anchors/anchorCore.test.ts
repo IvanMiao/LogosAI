@@ -87,4 +87,31 @@ describe('anchor core', () => {
     expect(getActiveAnchorIdForDocument(storage, 'document-1')).toBe(firstAnchor.id);
     expect(getActiveAnchorIdForDocument(storage, 'document-2')).toBe(secondAnchor.id);
   });
+
+  it('preserves a legacy active anchor when another document becomes active', () => {
+    const firstAnchor = createAnchorFromSelection({
+      documentId: 'document-1',
+      documentText: 'Alpha beta.',
+      selectedText: 'Alpha',
+    });
+    const secondAnchor = createAnchorFromSelection({
+      documentId: 'document-2',
+      documentText: 'Gamma delta.',
+      selectedText: 'Gamma',
+    });
+    expect(firstAnchor).not.toBeNull();
+    expect(secondAnchor).not.toBeNull();
+    if (!firstAnchor || !secondAnchor) return;
+
+    const storage = setActiveAnchorForDocument({
+      anchorsById: {
+        [firstAnchor.id]: firstAnchor,
+        [secondAnchor.id]: secondAnchor,
+      },
+      activeAnchorId: firstAnchor.id,
+    }, 'document-2', secondAnchor.id);
+
+    expect(getActiveAnchorIdForDocument(storage, 'document-1')).toBe(firstAnchor.id);
+    expect(getActiveAnchorIdForDocument(storage, 'document-2')).toBe(secondAnchor.id);
+  });
 });

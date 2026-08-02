@@ -96,8 +96,9 @@ describe('workspace hardening', () => {
 
     renderWorkspace();
     await user.click(screen.getByRole('button', { name: 'Open app menu' }));
-    await user.click(screen.getByRole('menuitem', { name: 'History' }));
-    await user.click(screen.getByRole('button', { name: 'Open as document' }));
+    await user.click(screen.getByRole('menuitem', { name: 'My texts' }));
+    await user.click(screen.getByText('Legacy analyses · 1'));
+    await user.click(screen.getByRole('button', { name: 'Import' }));
 
     const readingSurface = screen.getByRole('region', { name: 'Reading surface' });
     expect(readingSurface).toBeInTheDocument();

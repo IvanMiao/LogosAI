@@ -11,7 +11,10 @@ import userEvent from '@testing-library/user-event';
 import { readStoredAnchors, writeStoredAnchors } from '@/features/anchors';
 import { readStoredArtifacts, writeStoredArtifacts, type Artifact } from '@/features/artifacts';
 import { WorkspacePage } from '@/pages/workspace';
-import { writeStoredDocument } from '@/pages/workspace/workspace-storage';
+import {
+  readStoredDocumentLibrary,
+  writeStoredDocument,
+} from '@/pages/workspace/workspace-storage';
 
 const journeyDocument = {
   id: 'journey-document',
@@ -75,6 +78,17 @@ function renderWorkspace() {
       <WorkspacePage apiKey="test-key" hasApiKey model="gemini-2.5-flash" />
     </MemoryRouter>,
   );
+}
+
+async function importPastedDocument(
+  user: ReturnType<typeof userEvent.setup>,
+  text: string,
+) {
+  await user.click(screen.getByRole('button', { name: 'Open my texts' }));
+  await user.click(screen.getByRole('button', { name: 'New text' }));
+  await user.click(screen.getByRole('button', { name: 'Paste text' }));
+  await user.type(screen.getByPlaceholderText('Paste source text here...'), text);
+  await user.click(screen.getByRole('button', { name: 'Start reading' }));
 }
 
 function createCloseReading(
@@ -482,5 +496,75 @@ describe('close reading user journeys', () => {
     expect(screen.getByText(latestReading.content)).toBeInTheDocument();
     expect(screen.queryByText(earlierReading.content)).not.toBeInTheDocument();
     expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
+  });
+
+  it('switches between saved texts and restores their reading work', async () => {
+    const user = userEvent.setup();
+    const savedReading = createCloseReading(
+      'library-close-reading',
+      'Saved library reading',
+      'Reading work that must survive a document switch.',
+      '2026-07-21T16:00:00.000Z',
+    );
+    writeFirstParagraphArtifacts([savedReading], firstParagraphAnchor.id);
+    renderWorkspace();
+
+    await importPastedDocument(user, 'A second text for switching.');
+    expect(within(screen.getByRole('region', { name: 'Reading surface' }))
+      .getByText('A second text for switching.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open my texts' }));
+    const library = screen.getByRole('dialog', { name: 'My texts' });
+    const searchInput = within(library).getByRole('searchbox', { name: 'Search texts' });
+    await user.type(searchInput, 'second text');
+    expect(within(library).queryByText('Two paragraph journey')).not.toBeInTheDocument();
+    await user.clear(searchInput);
+    await user.click(within(library).getByRole('button', { name: /^Two paragraph journey/ }));
+    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+
+    expect(screen.getByText(savedReading.content)).toBeInTheDocument();
+    expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
+  });
+
+  it('renames the current text and keeps the title after reloading', async () => {
+    const user = userEvent.setup();
+    const view = renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Rename Two paragraph journey' }));
+    const titleInput = screen.getByRole('textbox', { name: 'Document title' });
+    await user.clear(titleInput);
+    await user.type(titleInput, 'My comparison text{Enter}');
+
+    expect(screen.getByRole('button', { name: 'Rename My comparison text' })).toBeInTheDocument();
+    expect(readStoredDocumentLibrary().documentsById[journeyDocument.id].title)
+      .toBe('My comparison text');
+
+    view.unmount();
+    renderWorkspace();
+    expect(screen.getByRole('button', { name: 'Rename My comparison text' })).toBeInTheDocument();
+  });
+
+  it('deletes one text and only its attached reading work', async () => {
+    const user = userEvent.setup();
+    writeFirstParagraphArtifacts([
+      createCloseReading(
+        'deleted-document-reading',
+        'Deleted document reading',
+        'This output belongs to the deleted document.',
+        '2026-07-21T17:00:00.000Z',
+      ),
+    ], firstParagraphAnchor.id);
+    renderWorkspace();
+    await importPastedDocument(user, 'A retained second text.');
+
+    await user.click(screen.getByRole('button', { name: 'Open my texts' }));
+    await user.click(screen.getByRole('button', { name: 'Delete Two paragraph journey' }));
+    await user.click(screen.getByRole('button', { name: 'Delete text' }));
+
+    expect(within(screen.getByRole('region', { name: 'Reading surface' }))
+      .getByText('A retained second text.')).toBeInTheDocument();
+    expect(readStoredDocumentLibrary().documentsById[journeyDocument.id]).toBeUndefined();
+    expect(readStoredAnchors().anchorsById[firstParagraphAnchor.id]).toBeUndefined();
+    expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toBeUndefined();
   });
 });

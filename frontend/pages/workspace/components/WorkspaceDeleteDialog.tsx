@@ -12,6 +12,11 @@ import {
 
 export type WorkspaceDeletionTarget =
   | {
+    kind: 'document';
+    id: string;
+    label: string;
+  }
+  | {
     kind: 'anchor';
     id: string;
     label: string;
@@ -40,6 +45,14 @@ function getDialogCopy(target: WorkspaceDeletionTarget): {
       title: 'Delete output?',
       description: 'This permanently removes this saved output. The source passage stays saved.',
       confirmLabel: 'Delete output',
+    };
+  }
+
+  if (target.kind === 'document') {
+    return {
+      title: 'Delete text?',
+      description: 'This permanently removes the text, its saved selections, notes, and outputs.',
+      confirmLabel: 'Delete text',
     };
   }
 

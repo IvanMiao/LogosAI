@@ -188,11 +188,22 @@ export function setActiveAnchorForDocument(
   documentId: string,
   anchorId: string | null,
 ): AnchorStorageState {
+  const activeAnchorIdByDocumentId = { ...storage.activeAnchorIdByDocumentId };
+  const legacyActiveAnchor = storage.activeAnchorId
+    ? storage.anchorsById[storage.activeAnchorId]
+    : undefined;
+  if (
+    legacyActiveAnchor
+    && activeAnchorIdByDocumentId[legacyActiveAnchor.documentId] === undefined
+  ) {
+    activeAnchorIdByDocumentId[legacyActiveAnchor.documentId] = legacyActiveAnchor.id;
+  }
+
   return {
     ...storage,
     activeAnchorId: anchorId,
     activeAnchorIdByDocumentId: {
-      ...storage.activeAnchorIdByDocumentId,
+      ...activeAnchorIdByDocumentId,
       [documentId]: anchorId,
     },
   };

@@ -1,5 +1,13 @@
-import type { ReactElement } from 'react';
-import { Check, Eraser, Languages, PanelRight, SlidersHorizontal } from 'lucide-react';
+import { useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
+import {
+  BookOpen,
+  Check,
+  Eraser,
+  Languages,
+  PanelRight,
+  Pencil,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -63,6 +71,65 @@ interface ReaderToolbarProps {
   onAnalysisLanguageChange: WorkspaceController['updateAnalysisLanguage'];
   onContextPanelToggle: () => void;
   onClearDocument: () => void;
+  onOpenLibrary: () => void;
+  onRenameDocument: (title: string) => void;
+}
+
+function EditableDocumentTitle({
+  document,
+  onRename,
+}: {
+  document: WorkspaceDocument;
+  onRename: (title: string) => void;
+}): ReactElement {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(document.title);
+
+  const submitRename = (event: FormEvent) => {
+    event.preventDefault();
+    if (!draftTitle.trim()) return;
+    onRename(draftTitle);
+    setIsEditing(false);
+  };
+
+  const cancelRename = () => {
+    setDraftTitle(document.title);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') cancelRename();
+  };
+
+  if (isEditing) {
+    return (
+      <form className="min-w-0" onSubmit={submitRename}>
+        <input
+          autoFocus
+          aria-label="Document title"
+          value={draftTitle}
+          maxLength={160}
+          onChange={(event) => setDraftTitle(event.target.value)}
+          onKeyDown={handleKeyDown}
+          className="h-9 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-sm font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base"
+        />
+      </form>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="group flex min-w-0 items-center gap-1.5 text-left"
+      aria-label={`Rename ${document.title}`}
+      onClick={() => setIsEditing(true)}
+    >
+      <span className="max-w-[42ch] truncate text-sm font-black sm:text-base" title={document.title}>
+        {document.title}
+      </span>
+      <Pencil className="h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100" />
+    </button>
+  );
 }
 
 function AnalysisLanguageSelect({
@@ -227,6 +294,8 @@ export function ReaderToolbar({
   onAnalysisLanguageChange,
   onContextPanelToggle,
   onClearDocument,
+  onOpenLibrary,
+  onRenameDocument,
 }: ReaderToolbarProps): ReactElement {
   const panelButtonLabel = isContextPanelOpen ? 'Close context panel' : 'Open context panel';
 
@@ -239,12 +308,22 @@ export function ReaderToolbar({
         )}
       >
         <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-          <h1
-            className="max-w-[42ch] truncate text-sm font-black sm:text-base"
-            title={activeDocument.title}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            aria-label="Open my texts"
+            title="My texts"
+            onClick={onOpenLibrary}
           >
-            {activeDocument.title}
-          </h1>
+            <BookOpen className="h-4 w-4" />
+          </Button>
+          <EditableDocumentTitle
+            key={activeDocument.id}
+            document={activeDocument}
+            onRename={onRenameDocument}
+          />
           <span aria-hidden="true" className="hidden text-muted-foreground md:inline">·</span>
           <p className="hidden shrink-0 text-xs text-muted-foreground md:block">
             {formatDocumentMeta(activeDocument)}

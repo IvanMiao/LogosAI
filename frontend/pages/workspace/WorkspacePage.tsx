@@ -2,7 +2,7 @@ import { useState, type ReactElement } from 'react';
 import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { Artifact } from '@/features/artifacts';
 import {
-  HistoryDrawer,
+  DocumentLibraryDrawer,
   ImportPanel,
   ReaderWorkspace,
   WorkspaceHeader,
@@ -14,7 +14,7 @@ import type { WorkspacePageProps } from './workspace.types';
 export function WorkspacePage(props: WorkspacePageProps): ReactElement {
   const workspace = useWorkspace(props);
   const isDesktopViewport = useWorkspaceViewport();
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isDesktopContextOpen, setIsDesktopContextOpen] = useState(false);
   const [isMobileContextOpen, setIsMobileContextOpen] = useState(false);
   const [noteEditorAnchorId, setNoteEditorAnchorId] = useState<string | null>(null);
@@ -51,8 +51,13 @@ export function WorkspacePage(props: WorkspacePageProps): ReactElement {
     <div className="min-h-screen bg-background text-foreground">
       <WorkspaceHeader
         viewModel={workspace.viewModel}
-        onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenLibrary={() => setIsLibraryOpen(true)}
       />
+      {workspace.workspaceError ? (
+        <p role="alert" className="border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground">
+          {workspace.workspaceError}
+        </p>
+      ) : null}
       <main>
         {workspace.activeDocument ? (
           <ReaderWorkspace
@@ -67,6 +72,7 @@ export function WorkspacePage(props: WorkspacePageProps): ReactElement {
             onStartNote={handleStartNote}
             onClearActiveAnchor={handleClearActiveAnchor}
             onRetryArtifact={handleRetryArtifact}
+            onOpenLibrary={() => setIsLibraryOpen(true)}
           />
         ) : (
           <ImportPanel
@@ -77,11 +83,17 @@ export function WorkspacePage(props: WorkspacePageProps): ReactElement {
           />
         )}
       </main>
-      <HistoryDrawer
-        open={isHistoryOpen}
+      <DocumentLibraryDrawer
+        open={isLibraryOpen}
+        documents={workspace.documents}
+        activeDocumentId={workspace.activeDocument?.id ?? null}
         history={workspace.history}
-        onOpenChange={setIsHistoryOpen}
-        onOpenAsDocument={workspace.openHistoryAsDocument}
+        onOpenChange={setIsLibraryOpen}
+        onOpenDocument={workspace.openDocument}
+        onRenameDocument={workspace.renameDocument}
+        onDeleteDocument={workspace.deleteDocument}
+        onStartNewDocument={workspace.startNewDocument}
+        onOpenLegacyDocument={workspace.openHistoryAsDocument}
         onDeleteHistoryItem={workspace.deleteHistoryItem}
       />
     </div>

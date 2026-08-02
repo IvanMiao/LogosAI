@@ -22,12 +22,12 @@ import type { WorkspaceViewModel } from '../workspace.types';
 
 interface WorkspaceHeaderProps {
   viewModel: WorkspaceViewModel;
-  onOpenHistory: () => void;
+  onOpenLibrary: () => void;
 }
 
 export function WorkspaceHeader({
   viewModel,
-  onOpenHistory,
+  onOpenLibrary,
 }: WorkspaceHeaderProps): ReactElement {
   const navigate = useNavigate();
   const apiKeyClassName = cn(
@@ -74,9 +74,9 @@ export function WorkspaceHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={onOpenHistory} className="gap-2">
+              <DropdownMenuItem onClick={onOpenLibrary} className="gap-2">
                 <History className="h-4 w-4" />
-                <span>History</span>
+                <span>My texts</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/app/settings')} className="gap-2">
                 <Settings className="h-4 w-4" />
