@@ -258,10 +258,10 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     setSelectedArtifactId(null);
   };
 
-  const addDocument = (document: WorkspaceDocument) => {
-    if (commitDocumentLibrary(addDocumentToLibrary(documentLibrary, document))) {
-      resetTransientDocumentState();
-    }
+  const addDocument = (document: WorkspaceDocument): boolean => {
+    const wasAdded = commitDocumentLibrary(addDocumentToLibrary(documentLibrary, document));
+    if (wasAdded) resetTransientDocumentState();
+    return wasAdded;
   };
 
   const importPastedText = () => {
@@ -274,8 +274,9 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    addDocument(createWorkspaceDocument(text, 'paste'));
-    setImportState({ pasteText: '', importError: '' });
+    if (addDocument(createWorkspaceDocument(text, 'paste'))) {
+      setImportState({ pasteText: '', importError: '' });
+    }
   };
 
   const importTextFile = async (file: File | null) => {
@@ -297,8 +298,9 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    addDocument(createWorkspaceDocument(text, 'file', file.name));
-    setImportState({ pasteText: '', importError: '' });
+    if (addDocument(createWorkspaceDocument(text, 'file', file.name))) {
+      setImportState({ pasteText: '', importError: '' });
+    }
   };
 
   const updateReaderPreference = <Key extends keyof ReaderPreferences>(

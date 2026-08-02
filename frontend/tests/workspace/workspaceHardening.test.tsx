@@ -116,6 +116,24 @@ describe('workspace hardening', () => {
     expect(screen.queryByRole('complementary', { name: 'Context panel' })).not.toBeInTheDocument();
   });
 
+  it('keeps pasted text available when browser storage fails', async () => {
+    const user = userEvent.setup();
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'QuotaExceededError');
+    });
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Paste text' }));
+    const pasteEditor = screen.getByPlaceholderText('Paste source text here...');
+    await user.type(pasteEditor, 'Text that must not be lost.');
+    await user.click(screen.getByRole('button', { name: 'Start reading' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('This change could not be saved');
+    expect(pasteEditor).toHaveValue('Text that must not be lost.');
+    expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
+    setItemSpy.mockRestore();
+  });
+
   it('renders a focused reader at mobile and desktop viewport widths', async () => {
     const user = userEvent.setup();
     const widths = [390, 1280];
