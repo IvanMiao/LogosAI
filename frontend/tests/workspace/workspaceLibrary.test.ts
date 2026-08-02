@@ -8,6 +8,7 @@ import {
   renameLibraryDocument,
 } from '@/pages/workspace/workspace-library';
 import { createEmptyDocumentLibrary } from '@/pages/workspace/workspace-storage';
+import { createWorkspaceDocument } from '@/pages/workspace/workspace.helpers';
 import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
 
 const firstDocument: WorkspaceDocument = {
@@ -29,6 +30,21 @@ const secondDocument: WorkspaceDocument = {
 };
 
 describe('workspace document library', () => {
+  it('uses the file name instead of source text for an uploaded document title', () => {
+    const document = createWorkspaceDocument('Opening words in the file.', 'file', 'my-book.md');
+
+    expect(document.title).toBe('my-book');
+  });
+
+  it('uses a Markdown heading for a pasted document title', () => {
+    const document = createWorkspaceDocument(
+      'A preface before the heading.\n\n# Deliberate title\n\nBody',
+      'paste',
+    );
+
+    expect(document.title).toBe('Deliberate title');
+  });
+
   it('adds documents without replacing earlier documents', () => {
     const withFirst = addDocumentToLibrary(createEmptyDocumentLibrary(), firstDocument);
     const withSecond = addDocumentToLibrary(withFirst, secondDocument);

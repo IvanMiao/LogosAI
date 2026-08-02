@@ -1,8 +1,26 @@
 import type { DocumentSourceType, WorkspaceDocument } from './workspace.types';
 
 const SUPPORTED_TEXT_FILE_EXTENSIONS = ['.txt', '.md'];
+const MARKDOWN_TITLE_PATTERN = /^#\s+(.+)$/m;
 
-function createDocumentTitle(text: string, fallback: string): string {
+function removeTextFileExtension(fileName: string): string {
+  return fileName.replace(/\.(?:txt|md)$/i, '');
+}
+
+function createDocumentTitle(
+  text: string,
+  sourceType: DocumentSourceType,
+  fallback: string,
+): string {
+  if (sourceType === 'file') {
+    return removeTextFileExtension(fallback).trim().slice(0, 80) || 'Untitled document';
+  }
+
+  const markdownTitle = text.match(MARKDOWN_TITLE_PATTERN)?.[1]?.trim();
+  if (markdownTitle) {
+    return markdownTitle.slice(0, 80);
+  }
+
   const firstLine = text.split(/\r?\n/).find((line) => line.trim().length > 0);
   if (!firstLine) {
     return fallback;
@@ -20,7 +38,7 @@ export function createWorkspaceDocument(
 
   return {
     id: `document-${Date.now()}`,
-    title: createDocumentTitle(text, fallbackTitle),
+    title: createDocumentTitle(text, sourceType, fallbackTitle),
     text,
     sourceType,
     createdAt: now,
