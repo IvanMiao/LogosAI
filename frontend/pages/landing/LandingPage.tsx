@@ -31,7 +31,7 @@ export function LandingPage() {
                     </h1>
 
                     <div className="bg-accent border-4 border-border px-6 py-2 shadow-[4px_4px_0px_0px_var(--border)] transform rotate-1 md:rotate-2">
-                        <p className="text-xl sm:text-2xl font-bold uppercase tracking-widest text-accent-foreground">
+                        <p className="font-brand text-xl sm:text-2xl font-bold uppercase tracking-widest text-accent-foreground">
                             Deep Text Analysis Engine
                         </p>
                     </div>
@@ -42,7 +42,7 @@ export function LandingPage() {
 
                     <button
                         onClick={() => navigate('/app')}
-                        className="relative mt-12 inline-flex items-center justify-center border-4 border-border bg-secondary px-10 py-5 text-xl font-black uppercase tracking-wider text-black shadow-[8px_8px_0px_0px_var(--border)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:bg-primary hover:shadow-[12px_12px_0px_0px_var(--border)] active:translate-x-2 active:translate-y-2 active:shadow-none motion-reduce:transition-none sm:px-12 sm:py-6 sm:text-2xl"
+                        className="relative mt-12 inline-flex items-center justify-center border-4 border-border bg-secondary px-10 py-5 font-brand text-xl font-black uppercase tracking-wider text-black shadow-[8px_8px_0px_0px_var(--border)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:bg-primary hover:shadow-[12px_12px_0px_0px_var(--border)] active:translate-x-2 active:translate-y-2 active:shadow-none motion-reduce:transition-none sm:px-12 sm:py-6 sm:text-2xl"
                     >
                         Start Analysis
                         <Zap className="ml-4 h-7 w-7 fill-black text-black sm:h-8 sm:w-8" />
@@ -56,7 +56,7 @@ export function LandingPage() {
                         <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-primary shadow-[4px_4px_0px_0px_var(--border)]">
                             <Languages className="w-8 h-8 text-primary-foreground" />
                         </div>
-                        <h2 className="mb-4 text-2xl font-black uppercase text-card-foreground">Any Language</h2>
+                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Any Language</h2>
                         <p className="font-sans font-medium text-muted-foreground">Automatic language detection and OCR error correction. Paste text in any language and get accurate analysis instantly.</p>
                     </div>
 
@@ -64,7 +64,7 @@ export function LandingPage() {
                         <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-secondary shadow-[4px_4px_0px_0px_var(--border)]">
                             <Brain className="w-8 h-8 text-secondary-foreground text-black" />
                         </div>
-                        <h2 className="mb-4 text-2xl font-black uppercase text-card-foreground">Deep Breakdown</h2>
+                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Deep Breakdown</h2>
                         <p className="font-sans font-medium text-muted-foreground">Get detailed linguistic analysis covering grammar, vocabulary, nuance, and context, tailored for advanced learners tackling real-world texts.</p>
                     </div>
 
@@ -72,7 +72,7 @@ export function LandingPage() {
                         <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-accent shadow-[4px_4px_0px_0px_var(--border)]">
                             <BookOpen className="w-8 h-8 text-accent-foreground text-black" />
                         </div>
-                        <h2 className="mb-4 text-2xl font-black uppercase text-card-foreground">Complex Texts</h2>
+                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Complex Texts</h2>
                         <p className="font-sans font-medium text-muted-foreground">Designed for challenging material like philosophical essays, academic papers, and dense news articles, not just textbook exercises.</p>
                     </div>
 
