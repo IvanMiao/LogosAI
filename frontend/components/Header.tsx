@@ -28,7 +28,7 @@ export function Header({ mounted }: HeaderProps) {
               <Brain className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
             </div>
             <div className="min-w-0">
-              <span className="block truncate font-mono text-xl font-bold tracking-tight text-foreground sm:text-3xl">
+              <span className="block truncate font-brand text-xl font-bold tracking-tight text-foreground sm:text-3xl">
                 LogosAI
               </span>
               <p className="mt-0.5 hidden font-mono text-sm text-muted-foreground sm:block">DEEP_TEXT_ANALYSIS</p>

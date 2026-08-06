@@ -26,7 +26,7 @@ export function LandingPage() {
                         <Brain className="w-14 h-14 sm:w-20 sm:h-20 text-primary-foreground" />
                     </div>
 
-                    <h1 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase transform -rotate-1 md:-rotate-2">
+                    <h1 className="font-brand text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase transform -rotate-1 md:-rotate-2">
                         LogosAI
                     </h1>
 

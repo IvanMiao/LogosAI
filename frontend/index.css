@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --font-brand: "Courier Prime", "Courier New", Courier, monospace;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans SC", monospace;
   --shadow-hard: 4px 4px 0px 0px var(--border);
   --shadow-hard-sm: 2px 2px 0px 0px var(--border);

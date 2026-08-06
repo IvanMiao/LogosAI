@@ -47,7 +47,7 @@ export function WorkspaceHeader({
             <Brain className="h-5 w-5" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-lg font-black leading-tight">LogosAI</span>
+            <span className="block truncate font-brand text-lg font-black leading-tight">LogosAI</span>
             <span className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground sm:block">
               Reading Workspace
             </span>
