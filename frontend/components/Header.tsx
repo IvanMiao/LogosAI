@@ -17,26 +17,26 @@ export function Header({ mounted }: HeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <header className={`mb-8 transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      <div className="bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] p-6">
+    <header className={`mb-6 transition-[opacity,transform] duration-800 motion-reduce:transition-none sm:mb-8 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className="border-2 border-border bg-card p-3 shadow-[4px_4px_0px_0px_var(--border)] sm:p-6">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('/app')}
-            className="flex items-center gap-4 group transition-opacity hover:opacity-80 p-0 border-0 bg-transparent text-left"
+            className="group flex min-w-0 items-center gap-2 border-0 bg-transparent p-0 text-left transition-opacity hover:opacity-80 sm:gap-4"
           >
-            <div className="w-12 h-12 bg-primary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
-              <Brain className="w-7 h-7 text-primary-foreground" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-primary shadow-[2px_2px_0px_0px_var(--border)] sm:h-12 sm:w-12">
+              <Brain className="h-6 w-6 text-primary-foreground sm:h-7 sm:w-7" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight font-mono">
+            <div className="min-w-0">
+              <span className="block truncate font-mono text-xl font-bold tracking-tight text-foreground sm:text-3xl">
                 LogosAI
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5 font-mono">DEEP_TEXT_ANALYSIS</p>
+              </span>
+              <p className="mt-0.5 hidden font-mono text-sm text-muted-foreground sm:block">DEEP_TEXT_ANALYSIS</p>
             </div>
           </button>
 
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-xs px-3 py-1 border-2 border-border text-foreground font-bold bg-accent">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Badge variant="outline" className="hidden border-2 border-border bg-accent px-3 py-1 text-xs font-bold text-foreground sm:inline-flex">
               v1.0
             </Badge>
 

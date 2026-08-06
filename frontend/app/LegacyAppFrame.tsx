@@ -13,10 +13,14 @@ export function LegacyAppFrame({ children }: LegacyAppFrameProps) {
   }, []);
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-3 sm:p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <Header mounted={mounted} />
-        <main className={`transition-all duration-1000 delay-300 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        <main
+          data-route-focus
+          tabIndex={-1}
+          className={`transition-[opacity,transform] duration-1000 delay-300 motion-reduce:transition-none ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+        >
           {children}
         </main>
       </div>

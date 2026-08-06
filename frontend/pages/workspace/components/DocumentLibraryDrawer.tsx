@@ -108,7 +108,7 @@ function DocumentListItem({
             maxLength={160}
             onChange={(event) => setDraftTitle(event.target.value)}
             onKeyDown={handleRenameKeyDown}
-            className="h-9 min-w-0 flex-1 border-2 border-border bg-input px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 min-w-0 flex-1 border-2 border-border bg-input px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
           />
           <Button type="submit" size="sm" disabled={!draftTitle.trim()}>Save</Button>
         </form>
@@ -225,7 +225,7 @@ export function DocumentLibraryDrawer({
               value={query}
               placeholder="Search title or text…"
               onChange={(event) => setQuery(event.target.value)}
-              className="h-10 w-full border-2 border-border bg-input pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
             />
           </label>
           <div className="mt-4 space-y-3">

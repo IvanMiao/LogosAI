@@ -15,7 +15,7 @@ interface HistoryListItemProps {
 
 export function HistoryListItem({ item, isExpanded, onToggleExpand, onRestore, onDelete }: HistoryListItemProps) {
   return (
-    <div className="border-2 border-border p-3.5 bg-card hover:shadow-[4px_4px_0px_0px_var(--border)] transition-all duration-200">
+    <div className="border-2 border-border bg-card p-3.5">
       <div className="flex items-center gap-2 mb-2.5">
         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
         <span className="text-xs text-muted-foreground font-mono">{formatDate(item.timestamp)}</span>
@@ -61,7 +61,7 @@ export function HistoryListItem({ item, isExpanded, onToggleExpand, onRestore, o
           variant="ghost"
           onClick={onDelete}
           aria-label="Delete this analysis"
-          className="h-8 px-2.5 text-destructive hover:text-destructive-foreground hover:bg-destructive border-2 border-transparent hover:border-border hover:shadow-[2px_2px_0px_0px_var(--border)]"
+          className="h-8 px-2.5 text-error-foreground hover:text-destructive-foreground hover:bg-destructive border-2 border-transparent hover:border-border hover:shadow-[2px_2px_0px_0px_var(--border)]"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </Button>

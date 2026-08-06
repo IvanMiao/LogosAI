@@ -6,12 +6,14 @@ import { SettingsPage, useSettingsPage } from '@/pages/settings';
 import { WorkspacePage } from '@/pages/workspace';
 import { AppLayout } from './AppLayout';
 import { LegacyAppFrame } from './LegacyAppFrame';
+import { RouteAccessibility } from './RouteAccessibility';
 
 export function App() {
   const settings = useSettingsPage();
 
   return (
     <BrowserRouter>
+      <RouteAccessibility />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/app" element={<AppLayout />}>

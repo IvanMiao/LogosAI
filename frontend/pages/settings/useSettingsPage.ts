@@ -10,6 +10,8 @@ import {
   readStoredModel,
 } from '@/utils/settingsStorage';
 
+export const MISSING_API_KEY_ERROR = 'Please enter your Gemini API key';
+
 export interface UseSettingsPageReturn {
   apiKey: string;
   setApiKey: (key: string) => void;
@@ -53,13 +55,13 @@ export function useSettingsPage(): UseSettingsPageReturn {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => setSaveSuccess(false), 3000);
+    const timeoutId = window.setTimeout(() => setSaveSuccess(false), 5000);
     return () => window.clearTimeout(timeoutId);
   }, [saveSuccess]);
 
   const saveSettings = useCallback(() => {
     if (!hasApiKey && !apiKey.trim()) {
-      setError('Please enter your Gemini API key');
+      setError(MISSING_API_KEY_ERROR);
       return;
     }
 

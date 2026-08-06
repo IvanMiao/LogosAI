@@ -58,7 +58,7 @@ export function WorkspacePage(props: WorkspacePageProps): ReactElement {
           {workspace.workspaceError}
         </p>
       ) : null}
-      <main>
+      <main data-route-focus tabIndex={-1}>
         {workspace.activeDocument ? (
           <ReaderWorkspace
             workspace={workspace}

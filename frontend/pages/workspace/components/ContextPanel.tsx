@@ -176,7 +176,7 @@ function SavedAnchorList({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                className="h-8 w-8 shrink-0 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
                 aria-label={`Delete saved ${anchor.scope}: ${anchor.quote}`}
                 onClick={() => onRequestDeleteAnchor(anchor)}
               >
@@ -228,7 +228,7 @@ function ActiveAnchorHeader({
             type="button"
             variant="ghost"
             size="icon"
-            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            className="text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
             aria-label={`Delete saved ${activeAnchor.scope}`}
             onClick={() => onRequestDeleteAnchor(activeAnchor)}
           >
@@ -287,7 +287,7 @@ function ActiveArtifactView({
             type="button"
             size="icon"
             variant="ghost"
-            className="h-9 w-9 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            className="h-9 w-9 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
             aria-label={`Delete ${getArtifactLabel(artifact)} output`}
             onClick={() => onRequestDeleteArtifact(artifact)}
           >
@@ -411,7 +411,7 @@ export function ContextPanel({
             onChange={(event) => onNoteDraftChange(event.target.value)}
             placeholder="Write a note attached to this selection..."
             rows={4}
-            className="mt-2 w-full resize-y border-2 border-border bg-background p-2 font-sans text-sm font-normal leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="mt-2 w-full resize-y border-2 border-border bg-background p-2 font-sans text-base font-normal leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
           />
         </label>
       ) : null}

@@ -61,7 +61,7 @@ function ArtifactError({ artifact }: { artifact: Artifact }): ReactElement | nul
 
   return (
     <div role="alert" className="border-l-4 border-destructive bg-destructive/10 p-3">
-      <p className="text-sm font-bold text-destructive">{artifact.errorMessage}</p>
+      <p className="text-sm font-bold text-error-foreground">{artifact.errorMessage}</p>
       {artifact.traceId ? (
         <Button
           type="button"

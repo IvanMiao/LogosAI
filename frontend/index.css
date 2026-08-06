@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-mono: "Courier Prime", "Courier New", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", monospace;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans SC", monospace;
   --shadow-hard: 4px 4px 0px 0px var(--border);
   --shadow-hard-sm: 2px 2px 0px 0px var(--border);
 }
@@ -23,6 +23,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-error-foreground: var(--error-foreground);
+  --color-link: var(--link);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -60,6 +62,8 @@
   --destructive: #ff4d4d;
   /* Bright Red */
   --destructive-foreground: #000000;
+  --error-foreground: #b21f2d;
+  --link: #b30088;
 
   --border: #000000;
   /* Pure Black Border */
@@ -94,6 +98,9 @@
   --accent-foreground: #000000;
 
   --destructive: #ff4d4d;
+  --destructive-foreground: #000000;
+  --error-foreground: #ffa3a3;
+  --link: #ff9dec;
   --border: #ffffff;
   --input: #333333;
   --ring: #ffffff;
@@ -109,8 +116,8 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-mono);
-    -webkit-font-smoothing: none;
-    /* Crisp edges */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Default thick borders for structural elements if needed, 
@@ -137,6 +144,24 @@
   .prose code::before,
   .prose code::after {
     content: "" !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  button:active,
+  a:active,
+  [role="button"]:active {
+    scale: 1 !important;
+    translate: 0 !important;
   }
 }
 

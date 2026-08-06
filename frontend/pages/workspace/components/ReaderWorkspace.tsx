@@ -198,6 +198,7 @@ export function ReaderWorkspace({
 
   return (
     <>
+      <h1 className="sr-only">{activeDocument.title}</h1>
       <ReaderToolbar
         activeDocument={activeDocument}
         preferences={workspace.readerPreferences}

@@ -125,7 +125,7 @@ export function CloseReadingActions({
         type="button"
         size="icon"
         variant="ghost"
-        className="h-9 w-9 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        className="h-9 w-9 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
         aria-label="Delete Close Reading"
         title="Delete Close Reading"
         onClick={() => onRequestDeleteArtifact(artifact)}

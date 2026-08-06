@@ -1,19 +1,19 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Info, Brain, Code, Layers, ExternalLink } from 'lucide-react';
 
 export function AboutPage() {
   return (
     <div className="space-y-6">
-      <Card className="border-border shadow-[4px_4px_0px_0px_var(--border)]">
+      <Card className="mx-auto max-w-5xl border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-secondary border-2 border-border flex items-center justify-center shadow-[2px_2px_0px_0px_var(--border)]">
               <Info className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-xl text-foreground font-mono">SYSTEM_MANIFEST</CardTitle>
-              <CardDescription className="text-xs mt-0.5 font-mono">
+              <h1 className="font-mono text-xl font-semibold leading-none tracking-tight text-foreground">SYSTEM_MANIFEST</h1>
+              <CardDescription className="mt-0.5 font-mono text-xs">
                 DEEP_TEXT_ANALYSIS_ENGINE
               </CardDescription>
             </div>
@@ -25,9 +25,9 @@ export function AboutPage() {
               <div className="w-10 h-10 bg-primary border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_var(--border)]">
                 <Brain className="w-5 h-5 text-primary-foreground" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground mb-2 font-mono">OPERATIONAL_SCOPE</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed font-mono">
+              <div className="min-w-0">
+                <h2 className="mb-2 font-mono text-base font-bold text-foreground">OPERATIONAL_SCOPE</h2>
+                <p className="max-w-[70ch] font-sans text-sm leading-relaxed text-muted-foreground">
                   Executes deep linguistic deconstruction. Isolates syntactic structures, decodes rhetorical strategies, and maps logical hierarchies. Extracts idiomatic nuances, cultural context, and authorial intent. Delivers rigorous, genre-specific analysis.
                 </p>
               </div>
@@ -37,25 +37,25 @@ export function AboutPage() {
               <div className="w-10 h-10 bg-accent border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_var(--border)]">
                 <Layers className="w-5 h-5 text-accent-foreground" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground mb-3 font-mono">Tech Stack</h3>
+              <div className="min-w-0">
+                <h2 className="mb-3 font-mono text-base font-bold text-foreground">Tech Stack</h2>
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs font-bold text-muted-foreground mb-2 font-mono">Frontend</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">React</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">Vite</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">TailwindCSS</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">shadcn/ui</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">React</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">Vite</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">TailwindCSS</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">shadcn/ui</Badge>
                     </div>
                   </div>
                   <div>
                     <p className="text-xs font-bold text-muted-foreground mb-2 font-mono">Backend</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">Langchain</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">FastAPI</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">PostgreSQL</Badge>
-                      <Badge variant="outline" className="text-xs border-2 border-border text-foreground font-bold bg-card hover:bg-accent hover:text-accent-foreground transition-colors">Pydantic</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">Langchain</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">FastAPI</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">PostgreSQL</Badge>
+                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">Pydantic</Badge>
                     </div>
                   </div>
                 </div>
@@ -66,9 +66,9 @@ export function AboutPage() {
               <div className="w-10 h-10 bg-green-400 border-2 border-border flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_0px_var(--border)]">
                 <Code className="w-5 h-5 text-black" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground mb-2 font-mono">Open Source</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-3 font-mono">
+              <div className="min-w-0">
+                <h2 className="mb-2 font-mono text-base font-bold text-foreground">Open Source</h2>
+                <p className="mb-3 max-w-[70ch] font-sans text-sm leading-relaxed text-muted-foreground">
                   LogosAI is an open-source project. Check out the source code on GitHub.
                 </p>
                 <a

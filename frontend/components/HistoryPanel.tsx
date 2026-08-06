@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { History } from 'lucide-react';
 import { HistoryListItem } from '@/components/HistoryListItem';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
@@ -54,7 +54,7 @@ export function HistoryPanel({
               <History className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-lg text-foreground font-mono">Analysis History</CardTitle>
+              <h2 className="font-mono text-lg font-semibold leading-none tracking-tight text-foreground">Analysis History</h2>
               <CardDescription className="text-xs mt-0.5 font-mono">
                 {history.length > 0 ? `${history.length} previous ${history.length === 1 ? 'analysis' : 'analyses'}` : 'No records'}
               </CardDescription>

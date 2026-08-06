@@ -103,7 +103,7 @@ function EditableDocumentTitle({
 
   if (isEditing) {
     return (
-      <form className="min-w-0" onSubmit={submitRename}>
+      <form className="min-w-0 flex-1" onSubmit={submitRename}>
         <input
           autoFocus
           aria-label="Document title"
@@ -111,7 +111,7 @@ function EditableDocumentTitle({
           maxLength={160}
           onChange={(event) => setDraftTitle(event.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-9 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-sm font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base"
+          className="h-9 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-base font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </form>
     );
@@ -120,11 +120,11 @@ function EditableDocumentTitle({
   return (
     <button
       type="button"
-      className="group flex min-w-0 items-center gap-1.5 text-left"
+      className="group flex min-w-0 flex-1 items-center gap-1.5 text-left"
       aria-label={`Rename ${document.title}`}
       onClick={() => setIsEditing(true)}
     >
-      <span className="max-w-[42ch] truncate text-sm font-black sm:text-base" title={document.title}>
+      <span className="max-w-full truncate text-sm font-black sm:max-w-[42ch] sm:text-base" title={document.title}>
         {document.title}
       </span>
       <Pencil className="h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100" />
@@ -303,11 +303,11 @@ export function ReaderToolbar({
     <div className="sticky top-0 z-20 border-b-2 border-border bg-card px-3 py-1.5 shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
       <div
         className={cn(
-          'mx-auto flex items-center justify-between gap-3 font-mono',
+          'mx-auto flex flex-wrap items-center gap-2 font-mono sm:flex-nowrap sm:justify-between sm:gap-3',
           isDeepReadingOpen ? 'max-w-[1600px]' : 'max-w-7xl',
         )}
       >
-        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+        <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden sm:flex-1">
           <Button
             type="button"
             variant="outline"
@@ -329,7 +329,7 @@ export function ReaderToolbar({
             {formatDocumentMeta(activeDocument)}
           </p>
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+        <div className="flex w-full shrink-0 items-center justify-between gap-1.5 sm:w-auto sm:justify-end sm:gap-2">
           <AnalysisLanguageSelect
             language={analysisLanguage}
             onLanguageChange={onAnalysisLanguageChange}

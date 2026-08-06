@@ -46,7 +46,7 @@ export function ImportPanel({
         {isPasteEditorOpen ? (
           <div className="mt-8 border-t-2 border-border pt-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-black">Paste source text</h2>
+              <label htmlFor="workspace-paste-text" className="text-sm font-black">Paste source text</label>
               <Button
                 type="button"
                 variant="ghost"
@@ -58,6 +58,7 @@ export function ImportPanel({
               </Button>
             </div>
             <textarea
+              id="workspace-paste-text"
               autoFocus
               value={importState.pasteText}
               onChange={(event) => onPasteTextChange(event.target.value)}
@@ -66,7 +67,7 @@ export function ImportPanel({
               className="mt-3 w-full resize-y border-2 border-border bg-input p-3 font-sans text-base leading-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             {importState.importError ? (
-              <p role="alert" className="mt-2 text-sm font-bold text-destructive">
+              <p role="alert" className="mt-2 text-sm font-bold text-error-foreground">
                 {importState.importError}
               </p>
             ) : null}
@@ -96,7 +97,7 @@ export function ImportPanel({
           ref={fileInputRef}
           type="file"
           accept=".txt,.md,text/plain,text/markdown"
-          className="sr-only"
+          hidden
           onChange={handleFileChange}
         />
       </div>
