@@ -36,7 +36,7 @@ export function LandingPage() {
                         </p>
                     </div>
 
-                    <p className="mt-8 max-w-2xl font-sans text-lg font-semibold leading-relaxed text-muted-foreground sm:text-xl">
+                    <p className="mt-8 max-w-2xl text-pretty font-mono text-lg font-medium leading-relaxed text-muted-foreground sm:text-xl">
                         Paste any complex text, from news articles to academic papers to literary works, and get detailed linguistic breakdowns powered by AI. Built for advanced language learners and deep readers.
                     </p>
 
@@ -57,7 +57,7 @@ export function LandingPage() {
                             <Languages className="w-8 h-8 text-primary-foreground" />
                         </div>
                         <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Any Language</h2>
-                        <p className="font-sans font-medium text-muted-foreground">Automatic language detection and OCR error correction. Paste text in any language and get accurate analysis instantly.</p>
+                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Automatic language detection and OCR error correction. Paste text in any language and get accurate analysis instantly.</p>
                     </div>
 
                     <div className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
@@ -65,7 +65,7 @@ export function LandingPage() {
                             <Brain className="w-8 h-8 text-secondary-foreground text-black" />
                         </div>
                         <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Deep Breakdown</h2>
-                        <p className="font-sans font-medium text-muted-foreground">Get detailed linguistic analysis covering grammar, vocabulary, nuance, and context, tailored for advanced learners tackling real-world texts.</p>
+                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Get detailed linguistic analysis covering grammar, vocabulary, nuance, and context, tailored for advanced learners tackling real-world texts.</p>
                     </div>
 
                     <div className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
@@ -73,7 +73,7 @@ export function LandingPage() {
                             <BookOpen className="w-8 h-8 text-accent-foreground text-black" />
                         </div>
                         <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Complex Texts</h2>
-                        <p className="font-sans font-medium text-muted-foreground">Designed for challenging material like philosophical essays, academic papers, and dense news articles, not just textbook exercises.</p>
+                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Designed for challenging material like philosophical essays, academic papers, and dense news articles, not just textbook exercises.</p>
                     </div>
 
                 </div>
