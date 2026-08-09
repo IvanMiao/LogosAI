@@ -1,7 +1,7 @@
 # LogosAI Project Reference
 
 - 状态：Active，当前产品与工程事实的唯一参考
-- 更新日期：2026-07-19
+- 更新日期：2026-08-09
 - 实施顺序：[ROADMAP.md](ROADMAP.md)
 
 本文档记录 LogosAI 现在是什么、代码如何工作，以及跨版本保持稳定的产品和工程边界。它不承诺未来功能，也不定义优先级。
@@ -27,17 +27,19 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 
 | 能力 | 当前状态 | 已知边界 |
 | --- | --- | --- |
-| 文本入口 | 支持 paste、`.txt`、`.md` 和 legacy history。 | 同时只有一个 active document。 |
+| 文本入口 | 支持 paste、`.txt`、`.md` 和 legacy history；多篇文本作为 Reading sessions 管理。 | 一个 session 同时只有一个 active document。 |
 | Reader | 支持桌面/移动布局和字体、字号、行距偏好。 | 尚未经过正式可用性测试。 |
 | Selection actions | 支持 Explain、Translate、Vocab、Note。 | 选区定位仍以首个 normalized quote 反查，重复文本可能错位。 |
 | Close Read | 支持 document 和 paragraph scope。 | 继续走 legacy `/api/analyze/stream`。 |
-| Artifact | 支持 explanation、translation、vocabulary、close reading 和 note。 | 只有浏览器本地存储，无 document revision。 |
+| Artifact | 支持 explanation、translation、vocabulary、close reading 和 note，并随 session 同步至 D1。 | 当前同步为 aggregate replacement，尚无冲突 UI。 |
 | Streaming | 支持 stage、chunk、done、error，以及 stop、retry、partial output。 | Anchor flow 还没有 client request ID 和严格的截断恢复。 |
-| 恢复 | document、anchor、artifact、preference 和 history 使用 `localStorage`。 | 换文档会清空当前 anchors 与 artifacts；storage failure 仍可能不可见。 |
-| API key | 用户在 Settings 中提供 Gemini key。 | key 保存在浏览器 `localStorage`，每次请求通过 header 发送。 |
+| 恢复 | D1 是 durable source of truth；user-scoped `localStorage` 是即时缓存与离线 fallback。 | 多设备并发修改目前 last-writer-wins。 |
+| 登录 | Better Auth 支持 email/password；Google/GitHub 在配置 OAuth 凭据后启用。 | 尚未接入邮件验证与密码重置邮件服务。 |
+| API key | 每用户在 Settings 中配置 Gemini key；Worker 以 AES-GCM 加密后写入 D1。 | 不提供端到端加密；AI 请求期间 Worker 需要短暂解密。 |
 | Observability | 有 no-op protocol 和 Langfuse adapter 骨架。 | sink 健康状态、完整 span 和 token usage 尚未验证。 |
 | Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
-| PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、history 和 API 都不依赖数据库。 |
+| Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
+| PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、auth、history 和 API 都不依赖 PostgreSQL。 |
 
 ## 领域语言
 
@@ -46,6 +48,7 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 | 概念 | 含义 |
 | --- | --- |
 | `Document` | 一份原始文本及其本地 identity、title、source type。 |
+| `Reading session` | 一份 Document 及其 anchors、notes、AI artifacts 的 durable aggregate。 |
 | `Anchor` | 指向 source range 的内部坐标；用户界面不显示 “anchor” 一词。 |
 | `Artifact` | 挂在 source object 上的 AI output 或 user note。 |
 | `Task` | 一次 streaming action 的运行状态与 request identity。 |
@@ -77,36 +80,33 @@ Artifact 统一处理 AI 和用户产物，但 ownership 不同：AI 可以新�
 ## 当前架构
 
 ```text
-Browser
-├── /app                       WorkspacePage
-│   ├── useWorkspace           orchestration and local state
-│   ├── features/anchors       anchor creation, resolution, persistence
-│   ├── features/artifacts     artifact/task state and persistence
-│   └── client-api             SSE clients
-├── /app/analysis              legacy one-shot analysis
-├── /app/settings              Gemini key and model
-└── /app/about
+Browser (React)
+├── /login, /register           Better Auth client
+├── /app                        Workspace + user-scoped local cache
+├── /app/settings               Cloud model/key settings
+└── /api/*                      same-origin requests
+      │
+      ▼
+Cloudflare Worker (Hono)
+├── /api/auth/*                 Better Auth → D1
+├── /api/account|workspace|reading-sessions → D1
+├── allowlisted AI routes       decrypt user key → FastAPI on Fly
+└── non-API GET/HEAD             → frontend bundle on Fly
 
-Selection skill
-  → POST /api/anchors/run
+FastAPI AI request
   → TextAnalysisLangchain.analyze_stream
   → detect → correct? → interpret
   → SSE stage/chunk/done/error
-  → artifact state → localStorage
-
-Document/paragraph Close Read
-  → POST /api/analyze/stream
-  → same LLM workflow
-  → SSE → artifact state → localStorage
+  → Artifact state → local cache → debounced D1 session sync
 ```
 
 前端组件不直接调用后端；请求集中在 `frontend/client-api/`。页面 hook 编排用户流程，`features/anchors` 和 `features/artifacts` 保存领域逻辑，presentational components 只接收 typed props。
 
-FastAPI 同时提供 `/api/*` 和生产 frontend bundle。开发时由 Vite 代理 API；Docker 和 Fly 使用同一容器，由 FastAPI 服务构建后的静态资源。
+FastAPI 仍同时提供 `/api/*` 和生产 frontend bundle，但生产浏览器入口是 Cloudflare Worker。开发时 Vite 将 `/api/*` 代理到本地 Worker，再由 Worker 只把 allowlisted AI routes 转发到 FastAPI。详细决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。
 
 ## API 与模型契约
 
-所有 AI 请求使用 `X-Gemini-Key`，允许的主模型为 `gemini-2.5-flash` 和 `gemini-2.5-pro`。服务端不保存 key。
+浏览器不再发送 `X-Gemini-Key`。Worker 根据 authenticated user 解密其 key，向 FastAPI 添加该 header；生产 FastAPI 同时校验 `X-LogosAI-Gateway`。允许的主模型为 `gemini-2.5-flash` 和 `gemini-2.5-pro`。FastAPI 不保存 key。
 
 ### Anchor skill
 
@@ -147,8 +147,11 @@ Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同�
 
 ## 数据、安全与可观测性
 
-- 当前 document、anchor、artifact、task、history、reader preference、model 和 Gemini key 都在 browser `localStorage`。
-- 新 document 会替换 active document，并清除当前 anchor/artifact storage；不存在多文档 library。
+- Better Auth identity、user settings、reader preferences、document、anchor 与 artifact 以 user ID 隔离后存入 Cloudflare D1。
+- Browser `localStorage` 只保留 user-scoped 工作缓存；首次登录用户可认领旧版未分 scope 的本地数据，其他账号不能继承。
+- Gemini key 使用 AES-256-GCM、随机 IV 和 user ID associated data 加密；读取设置只返回是否存在及末四位 hint。
+- OAuth token 使用 Better Auth token encryption。Source text 与 note 依赖 Cloudflare platform encryption at rest，不是 E2E encryption。
+- 一个用户可保留多个 reading sessions；删除 session 会级联其 anchors 与 artifacts。
 - 默认不应向第三方 telemetry 上传 API key、完整原文、完整 prompt 或私人 note。
 - Source text 是不可信数据，必须与 system instruction 分隔。当前没有 tool execution，因此 prompt injection 主要是 grounding 和输出质量风险。
 - Memory 如果未来实现，必须可检查、可删除，并记录 evidence、confidence 和 freshness；当前不实现隐形 personal memory。
@@ -170,10 +173,12 @@ Workspace 已被测试保护的交互旅程以
 以下旧方案不再具有实施授权：
 
 - 预先确定中高级语言学习者、内置 Reader 或 BYOK 一定是首发方案。
-- 先建设 Assistant Kernel、PostgreSQL/pgvector/Redis、Cloudflare D1/R2/Vectorize、Clerk、RAG、queue 或 cloud document library。
+- 先建设 Assistant Kernel、PostgreSQL/pgvector/Redis、R2/Vectorize、RAG、queue 或 collaboration platform。
 - 在真实文档分布出现前固定长文阈值、chunking、digest 或 storage 技术。
 - 立即建设 persona、memory、skill marketplace、auto recommendation、PreReadAgent 或 planner。
 - 在真实分享需求出现前承诺 E2E note encryption、public feed 或 collaboration schema。
 - 为实现未来能力而提前改写所有目录、API 或 LangGraph orchestration。
+
+2026-08-09 产品负责人明确要求登录与 Cloudflare durable sessions，因此这一纵切取代了旧文档中“Gate 5 前不做 cloud auth”的限制；它是产品方向决策，不被错误记录成已经获得 repeat-use evidence。
 
 这些能力可以作为 hypothesis 重新进入 [ROADMAP.md](ROADMAP.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。

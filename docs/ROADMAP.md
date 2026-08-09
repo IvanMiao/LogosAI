@@ -1,8 +1,8 @@
 # LogosAI Roadmap
 
 - 状态：Active，唯一有效的实施顺序
-- 更新日期：2026-07-19
-- 当前阶段：`Discover 0` 与 `Delivery 1`
+- 更新日期：2026-08-09
+- 当前阶段：`Discover 0`、`Delivery 1` 与已交付的 Cloud Foundation
 - 当前事实与架构：[PROJECT.md](PROJECT.md)
 
 ## 文档规则
@@ -32,9 +32,14 @@ LogosAI 探索的是 source-grounded AI reading assistance。候选核心任务�
 | F2 | Selection 只把 selected text 交给 anchor core，再匹配首个 normalized quote。 | 重复文本可能绑定错误位置。 |
 | F3 | Explain、Translate、Vocab 共用 `detect → correct → interpret` workflow。 | 三个名称尚未代表经过验证的独立语义。 |
 | F4 | Anchor skill 默认把全文传入后端。 | 成本、延迟、隐私和最小上下文都没有基线。 |
-| F5 | 只有一个 active document；换文档会清空 anchors 和 artifacts。 | 现状不能证明 library 或长期保存价值。 |
+| F5 | Workspace 已支持多个 reading sessions，并能恢复各自 anchors 与 artifacts。 | 可以开始观察 session 重开和跨设备使用，但尚无 repeat-use 证据。 |
 | F6 | 自动测试覆盖主要 contract；eval 命令只校验 dataset 结构。 | 尚无真实模型质量证据。 |
 | F7 | 仓库没有访谈、留存、行为分析或可用性测试结果。 | 用户、入口和产品形态仍是假设。 |
+| F8 | Better Auth + D1 已建立账号、per-user settings 和 durable reading sessions；email/password 可用，Google/GitHub 等待 OAuth credentials。 | Cloud capability 是明确产品决策，不代表 Gate 2 的用户需求已被验证。 |
+
+### 2026-08-09 产品方向决策
+
+产品负责人明确要求 Cloudflare user data、email/Google/GitHub login、per-user API key 与多 reading-session 管理。该明确授权覆盖了旧 roadmap 对 cloud auth 的 deferred 限制，因此交付了一个保持现有 Reader 与 FastAPI 的独立纵切；架构依据见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。Discover 结论仍未被替代，不能把实现本身当作用户价值证据。
 
 ### 待验证假设
 
@@ -143,11 +148,11 @@ Telemetry 必须经过用户同意，默认不上传完整原文、完整 prompt
 - Reload 后把无 controller 的 `running` task 恢复为 `interrupted`。
 - Storage 写入失败可见，不显示 false saved state。
 - 为 request size、timeout、concurrency 和 stable error type 建立边界。
-- 明确 API-key threat model 和存储选择。
+- 持续验证已实施的 API-key threat model、gateway isolation 与恢复流程。
 - 在真实 desktop/mobile viewport 验证 selection、sheet/dialog、focus 和 interrupted stream。
 - Observability 配置失败不能静默伪装成健康采集。
 
-不建设 cloud auth、queue、RAG、agent kernel，也不提前决定 IndexedDB、OPFS 或 server storage。
+不建设 queue、RAG、agent kernel、collaboration，也不提前决定 IndexedDB 或 OPFS。
 
 ## Evidence Gates
 
@@ -157,7 +162,7 @@ Telemetry 必须经过用户同意，默认不上传完整原文、完整 prompt
 | 2. Repeat Use | 1-2 周 beta 中自然出现第二篇文档、第二次 session、重开 artifact/note，并得到真实容量、离线和多设备需求。 | Local library、document revision、storage 选型、export/delete/migration/retention。 |
 | 3. Learning Loop | 至少一种跨 session 行为比一次性 Explain 增加价值。 | Provenance inspector、feedback、review item、session summary；Translate/Vocab 是否进入主流程。 |
 | 4. Proactive Assistance | Concierge difficulty preview 的打开、接受、dismiss、错误、帮助和成本数据。 | 自动触发、intervention budget、PreRead 与可检查 memory。 |
-| 5. Cloud & Agent Infrastructure | 重复使用、多设备或 durable background work 的明确需求。 | Auth、cloud persistence、queue、retry/cancellation、memory schema、LangGraph 或其他 orchestration。 |
+| 5. Durable Agent Infrastructure | durable background work 的明确需求。 | Queue、durable retry/cancellation、memory schema 或新的 agent orchestration。基础 auth/cloud persistence 已由明确产品决策提前交付。 |
 
 ## Deferred
 
@@ -166,7 +171,7 @@ Telemetry 必须经过用户同意，默认不上传完整原文、完整 prompt
 - Skill recommendation 或自动重排 selection toolbar。
 - 自动 PreRead margin feed、persona engine、personal memory 或 planner。
 - RAG、vector database、跨文档 knowledge graph。
-- Cloud document library、authentication、multi-user collaboration。
+- Multi-user collaboration、sharing permissions 和 organization accounts。
 - Public sharing、public feed、rich-text note editor、WebSocket chat、E2E note encryption。
 - PDF、EPUB、web-page ingestion 的生产实现；Discover 可以用低成本 prototype 验证入口。
 - 为未来 agent 预先建设 LangGraph kernel。
@@ -179,7 +184,7 @@ Telemetry 必须经过用户同意，默认不上传完整原文、完整 prompt
 2. Delivery 2：Explain runner、context policy 和 SSE lifecycle。
 3. Gate 2 后：local storage requirements 与 document revision。
 4. Gate 4 后：proactive intervention policy。
-5. Gate 5 后：cloud persistence、auth 和 durable jobs。
+5. Cloud persistence/auth：已完成 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)；Gate 5 后再决定 durable jobs。
 
 ## 每个纵切的 Definition of Done
 

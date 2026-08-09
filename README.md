@@ -14,27 +14,31 @@ The current Workspace Alpha supports:
 - a reader with persistent typography preferences;
 - selection-level Explain, Translate, Vocab, and Note actions;
 - document- and paragraph-level Close Read;
-- local restoration of the active document, anchors, artifacts, and history;
-- Gemini BYOK via the `X-Gemini-Key` request header.
+- email/password accounts, with Google and GitHub OAuth when configured;
+- Cloudflare D1 reading sessions that keep source text, selections, notes, and
+  AI reading entries together;
+- per-user Gemini BYOK encrypted by the Cloudflare Worker before D1 storage;
+- a user-scoped local cache for immediate restoration and offline-safe edits.
 
-Workspace data and the Gemini key are currently stored in browser
-`localStorage`. The backend receives the key for each AI request and does not
-persist it.
+The Cloudflare Worker is the public application and API origin. It owns auth,
+user data, and credentials, then forwards authenticated AI requests to the
+FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 
 ## Stack
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Radix UI
 - Backend: Python 3.13, FastAPI, Pydantic, LangChain/LangGraph
+- Cloud: Cloudflare Workers, D1, Hono, Better Auth
 - Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
-- Delivery: Docker image served by FastAPI and deployed on Fly.io
+- Delivery: frontend + FastAPI on Fly.io, fronted by Cloudflare Workers
 
 PostgreSQL scaffolding remains in the repository but is not part of the active
 Workspace request or persistence path.
 
 ## Local Development
 
-Prerequisites: Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/), and
-`npm`.
+Prerequisites: Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
+`npm`, and a logged-in Wrangler CLI.
 
 Start the backend:
 
@@ -44,7 +48,18 @@ uv sync
 uv run uvicorn app:app --reload
 ```
 
-Start the frontend in another terminal:
+Prepare and start the Cloudflare gateway in a second terminal:
+
+```bash
+cd cloudflare
+npm ci
+cp .dev.vars.example .dev.vars
+# Replace the three local secret placeholders in .dev.vars.
+npm run db:migrate:local
+npm run dev
+```
+
+Start the frontend in a third terminal:
 
 ```bash
 cd frontend
@@ -52,13 +67,15 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Vite proxies `/api/*` to
-`http://127.0.0.1:8000`. Add a Gemini API key from the Settings page before
-using AI actions; local notes work without a key.
+Open `http://localhost:5173`. Vite proxies `/api/*` to the Worker at
+`http://127.0.0.1:8787`; the Worker forwards only AI routes to FastAPI at
+`http://127.0.0.1:8000`. Create an account, then add a Gemini API key from
+Settings before using AI actions. Local notes work without a key.
 
-No environment file or PostgreSQL instance is required for the default local
-workflow. Optional observability configuration is described in
-[Project Reference](./docs/PROJECT.md).
+No PostgreSQL instance is required for the default workflow. Cloudflare setup,
+OAuth callback URLs, production secrets, migrations, and deployment order are
+documented in [Cloudflare Operations](./cloudflare/README.md). Optional
+observability configuration is described in [Project Reference](./docs/PROJECT.md).
 
 ## Docker
 
@@ -122,3 +139,5 @@ npm run build
   architecture, domain language, and runtime contracts.
 - [Roadmap](./docs/ROADMAP.md): the only source of truth for priorities,
   evidence gates, and deferred work.
+- [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
+  auth, D1 ownership, credential handling, and request boundaries.

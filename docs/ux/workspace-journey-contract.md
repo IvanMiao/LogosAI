@@ -1,7 +1,7 @@
 # Workspace Journey UX Contract
 
 - 状态：Active
-- 最近同步：2026-08-02
+- 最近同步：2026-08-09
 - 可执行规范：[workspaceJourney.test.tsx](../../frontend/tests/workspace/workspaceJourney.test.tsx)
 
 本文档固定 Workspace 当前已经被测试保护的用户旅程。它让产品与工程评审者不必先阅读测试实现，也能判断一次改动是在修复回归，还是有意改变 UX。
@@ -31,9 +31,10 @@
 5. 移动端离开结果回到原文后，可以再次打开同一个结果。
 6. Source 与 Close Reading 可以独立选字体，但字号和行距保持协调的阅读尺度。
 7. 删除 artifact 或 selection 只影响明确确认的对象及其从属数据，并给出可预测的 fallback。
-8. 导入新文本不能删除较早文本；用户可以从 `My texts` 切换回来，并恢复各自的 selection 与 artifact。
+8. 导入新文本不能删除较早文本；用户可以从 `Reading sessions` 切换回来，并恢复各自的 selection 与 artifact。
 9. 文本标题可以由用户修改，重载后必须保留自定义标题。
 10. 删除文本只级联删除该文本的 selection 与 artifact，其他文本及其工作不受影响。
+11. Reading-session 列表显示每个 session 的 selection 与 reading-entry 数量，帮助用户在切换前判断其中保存了什么。
 
 ## 固定用户旅程
 
@@ -217,13 +218,14 @@
 
 **用户动作**
 
-1. 从 `My texts` 新建并粘贴第二篇文本。
-2. 再次打开 `My texts`，切换回第一篇文本。
+1. 从 `Reading sessions` 新建并粘贴第二篇文本。
+2. 再次打开 `Reading sessions`，确认第一篇 session 的 reading-entry 数量并切换回来。
 3. 打开 Context Panel。
 
 **必须保持**
 
 - 新建第二篇文本不会替换或删除第一篇文本。
+- Session 列表显示第一篇文本有一个 reading entry。
 - 切回第一篇文本后恢复其 active source 和已保存的 Close Reading。
 - 切换过程不会重新请求分析。
 
@@ -254,8 +256,8 @@
 
 **用户动作**
 
-1. 在 `My texts` 请求删除第一篇文本。
-2. 在确认 dialog 中选择 `Delete text`。
+1. 在 `Reading sessions` 请求删除第一篇文本。
+2. 在确认 dialog 中选择 `Delete session`。
 
 **必须保持**
 
@@ -277,5 +279,6 @@
 
 | 日期 | 说明 |
 | --- | --- |
+| 2026-08-09 | 将 library UI 统一为 Reading sessions；WJ-10 增加 selection/entry 数量，WJ-12 更新 session 删除文案。 |
 | 2026-08-02 | 新增 WJ-10 至 WJ-12，固定多文本切换、标题重命名与文档级联删除契约。 |
 | 2026-08-01 | 根据现有九条 `workspaceJourney` 测试建立初始 UX contract；未改变测试行为。 |
