@@ -2,7 +2,7 @@ from hashlib import sha256
 from time import perf_counter
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 
 from llm.agent import TextAnalysisLangchain
@@ -12,8 +12,12 @@ from observability.factory import get_observability_client
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
 from schemas.anchors import AnchorExplainRequest, AnchorRunRequest, AnchorSkill
+from security.cloudflare_gateway import require_cloudflare_gateway
 
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter(
+    prefix="/api",
+    dependencies=[Depends(require_cloudflare_gateway)],
+)
 
 _ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro"}
 _PROMPT_VERSION = "anchor-skills:v1"
