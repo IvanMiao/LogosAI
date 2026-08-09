@@ -6,6 +6,7 @@
 backend/.venv
 backend/.pytest_cache
 cli
+cloudflare
 docs
 frontend/dist
 frontend/node_modules
