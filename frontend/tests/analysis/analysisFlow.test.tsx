@@ -9,7 +9,7 @@ import { readHistory, writeHistory } from '@/utils/historyStorage';
 function renderAnalysisPage() {
   return render(
     <MemoryRouter>
-      <AnalysisPage apiKey="test-key" hasApiKey model="gemini-2.5-flash" />
+      <AnalysisPage hasApiKey model="gemini-2.5-flash" />
     </MemoryRouter>,
   );
 }

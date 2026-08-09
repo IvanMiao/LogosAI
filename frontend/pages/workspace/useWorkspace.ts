@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { runAnchorSkill, type AnchorSkill } from '@/client-api/anchorApi';
 import { streamAnalysis } from '@/client-api/analysisApi';
 import type { HistoryItem } from '@/types';
+import { createClientId } from '@/utils/createClientId';
 import {
   createAnchorFromRange,
   createAnchorFromSelection,
@@ -32,6 +33,7 @@ import {
   type ArtifactStorageState,
 } from '@/features/artifacts';
 import {
+  buildReadingSessionStats,
   createWorkspaceDocument,
   type DocumentParagraph,
   isSupportedTextFile,
@@ -67,8 +69,11 @@ import type {
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
   WorkspacePageProps,
+  WorkspaceSyncStatus,
   WorkspaceViewModel,
 } from './workspace.types';
+import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
+import type { LocalWorkspaceState } from './workspace-cloud-state';
 
 function getAnchorsForDocument(
   anchorsById: Record<string, TextAnchor>,
@@ -113,10 +118,22 @@ function getAnchorMarkStatusById({
 
 function buildWorkspaceViewModel({
   hasApiKey,
-}: Pick<WorkspacePageProps, 'hasApiKey'>): WorkspaceViewModel {
+  syncStatus,
+}: Pick<WorkspacePageProps, 'hasApiKey'> & {
+  syncStatus: WorkspaceSyncStatus;
+}): WorkspaceViewModel {
+  const syncLabelByStatus: Record<WorkspaceSyncStatus, string> = {
+    loading: 'Loading cloud workspace',
+    saving: 'Saving to cloud',
+    saved: 'Saved to cloud',
+    offline: 'Cloud sync offline. Select to retry.',
+    error: 'Cloud sync failed. Select to retry.',
+  };
   return {
     apiKeyStatusLabel: hasApiKey ? 'API key ready' : 'API key missing',
     apiKeyStatusTone: hasApiKey ? 'ready' : 'missing',
+    cloudSyncLabel: syncLabelByStatus[syncStatus],
+    cloudSyncTone: syncStatus,
   };
 }
 
@@ -156,42 +173,76 @@ function clearRunningController(
 }
 
 export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
-  const { apiKey, hasApiKey, model } = props;
+  const { userId, hasApiKey, model } = props;
   const runningTasksRef = useRef<Record<string, AbortController>>({});
   const [documentLibrary, setDocumentLibrary] = useState<WorkspaceDocumentLibrary>(
-    () => readStoredDocumentLibrary(),
+    () => readStoredDocumentLibrary(userId),
   );
   const [importState, setImportState] = useState<ImportState>({
     pasteText: '',
     importError: '',
   });
-  const [history, setHistory] = useState<HistoryItem[]>(() => readHistory());
+  const [history, setHistory] = useState<HistoryItem[]>(() => readHistory(userId));
   const [readerPreferences, setReaderPreferences] = useState<ReaderPreferences>(
-    () => readStoredReaderPreferences(),
+    () => readStoredReaderPreferences(userId),
   );
   const [analysisLanguage, setAnalysisLanguage] = useState<AnalysisLanguage>(
-    () => readStoredAnalysisLanguage(),
+    () => readStoredAnalysisLanguage(userId),
   );
   const [anchorStorage, setAnchorStorage] = useState<AnchorStorageState>(
-    () => readStoredAnchors(),
+    () => readStoredAnchors(userId),
   );
   const [artifactStorage, setArtifactStorage] = useState<ArtifactStorageState>(
-    () => readStoredArtifacts(),
+    () => readStoredArtifacts(userId),
   );
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [selectionToolbarPlacement, setSelectionToolbarPlacement] =
     useState<SelectionToolbarPlacement | null>(null);
   const [workspaceError, setWorkspaceError] = useState('');
 
+  const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
+    documentLibrary,
+    anchorStorage,
+    artifactStorage,
+    readerPreferences,
+    analysisLanguage,
+  }), [
+    analysisLanguage,
+    anchorStorage,
+    artifactStorage,
+    documentLibrary,
+    readerPreferences,
+  ]);
+  const hydrateWorkspace = useCallback((state: LocalWorkspaceState) => {
+    setDocumentLibrary(state.documentLibrary);
+    setAnchorStorage(state.anchorStorage);
+    setArtifactStorage(state.artifactStorage);
+    setReaderPreferences(state.readerPreferences);
+    setAnalysisLanguage(state.analysisLanguage);
+    writeStoredDocumentLibrary(state.documentLibrary, userId);
+    writeStoredAnchors(state.anchorStorage, userId);
+    writeStoredArtifacts(state.artifactStorage, userId);
+    writeStoredReaderPreferences(state.readerPreferences, userId);
+    writeStoredAnalysisLanguage(state.analysisLanguage, userId);
+  }, [userId]);
+  const cloudSync = useWorkspaceCloudSync({
+    enabled: props.cloudSyncEnabled ?? false,
+    userId,
+    state: localWorkspaceState,
+    onHydrate: hydrateWorkspace,
+  });
   const viewModel = useMemo(
-    () => buildWorkspaceViewModel({ hasApiKey }),
-    [hasApiKey],
+    () => buildWorkspaceViewModel({ hasApiKey, syncStatus: cloudSync.status }),
+    [cloudSync.status, hasApiKey],
   );
   const activeDocument = getActiveDocument(documentLibrary);
   const documents = useMemo(
     () => listLibraryDocuments(documentLibrary),
     [documentLibrary],
   );
+  const sessionStatsByDocumentId = useMemo(() => {
+    return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
+  }, [anchorStorage, artifactStorage, documents]);
   const activeAnchorId = getActiveAnchorIdForDocument(
     anchorStorage,
     activeDocument?.id,
@@ -224,12 +275,12 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
 
   const writeAnchors = (state: AnchorStorageState) => {
     setAnchorStorage(state);
-    writeStoredAnchors(state);
+    writeStoredAnchors(state, userId);
   };
 
   const writeArtifacts = (state: ArtifactStorageState) => {
     setArtifactStorage(state);
-    writeStoredArtifacts(state);
+    writeStoredArtifacts(state, userId);
   };
 
   const updateArtifacts = (
@@ -237,13 +288,13 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   ) => {
     setArtifactStorage((current) => {
       const nextState = updater(current);
-      writeStoredArtifacts(nextState);
+      writeStoredArtifacts(nextState, userId);
       return nextState;
     });
   };
 
   const commitDocumentLibrary = (nextLibrary: WorkspaceDocumentLibrary): boolean => {
-    if (!writeStoredDocumentLibrary(nextLibrary)) {
+    if (!writeStoredDocumentLibrary(nextLibrary, userId)) {
       setWorkspaceError('This change could not be saved. Check browser storage and try again.');
       return false;
     }
@@ -309,14 +360,14 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   ) => {
     setReaderPreferences((current) => {
       const nextPreferences = { ...current, [key]: value };
-      writeStoredReaderPreferences(nextPreferences);
+      writeStoredReaderPreferences(nextPreferences, userId);
       return nextPreferences;
     });
   };
 
   const updateAnalysisLanguage = (language: AnalysisLanguage) => {
     setAnalysisLanguage(language);
-    writeStoredAnalysisLanguage(language);
+    writeStoredAnalysisLanguage(language, userId);
   };
 
   const createSelectionAnchor = (
@@ -452,7 +503,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
         documentId: anchor.documentId,
         anchorId: anchor.id,
         title,
-        requestId: `request-${Date.now()}`,
+        requestId: createClientId('request'),
         type,
       }),
       status: 'failed' as const,
@@ -474,7 +525,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    const requestId = `request-${Date.now()}`;
+    const requestId = createClientId('request');
     const artifact = createStreamingArtifact({
       documentId: anchor.documentId,
       anchorId: anchor.id,
@@ -488,7 +539,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     try {
       const finalResult = await streamAnalysis(
         {
-          apiKey,
           model,
           text,
           userLanguage: analysisLanguage,
@@ -537,7 +587,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    const pendingRequestId = `pending-${Date.now()}`;
+    const pendingRequestId = createClientId('pending');
     const artifact = createStreamingArtifact({
       documentId: activeDocument.id,
       anchorId: anchor.id,
@@ -552,7 +602,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     try {
       const finalResult = await runAnchorSkill(
         {
-          apiKey,
           model,
           document: activeDocument,
           anchor,
@@ -728,13 +777,14 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   };
 
   const deleteHistoryItem = (id: number) => {
-    setHistory(removeHistoryItem(id));
+    setHistory(removeHistoryItem(id, userId));
   };
 
   return {
     viewModel,
     activeDocument,
     documents,
+    sessionStatsByDocumentId,
     activeAnchor,
     anchors,
     activeAnchorId,
@@ -775,5 +825,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     updateReaderPreference,
     updateAnalysisLanguage,
     clearDocument: startNewDocument,
+    retryCloudSync: cloudSync.retry,
   };
 }

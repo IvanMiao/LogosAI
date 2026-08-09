@@ -124,7 +124,7 @@ export function createAnchorFromSelection({
   const quoteHash = hashAnchorQuote(normalizedQuote);
 
   return {
-    id: `anchor-${quoteHash}-${resolvedAnchor.startOffset}`,
+    id: `anchor-${documentId}-selection-${quoteHash}-${resolvedAnchor.startOffset}`,
     documentId,
     scope,
     quote: resolvedAnchor.quote,
@@ -152,7 +152,7 @@ export function createAnchorFromRange({
   const quoteHash = hashAnchorQuote(normalizedQuote);
 
   return {
-    id: `anchor-${scope}-${quoteHash}-${startOffset}`,
+    id: `anchor-${documentId}-${scope}-${quoteHash}-${startOffset}`,
     documentId,
     scope,
     quote,

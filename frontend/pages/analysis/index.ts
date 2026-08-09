@@ -1,1 +1,1 @@
-export { AnalysisPage } from './AnalysisPage';
+export { AnalysisPage, AuthenticatedAnalysisPage } from './AnalysisPage';

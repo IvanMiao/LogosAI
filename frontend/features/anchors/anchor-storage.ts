@@ -1,4 +1,5 @@
 import type { AnchorStorageState, TextAnchor } from './anchor.types';
+import { readScopedStorage, writeScopedStorage } from '@/utils/scopedStorage';
 
 const ANCHOR_STORAGE_KEY = 'logosai.workspace.anchors:v1';
 
@@ -49,9 +50,9 @@ function isAnchorStorageState(value: unknown): value is AnchorStorageState {
   );
 }
 
-export function readStoredAnchors(): AnchorStorageState {
+export function readStoredAnchors(storageScope?: string): AnchorStorageState {
   try {
-    const rawValue = localStorage.getItem(ANCHOR_STORAGE_KEY);
+    const rawValue = readScopedStorage(ANCHOR_STORAGE_KEY, storageScope);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     return isAnchorStorageState(parsedValue) ? parsedValue : EMPTY_ANCHOR_STORAGE;
   } catch {
@@ -59,9 +60,12 @@ export function readStoredAnchors(): AnchorStorageState {
   }
 }
 
-export function writeStoredAnchors(state: AnchorStorageState): void {
+export function writeStoredAnchors(
+  state: AnchorStorageState,
+  storageScope?: string,
+): void {
   try {
-    localStorage.setItem(ANCHOR_STORAGE_KEY, JSON.stringify(state));
+    writeScopedStorage(ANCHOR_STORAGE_KEY, JSON.stringify(state), storageScope);
   } catch {
     // Storage can fail in private browsing or when quota is exhausted.
   }

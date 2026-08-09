@@ -1,83 +1,133 @@
-import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, Languages, BookOpen } from 'lucide-react';
+import type { ReactElement } from 'react';
+import { BookOpen, Brain, Cloud, Languages, Zap, type LucideIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/features/auth';
+import { cn } from '@/utils/className';
 
-export function LandingPage() {
-    const navigate = useNavigate();
+interface LandingFeature {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  iconSurface: string;
+}
 
-    return (
-        <main
-            data-route-focus
-            tabIndex={-1}
-            className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6 font-mono text-foreground sm:p-12"
+const LANDING_FEATURES: LandingFeature[] = [
+  {
+    title: 'Any language',
+    description: 'Read challenging material in its original language, with explanations and translation kept beside the source.',
+    icon: Languages,
+    iconSurface: 'bg-primary text-primary-foreground',
+  },
+  {
+    title: 'Source-linked help',
+    description: 'Select a difficult passage for an explanation, vocabulary help, a note, or a deeper close reading.',
+    icon: BookOpen,
+    iconSurface: 'bg-secondary text-black',
+  },
+  {
+    title: 'Cloud sessions',
+    description: 'Return to each text with its saved selections, notes, and reading entries still attached.',
+    icon: Cloud,
+    iconSurface: 'bg-accent text-black',
+  },
+];
+
+function FeatureCard({ feature }: { feature: LandingFeature }): ReactElement {
+  const Icon = feature.icon;
+  return (
+    <article className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
+      <div className={cn(
+        'mb-6 flex h-14 w-14 items-center justify-center border-2 border-border shadow-[4px_4px_0px_0px_var(--border)]',
+        feature.iconSurface,
+      )}>
+        <Icon className="h-8 w-8" aria-hidden="true" />
+      </div>
+      <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">
+        {feature.title}
+      </h2>
+      <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">
+        {feature.description}
+      </p>
+    </article>
+  );
+}
+
+function LandingHero({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}): ReactElement {
+  return (
+    <section className="mb-20 flex flex-col items-center space-y-8 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-300">
+      <div className="mb-4 flex h-24 w-24 items-center justify-center border-4 border-border bg-primary shadow-[8px_8px_0px_0px_var(--border)] motion-safe:animate-in motion-safe:zoom-in motion-safe:delay-100 motion-safe:duration-300 motion-safe:fill-mode-both sm:h-32 sm:w-32">
+        <Brain className="h-14 w-14 text-primary-foreground sm:h-20 sm:w-20" aria-hidden="true" />
+      </div>
+
+      <h1 className="-rotate-1 font-brand text-6xl font-black uppercase tracking-tighter sm:text-8xl md:-rotate-2 md:text-9xl">
+        LogosAI
+      </h1>
+
+      <div className="mx-2 max-w-[calc(100vw-3rem)] rotate-1 border-4 border-border bg-accent px-3 py-2 shadow-[4px_4px_0px_0px_var(--border)] sm:px-6 md:rotate-2">
+        <p className="text-balance font-brand text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground sm:text-2xl sm:tracking-widest">
+          Source-grounded reading workspace
+        </p>
+      </div>
+
+      <p className="mt-8 max-w-2xl text-pretty px-1 font-mono text-base font-medium leading-relaxed text-muted-foreground sm:text-xl">
+        Import a difficult text, understand the passages that slow you down, and keep every useful note or close read tied to its source.
+      </p>
+
+      <Link
+        to={isAuthenticated ? '/app' : '/register'}
+        className="relative mt-12 inline-flex max-w-full items-center justify-center border-4 border-border bg-secondary px-6 py-5 font-brand text-lg font-black uppercase tracking-wide text-black shadow-[8px_8px_0px_0px_var(--border)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:bg-primary hover:shadow-[12px_12px_0px_0px_var(--border)] active:translate-x-2 active:translate-y-2 active:shadow-none motion-reduce:transition-none sm:px-12 sm:py-6 sm:text-2xl sm:tracking-wider"
+      >
+        {isAuthenticated ? 'Continue reading' : 'Start reading'}
+        <Zap className="ml-4 h-7 w-7 fill-black text-black sm:h-8 sm:w-8" aria-hidden="true" />
+      </Link>
+    </section>
+  );
+}
+
+export function LandingPage(): ReactElement {
+  const auth = useAuth();
+  const isAuthenticated = auth.status === 'authenticated';
+
+  return (
+    <main
+      id="main-content"
+      data-route-focus
+      tabIndex={-1}
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background p-6 font-mono text-foreground sm:p-12"
+    >
+      <nav aria-label="Account" className="absolute right-4 top-4 z-20 sm:right-8 sm:top-8">
+        <Link
+          to={isAuthenticated ? '/app' : '/login'}
+          className="inline-flex min-h-11 items-center border-2 border-border bg-card px-4 text-sm font-black shadow-hard-sm transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none motion-reduce:transition-none"
         >
-            {/* Background decoration */}
-            <div
-                className="absolute inset-0 pointer-events-none opacity-[0.05] dark:opacity-10"
-                style={{
-                    backgroundImage: 'radial-gradient(circle at 2px 2px, var(--foreground) 1px, transparent 0)',
-                    backgroundSize: '32px 32px'
-                }}
-            ></div>
+          {isAuthenticated ? 'Open workspace' : 'Sign in'}
+        </Link>
+      </nav>
 
-            <div className="max-w-5xl w-full z-10 flex flex-col items-center">
-                {/* Hero Section */}
-                <div className="mb-20 flex flex-col items-center space-y-8 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-1000">
-                    <div className="mb-4 flex h-24 w-24 items-center justify-center border-4 border-border bg-primary shadow-[8px_8px_0px_0px_var(--border)] motion-safe:animate-in motion-safe:zoom-in motion-safe:delay-200 motion-safe:duration-700 motion-safe:fill-mode-both sm:h-32 sm:w-32">
-                        <Brain className="w-14 h-14 sm:w-20 sm:h-20 text-primary-foreground" />
-                    </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.05] dark:opacity-10"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 2px 2px, var(--foreground) 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }}
+      />
 
-                    <h1 className="font-brand text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter uppercase transform -rotate-1 md:-rotate-2">
-                        LogosAI
-                    </h1>
-
-                    <div className="bg-accent border-4 border-border px-6 py-2 shadow-[4px_4px_0px_0px_var(--border)] transform rotate-1 md:rotate-2">
-                        <p className="font-brand text-xl sm:text-2xl font-bold uppercase tracking-widest text-accent-foreground">
-                            Deep Text Analysis Engine
-                        </p>
-                    </div>
-
-                    <p className="mt-8 max-w-2xl text-pretty font-mono text-lg font-medium leading-relaxed text-muted-foreground sm:text-xl">
-                        Paste any complex text, from news articles to academic papers to literary works, and get detailed linguistic breakdowns powered by AI. Built for advanced language learners and deep readers.
-                    </p>
-
-                    <button
-                        onClick={() => navigate('/app')}
-                        className="relative mt-12 inline-flex items-center justify-center border-4 border-border bg-secondary px-10 py-5 font-brand text-xl font-black uppercase tracking-wider text-black shadow-[8px_8px_0px_0px_var(--border)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:bg-primary hover:shadow-[12px_12px_0px_0px_var(--border)] active:translate-x-2 active:translate-y-2 active:shadow-none motion-reduce:transition-none sm:px-12 sm:py-6 sm:text-2xl"
-                    >
-                        Start Analysis
-                        <Zap className="ml-4 h-7 w-7 fill-black text-black sm:h-8 sm:w-8" />
-                    </button>
-                </div>
-
-                {/* Features Grid */}
-                <div className="mt-12 grid w-full grid-cols-1 gap-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-12 motion-safe:delay-500 motion-safe:duration-1000 motion-safe:fill-mode-both md:grid-cols-3">
-
-                    <div className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
-                        <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-primary shadow-[4px_4px_0px_0px_var(--border)]">
-                            <Languages className="w-8 h-8 text-primary-foreground" />
-                        </div>
-                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Any Language</h2>
-                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Automatic language detection and OCR error correction. Paste text in any language and get accurate analysis instantly.</p>
-                    </div>
-
-                    <div className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
-                        <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-secondary shadow-[4px_4px_0px_0px_var(--border)]">
-                            <Brain className="w-8 h-8 text-secondary-foreground text-black" />
-                        </div>
-                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Deep Breakdown</h2>
-                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Get detailed linguistic analysis covering grammar, vocabulary, nuance, and context, tailored for advanced learners tackling real-world texts.</p>
-                    </div>
-
-                    <div className="border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_var(--border)]">
-                        <div className="mb-6 flex h-14 w-14 items-center justify-center border-2 border-border bg-accent shadow-[4px_4px_0px_0px_var(--border)]">
-                            <BookOpen className="w-8 h-8 text-accent-foreground text-black" />
-                        </div>
-                        <h2 className="mb-4 font-brand text-2xl font-black uppercase text-card-foreground">Complex Texts</h2>
-                        <p className="text-pretty font-mono font-medium leading-relaxed text-muted-foreground">Designed for challenging material like philosophical essays, academic papers, and dense news articles, not just textbook exercises.</p>
-                    </div>
-
-                </div>
-            </div>
-        </main>
-    );
+      <div className="z-10 flex w-full max-w-5xl flex-col items-center">
+        <LandingHero isAuthenticated={isAuthenticated} />
+        <section
+          aria-label="What LogosAI keeps together"
+          className="mt-12 grid w-full grid-cols-1 gap-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-12 motion-safe:delay-150 motion-safe:duration-300 motion-safe:fill-mode-both md:grid-cols-3"
+        >
+          {LANDING_FEATURES.map((feature) => (
+            <FeatureCard key={feature.title} feature={feature} />
+          ))}
+        </section>
+      </div>
+    </main>
+  );
 }

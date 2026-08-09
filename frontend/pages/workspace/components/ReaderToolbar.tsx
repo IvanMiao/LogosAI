@@ -111,7 +111,7 @@ function EditableDocumentTitle({
           maxLength={160}
           onChange={(event) => setDraftTitle(event.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-9 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-base font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-base font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </form>
     );
@@ -149,7 +149,7 @@ function AnalysisLanguageSelect({
         <SelectTrigger
           aria-label="Analysis language"
           title="Analysis language"
-          className="h-9 w-24 bg-card sm:w-28"
+          className="h-11 w-24 bg-card sm:w-28"
         >
           <SelectValue />
         </SelectTrigger>
@@ -235,7 +235,7 @@ function ReadingSettingsMenu({
           type="button"
           variant="outline"
           size="icon"
-          className="h-9 w-9"
+          className="h-11 w-11"
           aria-label="Reading settings"
         >
           <SlidersHorizontal className="h-4 w-4" />
@@ -312,9 +312,9 @@ export function ReaderToolbar({
             type="button"
             variant="outline"
             size="icon"
-            className="h-9 w-9 shrink-0"
-            aria-label="Open my texts"
-            title="My texts"
+            className="h-11 w-11 shrink-0"
+            aria-label="Open reading sessions"
+            title="Reading sessions"
             onClick={onOpenLibrary}
           >
             <BookOpen className="h-4 w-4" />
@@ -341,7 +341,7 @@ export function ReaderToolbar({
           <Button
             type="button"
             variant="outline"
-            className={cn('h-9 w-9', isContextPanelOpen ? 'bg-secondary' : '')}
+            className={cn('h-11 w-11', isContextPanelOpen ? 'bg-secondary' : '')}
             size="icon"
             aria-label={panelButtonLabel}
             title={panelButtonLabel}
@@ -355,7 +355,7 @@ export function ReaderToolbar({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-11 w-11"
                 aria-label="Document menu"
               >
                 <span className="text-lg leading-none">•••</span>

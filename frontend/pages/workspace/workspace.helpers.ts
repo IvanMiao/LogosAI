@@ -1,4 +1,11 @@
-import type { DocumentSourceType, WorkspaceDocument } from './workspace.types';
+import type { AnchorStorageState } from '@/features/anchors';
+import type { ArtifactStorageState } from '@/features/artifacts';
+import { createClientId } from '@/utils/createClientId';
+import type {
+  DocumentSourceType,
+  ReadingSessionStats,
+  WorkspaceDocument,
+} from './workspace.types';
 
 const SUPPORTED_TEXT_FILE_EXTENSIONS = ['.txt', '.md'];
 const MARKDOWN_TITLE_PATTERN = /^#\s+(.+)$/m;
@@ -37,7 +44,7 @@ export function createWorkspaceDocument(
   const now = new Date().toISOString();
 
   return {
-    id: `document-${Date.now()}`,
+    id: createClientId('document'),
     title: createDocumentTitle(text, sourceType, fallbackTitle),
     text,
     sourceType,
@@ -97,4 +104,30 @@ export function formatDocumentMeta(document: WorkspaceDocument): string {
   };
   const sourceLabel = sourceLabelByType[document.sourceType];
   return `${sourceLabel} · ${wordCount} words`;
+}
+
+export function buildReadingSessionStats(
+  documents: WorkspaceDocument[],
+  anchorStorage: AnchorStorageState,
+  artifactStorage: ArtifactStorageState,
+): Record<string, ReadingSessionStats> {
+  const stats = Object.fromEntries(documents.map((document) => [document.id, {
+    selectionCount: 0,
+    entryCount: 0,
+  }]));
+
+  for (const anchor of Object.values(anchorStorage.anchorsById)) {
+    if (anchor.scope === 'selection' && stats[anchor.documentId]) {
+      stats[anchor.documentId].selectionCount += 1;
+    }
+  }
+  for (const artifacts of Object.values(artifactStorage.artifactsByAnchorId)) {
+    for (const artifact of artifacts) {
+      if (stats[artifact.documentId]) {
+        stats[artifact.documentId].entryCount += 1;
+      }
+    }
+  }
+
+  return stats;
 }

@@ -45,7 +45,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://127.0.0.1:8000',
+        target: process.env.VITE_CLOUD_PROXY_TARGET ?? 'http://127.0.0.1:8787',
         changeOrigin: true,
       },
     },

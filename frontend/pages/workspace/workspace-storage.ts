@@ -5,6 +5,11 @@ import type {
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
 } from './workspace.types';
+import {
+  readScopedStorage,
+  removeScopedStorage,
+  writeScopedStorage,
+} from '@/utils/scopedStorage';
 
 const LEGACY_DOCUMENT_STORAGE_KEY = 'logosai.workspace.document:v1';
 const DOCUMENT_LIBRARY_STORAGE_KEY = 'logosai.workspace.documentLibrary:v2';
@@ -124,9 +129,9 @@ function normalizeCloseReadingSourceWidth(value: number): number {
   return Math.round(clampedValue * 10) / 10;
 }
 
-function readLegacyDocument(): WorkspaceDocument | null {
+function readLegacyDocument(storageScope?: string): WorkspaceDocument | null {
   try {
-    const rawValue = localStorage.getItem(LEGACY_DOCUMENT_STORAGE_KEY);
+    const rawValue = readScopedStorage(LEGACY_DOCUMENT_STORAGE_KEY, storageScope);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     return isWorkspaceDocument(parsedValue) ? parsedValue : null;
   } catch {
@@ -134,19 +139,28 @@ function readLegacyDocument(): WorkspaceDocument | null {
   }
 }
 
-export function writeStoredDocumentLibrary(library: WorkspaceDocumentLibrary): boolean {
+export function writeStoredDocumentLibrary(
+  library: WorkspaceDocumentLibrary,
+  storageScope?: string,
+): boolean {
   try {
-    localStorage.setItem(DOCUMENT_LIBRARY_STORAGE_KEY, JSON.stringify(library));
-    localStorage.removeItem(LEGACY_DOCUMENT_STORAGE_KEY);
+    writeScopedStorage(
+      DOCUMENT_LIBRARY_STORAGE_KEY,
+      JSON.stringify(library),
+      storageScope,
+    );
+    removeScopedStorage(LEGACY_DOCUMENT_STORAGE_KEY, storageScope);
     return true;
   } catch {
     return false;
   }
 }
 
-export function readStoredDocumentLibrary(): WorkspaceDocumentLibrary {
+export function readStoredDocumentLibrary(
+  storageScope?: string,
+): WorkspaceDocumentLibrary {
   try {
-    const rawValue = localStorage.getItem(DOCUMENT_LIBRARY_STORAGE_KEY);
+    const rawValue = readScopedStorage(DOCUMENT_LIBRARY_STORAGE_KEY, storageScope);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     const storedLibrary = normalizeDocumentLibrary(parsedValue);
     if (storedLibrary) {
@@ -156,7 +170,7 @@ export function readStoredDocumentLibrary(): WorkspaceDocumentLibrary {
     // Fall through to the legacy document migration.
   }
 
-  const legacyDocument = readLegacyDocument();
+  const legacyDocument = readLegacyDocument(storageScope);
   if (!legacyDocument) {
     return createEmptyDocumentLibrary();
   }
@@ -165,30 +179,37 @@ export function readStoredDocumentLibrary(): WorkspaceDocumentLibrary {
     activeDocumentId: legacyDocument.id,
     documentsById: { [legacyDocument.id]: legacyDocument },
   };
-  writeStoredDocumentLibrary(migratedLibrary);
+  writeStoredDocumentLibrary(migratedLibrary, storageScope);
   return migratedLibrary;
 }
 
-export function readStoredDocument(): WorkspaceDocument | null {
-  return getActiveDocument(readStoredDocumentLibrary());
+export function readStoredDocument(storageScope?: string): WorkspaceDocument | null {
+  return getActiveDocument(readStoredDocumentLibrary(storageScope));
 }
 
-export function writeStoredDocument(document: WorkspaceDocument | null): void {
+export function writeStoredDocument(
+  document: WorkspaceDocument | null,
+  storageScope?: string,
+): void {
   try {
-    localStorage.removeItem(DOCUMENT_LIBRARY_STORAGE_KEY);
+    removeScopedStorage(DOCUMENT_LIBRARY_STORAGE_KEY, storageScope);
     if (document) {
-      localStorage.setItem(LEGACY_DOCUMENT_STORAGE_KEY, JSON.stringify(document));
+      writeScopedStorage(
+        LEGACY_DOCUMENT_STORAGE_KEY,
+        JSON.stringify(document),
+        storageScope,
+      );
     } else {
-      localStorage.removeItem(LEGACY_DOCUMENT_STORAGE_KEY);
+      removeScopedStorage(LEGACY_DOCUMENT_STORAGE_KEY, storageScope);
     }
   } catch {
     // This compatibility helper is only used to seed legacy document state.
   }
 }
 
-export function readStoredReaderPreferences(): ReaderPreferences {
+export function readStoredReaderPreferences(storageScope?: string): ReaderPreferences {
   try {
-    const rawValue = localStorage.getItem(READER_PREFERENCES_STORAGE_KEY);
+    const rawValue = readScopedStorage(READER_PREFERENCES_STORAGE_KEY, storageScope);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     return normalizeReaderPreferences(parsedValue) ?? DEFAULT_READER_PREFERENCES;
   } catch {
@@ -196,26 +217,36 @@ export function readStoredReaderPreferences(): ReaderPreferences {
   }
 }
 
-export function writeStoredReaderPreferences(preferences: ReaderPreferences): void {
+export function writeStoredReaderPreferences(
+  preferences: ReaderPreferences,
+  storageScope?: string,
+): void {
   try {
-    localStorage.setItem(READER_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    writeScopedStorage(
+      READER_PREFERENCES_STORAGE_KEY,
+      JSON.stringify(preferences),
+      storageScope,
+    );
   } catch {
     // Storage can fail in private browsing or when quota is exhausted.
   }
 }
 
-export function readStoredAnalysisLanguage(): AnalysisLanguage {
+export function readStoredAnalysisLanguage(storageScope?: string): AnalysisLanguage {
   try {
-    const storedLanguage = localStorage.getItem(ANALYSIS_LANGUAGE_STORAGE_KEY);
+    const storedLanguage = readScopedStorage(ANALYSIS_LANGUAGE_STORAGE_KEY, storageScope);
     return isAnalysisLanguage(storedLanguage) ? storedLanguage : DEFAULT_ANALYSIS_LANGUAGE;
   } catch {
     return DEFAULT_ANALYSIS_LANGUAGE;
   }
 }
 
-export function writeStoredAnalysisLanguage(language: AnalysisLanguage): void {
+export function writeStoredAnalysisLanguage(
+  language: AnalysisLanguage,
+  storageScope?: string,
+): void {
   try {
-    localStorage.setItem(ANALYSIS_LANGUAGE_STORAGE_KEY, language);
+    writeScopedStorage(ANALYSIS_LANGUAGE_STORAGE_KEY, language, storageScope);
   } catch {
     // Storage can fail in private browsing or when quota is exhausted.
   }

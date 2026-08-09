@@ -255,7 +255,7 @@ export function ReadingSurface({
               key={`${activeDocument.id}-${index}`}
               data-active-source={isActiveSource ? 'true' : undefined}
               className={cn(
-                'group grid scroll-mt-36 grid-cols-1 border-l-4 border-l-transparent px-3 transition-colors duration-700 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
+                'group grid scroll-mt-36 grid-cols-1 border-l-4 border-l-transparent px-3 transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
                 isRevealedSource ? 'border-l-secondary bg-secondary/10' : '',
               )}
             >

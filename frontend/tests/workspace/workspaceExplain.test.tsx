@@ -15,10 +15,11 @@ const document = {
   createdAt: '2026-06-30T00:00:00.000Z',
   updatedAt: '2026-06-30T00:00:00.000Z',
 };
+const TEST_USER_ID = 'test-user';
 
 function WorkspaceHarness() {
   const workspace = useWorkspace({
-    apiKey: 'test-key',
+    userId: TEST_USER_ID,
     hasApiKey: true,
     model: 'gemini-2.5-flash',
   });
@@ -59,7 +60,7 @@ describe('workspace anchored explain flow', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    writeStoredDocument(document);
+    writeStoredDocument(document, TEST_USER_ID);
 
     const stream = new ReadableStream<Uint8Array>({
       start(nextController) {
@@ -87,7 +88,7 @@ describe('workspace anchored explain flow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Select beta' }));
     await screen.findByText('Active: beta');
-    const anchorAId = readStoredAnchors().activeAnchorId;
+    const anchorAId = readStoredAnchors(TEST_USER_ID).activeAnchorId;
 
     await user.click(screen.getByRole('button', { name: 'Analyze in French' }));
     await user.click(screen.getByRole('button', { name: 'Explain' }));
@@ -112,7 +113,7 @@ describe('workspace anchored explain flow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Select gamma' }));
     await screen.findByText('Active: gamma');
-    const anchorBId = readStoredAnchors().activeAnchorId;
+    const anchorBId = readStoredAnchors(TEST_USER_ID).activeAnchorId;
 
     await act(async () => {
       enqueueSse('chunk', {
@@ -131,7 +132,7 @@ describe('workspace anchored explain flow', () => {
     });
 
     await waitFor(() => {
-      const artifacts = readStoredArtifacts();
+      const artifacts = readStoredArtifacts(TEST_USER_ID);
       const anchorArtifacts = artifacts.artifactsByAnchorId[anchorAId ?? ''] ?? [];
       expect(anchorArtifacts[0]?.content).toBe('First second');
       expect(anchorArtifacts[0]?.traceId).toBe('trace-a');

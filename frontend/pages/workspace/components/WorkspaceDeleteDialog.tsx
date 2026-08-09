@@ -50,9 +50,9 @@ function getDialogCopy(target: WorkspaceDeletionTarget): {
 
   if (target.kind === 'document') {
     return {
-      title: 'Delete text?',
-      description: 'This permanently removes the text, its saved selections, notes, and outputs.',
-      confirmLabel: 'Delete text',
+      title: 'Delete reading session?',
+      description: 'This permanently removes the text, its saved selections, notes, and reading entries.',
+      confirmLabel: 'Delete session',
     };
   }
 

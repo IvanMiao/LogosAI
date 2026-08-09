@@ -10,16 +10,20 @@ export type ReaderFontFamily = 'serif' | 'sans' | 'mono';
 export type AnalysisLanguage = 'zh' | 'en' | 'fr' | 'de' | 'es' | 'it' | 'ja';
 
 export interface WorkspacePageProps {
-  apiKey: string;
+  userId: string;
   hasApiKey: boolean;
   model: AnalysisModel;
+  cloudSyncEnabled?: boolean;
 }
 
 export type ApiKeyStatusTone = 'ready' | 'missing';
+export type WorkspaceSyncStatus = 'loading' | 'saved' | 'saving' | 'offline' | 'error';
 
 export interface WorkspaceViewModel {
   apiKeyStatusLabel: string;
   apiKeyStatusTone: ApiKeyStatusTone;
+  cloudSyncLabel: string;
+  cloudSyncTone: WorkspaceSyncStatus;
 }
 
 export interface WorkspaceDocument {
@@ -35,6 +39,11 @@ export interface WorkspaceDocument {
 export interface WorkspaceDocumentLibrary {
   activeDocumentId: string | null;
   documentsById: Record<string, WorkspaceDocument>;
+}
+
+export interface ReadingSessionStats {
+  selectionCount: number;
+  entryCount: number;
 }
 
 export interface ReaderPreferences {
@@ -60,6 +69,7 @@ export interface WorkspaceController {
   viewModel: WorkspaceViewModel;
   activeDocument: WorkspaceDocument | null;
   documents: WorkspaceDocument[];
+  sessionStatsByDocumentId: Record<string, ReadingSessionStats>;
   activeAnchor: TextAnchor | null;
   anchors: TextAnchor[];
   activeAnchorId: string | null;
@@ -106,4 +116,5 @@ export interface WorkspaceController {
   ) => void;
   updateAnalysisLanguage: (language: AnalysisLanguage) => void;
   clearDocument: () => void;
+  retryCloudSync: () => void;
 }

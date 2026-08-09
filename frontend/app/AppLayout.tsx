@@ -1,9 +1,12 @@
 import { Outlet } from 'react-router-dom';
+import { UserSettingsProvider } from '@/features/user-settings';
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-background">
-      <Outlet />
-    </div>
+    <UserSettingsProvider>
+      <div className="min-h-screen bg-background">
+        <Outlet />
+      </div>
+    </UserSettingsProvider>
   );
 }

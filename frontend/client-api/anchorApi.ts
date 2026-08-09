@@ -19,7 +19,6 @@ export interface AnchorStreamMetadata {
 export type AnchorSkill = 'explain' | 'translate' | 'vocab';
 
 export interface RunAnchorExplainRequest {
-  apiKey: string;
   model: AnalysisModel;
   document: WorkspaceDocument;
   anchor: TextAnchor;
@@ -78,7 +77,6 @@ async function requestAnchorSkill(
     headers: {
       Accept: 'text/event-stream',
       'Content-Type': 'application/json',
-      'X-Gemini-Key': request.apiKey,
     },
     signal: request.signal,
     body: JSON.stringify({

@@ -6,10 +6,19 @@ import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { RouteAccessibility } from '@/app/RouteAccessibility';
 import { SettingsPage, useSettingsPage } from '@/pages/settings';
 import { WorkspacePage } from '@/pages/workspace';
+import { UserSettingsProvider } from '@/features/user-settings';
 
 function SettingsHarness() {
   const settings = useSettingsPage();
   return <SettingsPage settings={settings} />;
+}
+
+function renderSettings() {
+  return render(
+    <UserSettingsProvider>
+      <SettingsHarness />
+    </UserSettingsProvider>,
+  );
 }
 
 function RouteFixture() {
@@ -29,37 +38,54 @@ describe('UI accessibility', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.unstubAllGlobals();
+    vi.stubGlobal('fetch', vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const hasApiKey = init?.method === 'PUT';
+      return new Response(JSON.stringify({
+        settings: {
+          model: 'gemini-2.5-flash',
+          hasApiKey,
+          apiKeyHint: hasApiKey ? '•••• alue' : null,
+          updatedAt: hasApiKey ? '2026-08-09T12:00:00.000Z' : null,
+        },
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }));
   });
 
   it('associates settings controls and focuses an invalid API key field', async () => {
     const user = userEvent.setup();
-    render(<SettingsHarness />);
+    renderSettings();
 
-    const apiKeyInput = screen.getByLabelText('API Key');
+    const apiKeyInput = screen.getByLabelText('API key');
     expect(apiKeyInput).toHaveAttribute('aria-describedby', 'settings-api-key-help');
     expect(screen.getByLabelText('Model')).toHaveAttribute('id', 'settings-model');
 
-    await user.click(screen.getByRole('button', { name: 'Save Settings' }));
+    const saveButton = screen.getByRole('button', { name: 'Loading settings…' });
+    await waitFor(() => expect(saveButton).toHaveAccessibleName('Save settings'));
+    await user.click(saveButton);
 
     await waitFor(() => expect(apiKeyInput).toHaveFocus());
     expect(apiKeyInput).toHaveAttribute('aria-invalid', 'true');
-    expect(apiKeyInput).toHaveAccessibleDescription(/Please enter your Gemini API key/);
+    expect(apiKeyInput).toHaveAccessibleDescription(/Enter your Gemini API key/);
   });
 
   it('keeps the settings success announcement available to assistive technology', async () => {
     const user = userEvent.setup();
-    render(<SettingsHarness />);
+    renderSettings();
 
-    await user.type(screen.getByLabelText('API Key'), 'test-key');
-    await user.click(screen.getByRole('button', { name: 'Save Settings' }));
+    await screen.findByRole('button', { name: 'Save settings' });
+    await user.type(screen.getByLabelText('API key'), 'test-key-value');
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('Settings saved successfully!');
+    expect(screen.getByRole('status')).toHaveTextContent('Settings saved successfully.');
   });
 
   it('removes the programmatically opened file input from the tab order', () => {
     render(
       <MemoryRouter>
-        <WorkspacePage apiKey="" hasApiKey={false} model="gemini-2.5-flash" />
+        <WorkspacePage userId="test-user" hasApiKey={false} model="gemini-2.5-flash" />
       </MemoryRouter>,
     );
 

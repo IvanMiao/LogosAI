@@ -1,2 +1,2 @@
-export { WorkspacePage } from './WorkspacePage';
+export { AuthenticatedWorkspacePage, WorkspacePage } from './WorkspacePage';
 export type { WorkspacePageProps } from './workspace.types';

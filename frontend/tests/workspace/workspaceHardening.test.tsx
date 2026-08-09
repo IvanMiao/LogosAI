@@ -21,6 +21,7 @@ const workspaceDocument = {
   createdAt: '2026-07-13T00:00:00.000Z',
   updatedAt: '2026-07-13T00:00:00.000Z',
 };
+const TEST_USER_ID = 'test-user';
 const scrollIntoViewMock = vi.fn();
 
 function writeCloseReadingArtifacts() {
@@ -58,17 +59,17 @@ function writeCloseReadingArtifacts() {
   writeStoredAnchors({
     anchorsById: { [anchor.id]: anchor },
     activeAnchorId: anchor.id,
-  });
+  }, TEST_USER_ID);
   writeStoredArtifacts({
     artifactsByAnchorId: { [anchor.id]: [latestArtifact, earlierArtifact] },
     tasksByRequestId: {},
-  });
+  }, TEST_USER_ID);
 }
 
 function renderWorkspace() {
   return render(
     <MemoryRouter>
-      <WorkspacePage apiKey="" hasApiKey={false} model="gemini-2.5-flash" />
+      <WorkspacePage userId={TEST_USER_ID} hasApiKey={false} model="gemini-2.5-flash" />
     </MemoryRouter>,
   );
 }
@@ -96,7 +97,7 @@ describe('workspace hardening', () => {
 
     renderWorkspace();
     await user.click(screen.getByRole('button', { name: 'Open app menu' }));
-    await user.click(screen.getByRole('menuitem', { name: 'My texts' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Reading sessions' }));
     await user.click(screen.getByText('Legacy analyses · 1'));
     await user.click(screen.getByRole('button', { name: 'Import' }));
 
@@ -140,7 +141,7 @@ describe('workspace hardening', () => {
 
     for (const width of widths) {
       window.innerWidth = width;
-      writeStoredDocument(workspaceDocument);
+      writeStoredDocument(workspaceDocument, TEST_USER_ID);
       const { unmount } = renderWorkspace();
 
       expect(screen.getByRole('button', { name: /API key missing/i })).toBeInTheDocument();
@@ -158,7 +159,7 @@ describe('workspace hardening', () => {
 
   it('dismisses selection actions when the user clicks elsewhere', async () => {
     const user = userEvent.setup();
-    writeStoredDocument(workspaceDocument);
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
     renderWorkspace();
     const sourceParagraph = screen.getByText(workspaceDocument.text);
     const selectionRange = {
@@ -186,7 +187,7 @@ describe('workspace hardening', () => {
   it('opens paragraph Close Read as a primary reading pane', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1280;
-    writeStoredDocument(workspaceDocument);
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
     renderWorkspace();
 
     await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));
@@ -223,7 +224,7 @@ describe('workspace hardening', () => {
   it('resizes the Close Reading split with the keyboard and remembers the ratio', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1280;
-    writeStoredDocument(workspaceDocument);
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
     renderWorkspace();
 
     await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));
@@ -243,7 +244,7 @@ describe('workspace hardening', () => {
   it('navigates and copies Close Reading outputs for the active source', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1280;
-    writeStoredDocument(workspaceDocument);
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
     writeCloseReadingArtifacts();
     renderWorkspace();
 
@@ -271,7 +272,7 @@ describe('workspace hardening', () => {
   it('opens paragraph Close Read as a full-screen mobile reading view', async () => {
     const user = userEvent.setup();
     window.innerWidth = 390;
-    writeStoredDocument(workspaceDocument);
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
     renderWorkspace();
 
     await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));

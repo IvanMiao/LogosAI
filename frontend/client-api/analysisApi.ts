@@ -15,7 +15,6 @@ import {
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
 export interface StreamAnalysisRequest {
-  apiKey: string;
   model: string;
   text: string;
   userLanguage: string;
@@ -48,7 +47,6 @@ async function requestAnalysisStream(
     headers: {
       Accept: 'text/event-stream',
       'Content-Type': 'application/json',
-      'X-Gemini-Key': request.apiKey,
     },
     signal: request.signal,
     body: JSON.stringify({

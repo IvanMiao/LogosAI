@@ -88,6 +88,21 @@ describe('anchor core', () => {
     expect(getActiveAnchorIdForDocument(storage, 'document-2')).toBe(secondAnchor.id);
   });
 
+  it('keeps identical passages distinct across reading sessions', () => {
+    const firstAnchor = createAnchorFromSelection({
+      documentId: 'document-1',
+      documentText: 'The same passage.',
+      selectedText: 'same',
+    });
+    const secondAnchor = createAnchorFromSelection({
+      documentId: 'document-2',
+      documentText: 'The same passage.',
+      selectedText: 'same',
+    });
+
+    expect(firstAnchor?.id).not.toBe(secondAnchor?.id);
+  });
+
   it('preserves a legacy active anchor when another document becomes active', () => {
     const firstAnchor = createAnchorFromSelection({
       documentId: 'document-1',

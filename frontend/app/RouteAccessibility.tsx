@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'LogosAI',
+  '/login': 'Sign in | LogosAI',
+  '/register': 'Create account | LogosAI',
   '/app': 'LogosAI',
   '/app/analysis': 'INPUT_ZONE | LogosAI',
   '/app/settings': 'Settings | LogosAI',

@@ -24,6 +24,7 @@ const journeyDocument = {
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 };
+const TEST_USER_ID = 'test-user';
 const firstParagraphQuote = 'First paragraph for close reading.';
 const firstParagraphAnchor = {
   id: 'first-paragraph-anchor',
@@ -75,7 +76,7 @@ function createCloseReadingResponse(result: string): Response {
 function renderWorkspace() {
   return render(
     <MemoryRouter>
-      <WorkspacePage apiKey="test-key" hasApiKey model="gemini-2.5-flash" />
+      <WorkspacePage userId={TEST_USER_ID} hasApiKey model="gemini-2.5-flash" />
     </MemoryRouter>,
   );
 }
@@ -84,8 +85,8 @@ async function importPastedDocument(
   user: ReturnType<typeof userEvent.setup>,
   text: string,
 ) {
-  await user.click(screen.getByRole('button', { name: 'Open my texts' }));
-  await user.click(screen.getByRole('button', { name: 'New text' }));
+  await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+  await user.click(screen.getByRole('button', { name: 'New session' }));
   await user.click(screen.getByRole('button', { name: 'Paste text' }));
   await user.type(screen.getByPlaceholderText('Paste source text here...'), text);
   await user.click(screen.getByRole('button', { name: 'Start reading' }));
@@ -117,11 +118,11 @@ function writeFirstParagraphArtifacts(
   writeStoredAnchors({
     anchorsById: { [firstParagraphAnchor.id]: firstParagraphAnchor },
     activeAnchorId,
-  });
+  }, TEST_USER_ID);
   writeStoredArtifacts({
     artifactsByAnchorId: { [firstParagraphAnchor.id]: artifacts },
     tasksByRequestId: {},
-  });
+  }, TEST_USER_ID);
 }
 
 function writeMixedOutputsForFirstParagraph() {
@@ -154,7 +155,7 @@ describe('close reading user journeys', () => {
       configurable: true,
       value: vi.fn(),
     });
-    writeStoredDocument(journeyDocument);
+    writeStoredDocument(journeyDocument, TEST_USER_ID);
   });
 
   afterEach(() => {
@@ -418,7 +419,7 @@ describe('close reading user journeys', () => {
         [firstParagraphAnchor.id]: firstParagraphAnchor,
       },
       activeAnchorId: savedSelectionAnchor.id,
-    });
+    }, TEST_USER_ID);
     writeStoredArtifacts({
       artifactsByAnchorId: {
         [savedSelectionAnchor.id]: [latestExplanation, earlierTranslation],
@@ -430,7 +431,7 @@ describe('close reading user journeys', () => {
         )],
       },
       tasksByRequestId: {},
-    });
+    }, TEST_USER_ID);
     renderWorkspace();
 
     await user.click(screen.getByRole('button', { name: 'Open context panel' }));
@@ -449,7 +450,7 @@ describe('close reading user journeys', () => {
     expect(screen.getByRole('dialog', { name: 'Delete output?' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Delete output' }));
     expect(within(contextPanel).getByText(latestExplanation.content)).toBeInTheDocument();
-    expect(readStoredArtifacts().artifactsByAnchorId[savedSelectionAnchor.id]).toHaveLength(1);
+    expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[savedSelectionAnchor.id]).toHaveLength(1);
 
     await user.click(within(contextPanel).getByRole('button', { name: 'Close active selection' }));
     expect(within(contextPanel).getByRole('heading', { name: 'Saved selections · 2' }))
@@ -463,8 +464,8 @@ describe('close reading user journeys', () => {
     expect(screen.getByText('This permanently removes this selection and 1 attached output.'))
       .toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Delete selection' }));
-    expect(readStoredAnchors().anchorsById[savedSelectionAnchor.id]).toBeUndefined();
-    expect(readStoredArtifacts().artifactsByAnchorId[savedSelectionAnchor.id]).toBeUndefined();
+    expect(readStoredAnchors(TEST_USER_ID).anchorsById[savedSelectionAnchor.id]).toBeUndefined();
+    expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[savedSelectionAnchor.id]).toBeUndefined();
     expect(within(contextPanel).getByRole('heading', { name: 'Saved selections · 1' }))
       .toBeInTheDocument();
   });
@@ -495,7 +496,7 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Delete output' }));
     expect(screen.getByText(latestReading.content)).toBeInTheDocument();
     expect(screen.queryByText(earlierReading.content)).not.toBeInTheDocument();
-    expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
+    expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
   });
 
   it('switches between saved texts and restores their reading work', async () => {
@@ -513,9 +514,10 @@ describe('close reading user journeys', () => {
     expect(within(screen.getByRole('region', { name: 'Reading surface' }))
       .getByText('A second text for switching.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open my texts' }));
-    const library = screen.getByRole('dialog', { name: 'My texts' });
-    const searchInput = within(library).getByRole('searchbox', { name: 'Search texts' });
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    const library = screen.getByRole('dialog', { name: 'Reading sessions' });
+    expect(within(library).getByText(/1 reading entry/)).toBeInTheDocument();
+    const searchInput = within(library).getByRole('searchbox', { name: 'Search reading sessions' });
     await user.type(searchInput, 'second text');
     expect(within(library).queryByText('Two paragraph journey')).not.toBeInTheDocument();
     await user.clear(searchInput);
@@ -523,7 +525,7 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Open context panel' }));
 
     expect(screen.getByText(savedReading.content)).toBeInTheDocument();
-    expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
+    expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
   });
 
   it('renames the current text and keeps the title after reloading', async () => {
@@ -536,7 +538,7 @@ describe('close reading user journeys', () => {
     await user.type(titleInput, 'My comparison text{Enter}');
 
     expect(screen.getByRole('button', { name: 'Rename My comparison text' })).toBeInTheDocument();
-    expect(readStoredDocumentLibrary().documentsById[journeyDocument.id].title)
+    expect(readStoredDocumentLibrary(TEST_USER_ID).documentsById[journeyDocument.id].title)
       .toBe('My comparison text');
 
     view.unmount();
@@ -557,14 +559,14 @@ describe('close reading user journeys', () => {
     renderWorkspace();
     await importPastedDocument(user, 'A retained second text.');
 
-    await user.click(screen.getByRole('button', { name: 'Open my texts' }));
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
     await user.click(screen.getByRole('button', { name: 'Delete Two paragraph journey' }));
-    await user.click(screen.getByRole('button', { name: 'Delete text' }));
+    await user.click(screen.getByRole('button', { name: 'Delete session' }));
 
     expect(within(screen.getByRole('region', { name: 'Reading surface' }))
       .getByText('A retained second text.')).toBeInTheDocument();
-    expect(readStoredDocumentLibrary().documentsById[journeyDocument.id]).toBeUndefined();
-    expect(readStoredAnchors().anchorsById[firstParagraphAnchor.id]).toBeUndefined();
-    expect(readStoredArtifacts().artifactsByAnchorId[firstParagraphAnchor.id]).toBeUndefined();
+    expect(readStoredDocumentLibrary(TEST_USER_ID).documentsById[journeyDocument.id]).toBeUndefined();
+    expect(readStoredAnchors(TEST_USER_ID).anchorsById[firstParagraphAnchor.id]).toBeUndefined();
+    expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[firstParagraphAnchor.id]).toBeUndefined();
   });
 });

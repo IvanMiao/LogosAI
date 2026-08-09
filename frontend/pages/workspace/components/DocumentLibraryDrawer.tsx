@@ -10,12 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { formatDate } from '@/utils/formatters';
 import type { HistoryItem } from '@/types';
-import type { WorkspaceDocument } from '../workspace.types';
+import type { ReadingSessionStats, WorkspaceDocument } from '../workspace.types';
 import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
 
 interface DocumentLibraryDrawerProps {
   open: boolean;
   documents: WorkspaceDocument[];
+  sessionStatsByDocumentId: Record<string, ReadingSessionStats>;
   activeDocumentId: string | null;
   history: HistoryItem[];
   onOpenChange: (open: boolean) => void;
@@ -29,6 +30,7 @@ interface DocumentLibraryDrawerProps {
 
 interface DocumentListItemProps {
   document: WorkspaceDocument;
+  stats: ReadingSessionStats;
   isActive: boolean;
   onOpen: () => void;
   onRename: (title: string) => void;
@@ -37,6 +39,7 @@ interface DocumentListItemProps {
 
 function DocumentListItem({
   document,
+  stats,
   isActive,
   onOpen,
   onRename,
@@ -75,13 +78,18 @@ function DocumentListItem({
           <span className="mt-2 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {document.sourceType} · {formatDate(document.lastOpenedAt ?? document.updatedAt)}
           </span>
+          <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            {stats.selectionCount} {stats.selectionCount === 1 ? 'selection' : 'selections'}
+            {' · '}
+            {stats.entryCount} {stats.entryCount === 1 ? 'reading entry' : 'reading entries'}
+          </span>
         </button>
         <div className="flex shrink-0 gap-1">
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-11 w-11"
             aria-label={`Rename ${document.title}`}
             onClick={() => setIsRenaming(true)}
           >
@@ -91,7 +99,7 @@ function DocumentListItem({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-11 w-11"
             aria-label={`Delete ${document.title}`}
             onClick={onDelete}
           >
@@ -108,9 +116,11 @@ function DocumentListItem({
             maxLength={160}
             onChange={(event) => setDraftTitle(event.target.value)}
             onKeyDown={handleRenameKeyDown}
-            className="h-9 min-w-0 flex-1 border-2 border-border bg-input px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+            className="h-11 min-w-0 flex-1 border-2 border-border bg-input px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
           />
-          <Button type="submit" size="sm" disabled={!draftTitle.trim()}>Save</Button>
+          <Button type="submit" size="sm" className="min-h-11" disabled={!draftTitle.trim()}>
+            Save
+          </Button>
         </form>
       ) : null}
     </article>
@@ -153,6 +163,7 @@ function LegacyHistory({
 export function DocumentLibraryDrawer({
   open,
   documents,
+  sessionStatsByDocumentId,
   activeDocumentId,
   history,
   onOpenChange,
@@ -208,24 +219,26 @@ export function DocumentLibraryDrawer({
         <DialogContent className="left-auto right-0 top-0 h-dvh max-h-dvh max-w-md translate-x-0 translate-y-0 overflow-y-auto p-5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              My texts
+              <BookOpen className="h-5 w-5" aria-hidden="true" />
+              Reading sessions
             </DialogTitle>
-            <DialogDescription>Find, rename, or switch between saved reading texts.</DialogDescription>
+            <DialogDescription>
+              Find, rename, or switch sessions. Each session keeps its selections and reading entries.
+            </DialogDescription>
           </DialogHeader>
-          <Button type="button" className="mt-2 w-full" onClick={startNewDocument}>
-            <FilePlus2 className="h-4 w-4" />
-            New text
+          <Button type="button" className="mt-2 min-h-11 w-full" onClick={startNewDocument}>
+            <FilePlus2 className="h-4 w-4" aria-hidden="true" />
+            New session
           </Button>
           <label className="relative mt-2 block">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <span className="sr-only">Search texts</span>
+            <span className="sr-only">Search reading sessions</span>
             <input
               type="search"
               value={query}
-              placeholder="Search title or text…"
+              placeholder="Search session title or text…"
               onChange={(event) => setQuery(event.target.value)}
-              className="h-10 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+              className="h-11 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
             />
           </label>
           <div className="mt-4 space-y-3">
@@ -233,6 +246,10 @@ export function DocumentLibraryDrawer({
               <DocumentListItem
                 key={document.id}
                 document={document}
+                stats={sessionStatsByDocumentId[document.id] ?? {
+                  selectionCount: 0,
+                  entryCount: 0,
+                }}
                 isActive={document.id === activeDocumentId}
                 onOpen={() => openDocument(document.id)}
                 onRename={(title) => onRenameDocument(document.id, title)}
@@ -240,7 +257,9 @@ export function DocumentLibraryDrawer({
               />
             )) : (
               <p className="border-2 border-dashed border-border p-4 text-sm text-muted-foreground">
-                {documents.length === 0 ? 'No saved texts yet.' : 'No texts match this search.'}
+                {documents.length === 0
+                  ? 'No reading sessions yet. Import a text to begin.'
+                  : 'No sessions match this search.'}
               </p>
             )}
           </div>

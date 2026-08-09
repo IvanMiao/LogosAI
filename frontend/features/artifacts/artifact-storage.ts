@@ -1,4 +1,5 @@
 import type { Artifact, ArtifactStorageState } from './artifact.types';
+import { readScopedStorage, writeScopedStorage } from '@/utils/scopedStorage';
 
 const ARTIFACT_STORAGE_KEY = 'logosai.workspace.artifacts:v1';
 
@@ -63,9 +64,9 @@ function recoverInterruptedState(state: ArtifactStorageState): ArtifactStorageSt
   return { artifactsByAnchorId, tasksByRequestId };
 }
 
-export function readStoredArtifacts(): ArtifactStorageState {
+export function readStoredArtifacts(storageScope?: string): ArtifactStorageState {
   try {
-    const rawValue = localStorage.getItem(ARTIFACT_STORAGE_KEY);
+    const rawValue = readScopedStorage(ARTIFACT_STORAGE_KEY, storageScope);
     const parsedValue = rawValue ? JSON.parse(rawValue) : null;
     if (!isArtifactStorageState(parsedValue)) {
       return EMPTY_ARTIFACT_STORAGE;
@@ -80,9 +81,12 @@ export function readStoredArtifacts(): ArtifactStorageState {
   }
 }
 
-export function writeStoredArtifacts(state: ArtifactStorageState): void {
+export function writeStoredArtifacts(
+  state: ArtifactStorageState,
+  storageScope?: string,
+): void {
   try {
-    localStorage.setItem(ARTIFACT_STORAGE_KEY, JSON.stringify(state));
+    writeScopedStorage(ARTIFACT_STORAGE_KEY, JSON.stringify(state), storageScope);
   } catch {
     // Storage can fail in private browsing or when quota is exhausted.
   }

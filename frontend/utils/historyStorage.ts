@@ -1,4 +1,5 @@
 import type { HistoryItem } from '@/types';
+import { readScopedStorage, writeScopedStorage } from './scopedStorage';
 
 const HISTORY_STORAGE_KEY = 'logosai_history';
 
@@ -21,9 +22,9 @@ function normalizeHistoryItem(item: LegacyHistoryItem): HistoryItem {
   };
 }
 
-export function readHistory(): HistoryItem[] {
+export function readHistory(storageScope?: string): HistoryItem[] {
   try {
-    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const raw = readScopedStorage(HISTORY_STORAGE_KEY, storageScope);
     if (!raw) {
       return [];
     }
@@ -35,18 +36,21 @@ export function readHistory(): HistoryItem[] {
   }
 }
 
-export function writeHistory(items: HistoryItem[]): void {
-  localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(items));
+export function writeHistory(items: HistoryItem[], storageScope?: string): void {
+  writeScopedStorage(HISTORY_STORAGE_KEY, JSON.stringify(items), storageScope);
 }
 
-export function prependHistoryItem(item: HistoryItem): HistoryItem[] {
-  const updated = [item, ...readHistory()];
-  writeHistory(updated);
+export function prependHistoryItem(
+  item: HistoryItem,
+  storageScope?: string,
+): HistoryItem[] {
+  const updated = [item, ...readHistory(storageScope)];
+  writeHistory(updated, storageScope);
   return updated;
 }
 
-export function removeHistoryItem(id: number): HistoryItem[] {
-  const updated = readHistory().filter((item) => item.id !== id);
-  writeHistory(updated);
+export function removeHistoryItem(id: number, storageScope?: string): HistoryItem[] {
+  const updated = readHistory(storageScope).filter((item) => item.id !== id);
+  writeHistory(updated, storageScope);
   return updated;
 }

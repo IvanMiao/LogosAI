@@ -1,12 +1,13 @@
 import type { Artifact, ArtifactStorageState, NoteArtifact } from './artifact.types';
+import { createClientId } from '@/utils/createClientId';
 
 const EMPTY_ARTIFACT_STORAGE: ArtifactStorageState = {
   artifactsByAnchorId: {},
   tasksByRequestId: {},
 };
 
-function createArtifactId(anchorId: string, type: string): string {
-  return `${type}-${anchorId}-${Date.now()}`;
+function createArtifactId(type: string): string {
+  return createClientId(type);
 }
 
 export function createEmptyArtifactStorage(): ArtifactStorageState {
@@ -61,7 +62,7 @@ export function upsertNoteDraft({
   const nextDraft: NoteArtifact = existingDraft
     ? { ...existingDraft, content, updatedAt: now }
     : {
-      id: createArtifactId(anchorId, 'note'),
+      id: createArtifactId('note'),
       documentId,
       anchorId,
       type: 'note',
@@ -245,7 +246,7 @@ export function createStreamingArtifact({
   const now = new Date().toISOString();
 
   return {
-    id: createArtifactId(anchorId, type),
+    id: createArtifactId(type),
     documentId,
     anchorId,
     type,
