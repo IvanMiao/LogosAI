@@ -17,4 +17,6 @@ backend/history.db
 **/.ruff_cache/
 
 AGENTS.md
-
+.agents/
+skills-lock.json
+docs/gtm-cofounder
