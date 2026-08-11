@@ -88,10 +88,10 @@ Browser (React)
       │
       ▼
 Cloudflare Worker (Hono)
+├── static React assets          served from Worker Assets
 ├── /api/auth/*                 Better Auth → D1
 ├── /api/account|workspace|reading-sessions → D1
 ├── allowlisted AI routes       decrypt user key → FastAPI on Fly
-└── non-API GET/HEAD             → frontend bundle on Fly
 
 FastAPI AI request
   → TextAnalysisLangchain.analyze_stream
@@ -102,7 +102,7 @@ FastAPI AI request
 
 前端组件不直接调用后端；请求集中在 `frontend/client-api/`。页面 hook 编排用户流程，`features/anchors` 和 `features/artifacts` 保存领域逻辑，presentational components 只接收 typed props。
 
-FastAPI 仍同时提供 `/api/*` 和生产 frontend bundle，但生产浏览器入口是 Cloudflare Worker。开发时 Vite 将 `/api/*` 代理到本地 Worker，再由 Worker 只把 allowlisted AI routes 转发到 FastAPI。详细决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。
+FastAPI 只提供受 Cloudflare gateway 保护的 AI `/api/*` 路由。生产浏览器入口与静态 React assets 都由 Cloudflare Worker 提供；开发时 Vite 将 `/api/*` 代理到本地 Worker，再由 Worker 只把 allowlisted AI routes 转发到 FastAPI。详细决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。
 
 ## API 与模型契约
 

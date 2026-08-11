@@ -30,7 +30,7 @@ FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 - Backend: Python 3.13, FastAPI, Pydantic, LangChain/LangGraph
 - Cloud: Cloudflare Workers, D1, Hono, Better Auth
 - Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
-- Delivery: frontend + FastAPI on Fly.io, fronted by Cloudflare Workers
+- Delivery: React static assets, auth, and D1 on Cloudflare Workers; FastAPI on Fly.io
 
 PostgreSQL scaffolding remains in the repository but is not part of the active
 Workspace request or persistence path.
@@ -83,13 +83,13 @@ observability configuration is described in [Project Reference](./docs/PROJECT.m
 docker compose up --build
 ```
 
-Open `http://localhost:3000`. The Compose file starts one FastAPI container;
-the image builds the frontend and FastAPI serves the resulting static bundle.
-If port `3000` is already in use, select another host port without changing
+The Compose file starts only the FastAPI AI service at `http://localhost:8000`.
+Use the Worker and Vite processes from Local Development for the browser app.
+If port `8000` is already in use, select another host port without changing
 the container configuration:
 
 ```bash
-LOGOSAI_PORT=3001 docker compose up --build
+LOGOSAI_PORT=8001 docker compose up --build
 ```
 
 ## Error Monitoring
@@ -102,7 +102,7 @@ disabled and the application behaves as before.
 - Frontend build: set `VITE_SENTRY_DSN`; optionally set
   `VITE_SENTRY_ENVIRONMENT`. Set `SENTRY_ORG`, `SENTRY_PROJECT`,
   `SENTRY_RELEASE`, and the build-only `SENTRY_AUTH_TOKEN` to upload source
-  maps. The Docker build accepts the token as a BuildKit secret.
+  maps during `cd cloudflare && npm run deploy`.
 
 The default configuration sends errors only: tracing, replay, session
 tracking, and breadcrumbs are off. Request bodies, cookies, user identity,

@@ -1,6 +1,6 @@
 export interface CloudflareBindings {
   LOGOSAI_DB: D1Database;
-  APP_ORIGIN: string;
+  ASSETS: Fetcher;
   FASTAPI_ORIGIN: string;
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;

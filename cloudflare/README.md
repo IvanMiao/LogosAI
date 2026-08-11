@@ -1,8 +1,9 @@
 # LogosAI Cloudflare Gateway
 
-This Worker is the canonical browser origin for LogosAI. It authenticates the
-reader, stores user-owned data in D1, decrypts that reader's Gemini key only for
-an AI request, and forwards the request to FastAPI on Fly.io.
+This Worker is the canonical browser origin for LogosAI. It serves the React
+SPA from Worker Assets, authenticates the reader, stores user-owned data in D1,
+decrypts that reader's Gemini key only for an AI request, and forwards that
+request to FastAPI on Fly.io.
 
 ## File map
 
@@ -13,7 +14,7 @@ an AI request, and forwards the request to FastAPI on Fly.io.
 | `src/account/` | Model choice and encrypted Gemini key settings. | `security/`, `user_settings`. |
 | `src/workspace/` | Reader preferences and aggregate workspace reads. | `reading/`, `workspace_preferences`. |
 | `src/reading/` | Validate and replace one complete reading-session aggregate. | Session, anchor, and artifact tables. |
-| `src/gateway/` | Allowlisted AI proxy and Fly frontend proxy. | FastAPI and the Fly app origin. |
+| `src/gateway/` | Allowlisted AI proxy and SPA asset fallback. | FastAPI and Worker Assets. |
 | `src/security/` | AES-GCM encryption bound to the owning user ID. | Web Crypto API. |
 | `src/http/` | Stable JSON errors. | Hono error handler. |
 | `migrations/` | Better Auth and application D1 schema. | Wrangler migrations. |
@@ -51,7 +52,9 @@ buttons.
 - D1 ID: `b5d33fc3-5c6c-4646-a27f-5fe826eab5fd`
 - D1 jurisdiction: EU (EEUR)
 
-Apply committed migrations before deploying a schema-dependent Worker:
+`npm run deploy` builds `../frontend` and deploys that `dist/` directory as
+Worker Assets together with the API Worker. Apply committed migrations before a
+schema-dependent deployment:
 
 ```bash
 npm run db:migrate:remote

@@ -18,7 +18,6 @@ const schemaDatabase = {
 } as unknown as D1Database;
 
 export const auth = createAuthForDatabase(schemaDatabase, {
-  APP_ORIGIN: 'https://logosai.example',
   FASTAPI_ORIGIN: 'https://logosai.example',
   BETTER_AUTH_URL: 'https://logosai.example',
   BETTER_AUTH_SECRET: 'schema-generation-only-secret-value',

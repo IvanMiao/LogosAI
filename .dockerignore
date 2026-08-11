@@ -8,6 +8,5 @@ backend/.pytest_cache
 cli
 cloudflare
 docs
-frontend/dist
-frontend/node_modules
+frontend
 L_docs

@@ -24,10 +24,10 @@ Browser
   │ same-origin cookies and /api requests
   ▼
 Cloudflare Worker (Hono)
+  ├── Worker Assets ────────────► React SPA and hashed static files
   ├── Better Auth ───────────────► D1 auth tables
   ├── account/workspace/reading ─► D1 application tables
   ├── allowlisted AI gateway ────► FastAPI on Fly.io ─► Gemini
-  └── non-API GET/HEAD ──────────► frontend bundle on Fly.io
 ```
 
 ### Identity
@@ -78,6 +78,8 @@ resurrecting older cloud state.
 Positive:
 
 - Auth and user data have one same-origin security boundary.
+- Static React assets are globally cached and deploy with the Worker, rather
+  than taking an extra request through Fly.io.
 - The AI service remains focused on model orchestration.
 - Each directory has one reason to change and route ownership is inspectable
   from `cloudflare/src/app.ts`.
@@ -86,8 +88,8 @@ Positive:
 
 Costs and limits:
 
-- Production must use the Worker URL or a future Worker custom domain; the Fly
-  URL is an implementation origin, not the supported app entry point.
+- Production must use the Worker URL or a future Worker custom domain; Fly only
+  exposes the protected AI origin and is not a browser entry point.
 - The current sync is aggregate replacement with debounced, last-writer-wins
   behavior. Revision-aware conflict UI is deferred until concurrent editing is
   observed.
@@ -117,6 +119,7 @@ The production path is ready only when:
 2. Better Auth, credential-encryption, and gateway secrets are set by CLI;
 3. the same gateway secret is set on Fly;
 4. OAuth callbacks use the canonical Worker origin;
-5. Worker, frontend, and backend checks pass;
-6. email registration, login, key settings, session reload, and sign-out are
+5. the React build is attached as Worker Assets during Worker deployment;
+6. Worker, frontend, and backend checks pass;
+7. email registration, login, key settings, session reload, and sign-out are
    smoke-tested against the deployed Worker.

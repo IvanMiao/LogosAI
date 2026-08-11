@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import type { CloudflareBindings } from '../env';
 import { splitTrustedOrigins } from '../env';
 
-type AuthEnvironment = Omit<CloudflareBindings, 'LOGOSAI_DB'>;
+type AuthEnvironment = Omit<CloudflareBindings, 'LOGOSAI_DB' | 'ASSETS'>;
 
 interface GitHubProfile {
   id?: string | number;
