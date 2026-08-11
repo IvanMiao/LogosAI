@@ -104,11 +104,12 @@ disabled and the application behaves as before.
   `SENTRY_RELEASE`, and the build-only `SENTRY_AUTH_TOKEN` to upload source
   maps during `cd cloudflare && npm run deploy`.
 - Cloudflare Worker: set `SENTRY_DSN` as a Wrangler secret; optionally set
-  `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` as Wrangler secrets. The Worker
-  captures unexpected Hono, D1, and AI gateway failures.
+  `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, and `SENTRY_TRACES_SAMPLE_RATE` as
+  Wrangler secrets. The Worker captures unexpected Hono, D1, and AI gateway
+  failures plus sampled performance traces.
 
-The default configuration sends errors only: tracing, replay, session
-tracking, and breadcrumbs are off. Request bodies, cookies, user identity,
+The Worker defaults to 10% production tracing (100% in development); replay,
+session tracking, and breadcrumbs are off. Request bodies, cookies, user identity,
 document fields, notes, and Gemini credentials are removed before events are
 sent. Source maps are deleted from the production bundle after a successful
 upload.

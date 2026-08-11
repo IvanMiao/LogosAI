@@ -2,6 +2,8 @@ import * as Sentry from '@sentry/cloudflare';
 import type { CloudflareBindings } from '../env';
 
 const FILTERED = '[Filtered]';
+const DEFAULT_PRODUCTION_TRACE_RATE = 0.1;
+const DEVELOPMENT_TRACE_RATE = 1;
 const SENSITIVE_FIELD_NAMES = new Set([
   'api-key',
   'apikey',
@@ -44,8 +46,19 @@ function scrubValue(value: unknown): unknown {
   );
 }
 
-export function scrubWorkerErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
-  const scrubbedEvent = scrubValue(event) as Sentry.ErrorEvent;
+function resolveTraceSampleRate(env: CloudflareBindings): number {
+  const configuredRate = Number(env.SENTRY_TRACES_SAMPLE_RATE);
+  if (Number.isFinite(configuredRate) && configuredRate >= 0 && configuredRate <= 1) {
+    return configuredRate;
+  }
+
+  return env.SENTRY_ENVIRONMENT === 'development'
+    ? DEVELOPMENT_TRACE_RATE
+    : DEFAULT_PRODUCTION_TRACE_RATE;
+}
+
+export function scrubWorkerEvent<T extends Sentry.Event>(event: T): T {
+  const scrubbedEvent = scrubValue(event) as T;
   delete scrubbedEvent.user;
 
   if (scrubbedEvent.request) {
@@ -55,6 +68,10 @@ export function scrubWorkerErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEve
   }
 
   return scrubbedEvent;
+}
+
+export function scrubWorkerErrorEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
+  return scrubWorkerEvent(event);
 }
 
 export function createSentryOptions(
@@ -70,8 +87,21 @@ export function createSentryOptions(
     environment: env.SENTRY_ENVIRONMENT || 'production',
     release: env.SENTRY_RELEASE || undefined,
     sendDefaultPii: false,
-    tracesSampleRate: 0,
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      stackFrameVariables: false,
+      frameContextLines: 0,
+    },
+    tracesSampleRate: resolveTraceSampleRate(env),
     maxBreadcrumbs: 0,
     beforeSend: scrubWorkerErrorEvent,
+    beforeSendTransaction: scrubWorkerEvent,
   };
 }
