@@ -64,6 +64,7 @@ import type {
   AnalysisLanguage,
   ImportState,
   ReaderPreferences,
+  PendingSelection,
   SelectionToolbarPlacement,
   WorkspaceController,
   WorkspaceDocument,
@@ -198,6 +199,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [selectionToolbarPlacement, setSelectionToolbarPlacement] =
     useState<SelectionToolbarPlacement | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
   const [workspaceError, setWorkspaceError] = useState('');
 
   const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
@@ -306,6 +308,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
 
   const resetTransientDocumentState = () => {
     setSelectionToolbarPlacement(null);
+    setPendingSelection(null);
     setSelectedArtifactId(null);
   };
 
@@ -370,21 +373,28 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     writeStoredAnalysisLanguage(language, userId);
   };
 
-  const createSelectionAnchor = (
-    selectedText: string,
+  const showSelectionActions = (
+    selection: PendingSelection,
     placement: SelectionToolbarPlacement,
   ) => {
-    if (!activeDocument) {
-      return;
+    setPendingSelection(selection);
+    setSelectionToolbarPlacement(placement);
+  };
+
+  const confirmPendingSelection = (): TextAnchor | null => {
+    if (!activeDocument || !pendingSelection) {
+      return null;
     }
 
     const anchor = createAnchorFromSelection({
       documentId: activeDocument.id,
       documentText: activeDocument.text,
-      selectedText,
+      selectedText: pendingSelection.selectedText,
+      startOffset: pendingSelection.startOffset,
+      endOffset: pendingSelection.endOffset,
     });
     if (!anchor) {
-      return;
+      return null;
     }
 
     const nextState = setActiveAnchorForDocument({
@@ -397,8 +407,10 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     }, activeDocument.id, anchor.id);
 
     writeAnchors(nextState);
-    setSelectionToolbarPlacement(placement);
+    setPendingSelection(null);
+    setSelectionToolbarPlacement(null);
     setSelectedArtifactId(null);
+    return anchor;
   };
 
   const setActiveAnchorId = (anchorId: string) => {
@@ -413,6 +425,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   };
 
   const dismissSelectionToolbar = () => {
+    setPendingSelection(null);
     setSelectionToolbarPlacement(null);
   };
 
@@ -657,6 +670,19 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     await runAnchorSkillForAnchor(activeAnchor, skill);
   };
 
+  const runAnchorSkillForPendingSelection = async (skill: AnchorSkill) => {
+    const anchor = confirmPendingSelection();
+    if (!anchor) {
+      return;
+    }
+
+    await runAnchorSkillForAnchor(anchor, skill);
+  };
+
+  const startNoteForPendingSelection = (): TextAnchor | null => {
+    return confirmPendingSelection();
+  };
+
   const runCloseReadDocument = async () => {
     if (!activeDocument) {
       return;
@@ -802,8 +828,10 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     setPasteText,
     importPastedText,
     importTextFile,
-    createSelectionAnchor,
+    showSelectionActions,
     dismissSelectionToolbar,
+    runAnchorSkillForPendingSelection,
+    startNoteForPendingSelection,
     setActiveAnchorId,
     selectArtifact,
     deleteArtifact,

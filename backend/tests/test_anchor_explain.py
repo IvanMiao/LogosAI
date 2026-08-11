@@ -132,7 +132,7 @@ class TestAnchorExplainEndpoint:
 
         assert done["data"]["result"] == "".join(chunks)
 
-    def test_noop_observability_does_not_change_behavior(self, client):
+    def test_anchor_run_completes_without_optional_telemetry(self, client):
         resp = client.post("/api/anchors/explain", json=anchor_request())
         events = parse_sse_events(resp.text)
 

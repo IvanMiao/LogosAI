@@ -31,6 +31,28 @@ describe('anchor core', () => {
     expect(anchor?.quoteHash).toBeTruthy();
   });
 
+  it('uses the provided offsets for a repeated selected passage', () => {
+    const anchor = createAnchorFromSelection({
+      documentId: 'document-1',
+      documentText: 'Repeat this. Repeat this.',
+      selectedText: 'Repeat this',
+      startOffset: 13,
+      endOffset: 24,
+    });
+
+    expect(anchor).toMatchObject({ startOffset: 13, endOffset: 24 });
+  });
+
+  it('does not guess an anchor for an ambiguous passage without offsets', () => {
+    const anchor = createAnchorFromSelection({
+      documentId: 'document-1',
+      documentText: 'Repeat this. Repeat this.',
+      selectedText: 'Repeat this',
+    });
+
+    expect(anchor).toBeNull();
+  });
+
   it('resolves an anchor when the document text is unchanged', () => {
     const anchor = createAnchorFromSelection({
       documentId: 'document-1',

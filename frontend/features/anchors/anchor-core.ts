@@ -9,6 +9,8 @@ interface CreateAnchorInput {
   documentId: string;
   documentText: string;
   selectedText: string;
+  startOffset?: number;
+  endOffset?: number;
   scope?: AnchorScope;
 }
 
@@ -77,6 +79,14 @@ function findNormalizedOffsets(documentText: string, quote: string): ResolvedAnc
     return null;
   }
 
+  const nextMatch = normalizedDocumentText.indexOf(
+    normalizedQuote,
+    normalizedStart + normalizedQuote.length,
+  );
+  if (nextMatch !== -1) {
+    return null;
+  }
+
   const normalizedEnd = normalizedStart + normalizedQuote.length - 1;
   const startOffset = normalizedDocument[normalizedStart]?.rawIndex;
   const endOffset = normalizedDocument[normalizedEnd]?.rawIndex;
@@ -89,6 +99,28 @@ function findNormalizedOffsets(documentText: string, quote: string): ResolvedAnc
     endOffset: endOffset + 1,
     quote: documentText.slice(startOffset, endOffset + 1),
   };
+}
+
+function resolveSelectedOffsets({
+  documentText,
+  selectedText,
+  startOffset,
+  endOffset,
+}: CreateAnchorInput): ResolvedAnchor | null {
+  if (startOffset === undefined || endOffset === undefined) {
+    return findNormalizedOffsets(documentText, selectedText);
+  }
+
+  if (startOffset < 0 || endOffset <= startOffset) {
+    return null;
+  }
+
+  const quote = documentText.slice(startOffset, endOffset);
+  if (normalizeAnchorQuote(quote) !== normalizeAnchorQuote(selectedText)) {
+    return null;
+  }
+
+  return { startOffset, endOffset, quote };
 }
 
 export function resolveAnchor(anchor: TextAnchor, documentText: string): ResolvedAnchor | null {
@@ -113,10 +145,19 @@ export function createAnchorFromSelection({
   documentId,
   documentText,
   selectedText,
+  startOffset,
+  endOffset,
   scope = 'selection',
 }: CreateAnchorInput): TextAnchor | null {
   const normalizedQuote = normalizeAnchorQuote(selectedText);
-  const resolvedAnchor = findNormalizedOffsets(documentText, selectedText);
+  const resolvedAnchor = resolveSelectedOffsets({
+    documentId,
+    documentText,
+    selectedText,
+    startOffset,
+    endOffset,
+    scope,
+  });
   if (!normalizedQuote || !resolvedAnchor) {
     return null;
   }

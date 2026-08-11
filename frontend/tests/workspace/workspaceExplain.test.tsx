@@ -1,4 +1,5 @@
 import { act } from 'react';
+import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -29,20 +30,28 @@ function WorkspaceHarness() {
       <p>Active: {workspace.activeAnchor?.quote ?? 'none'}</p>
       <button
         type="button"
-        onClick={() => workspace.createSelectionAnchor('beta', { top: 0, left: 0 })}
+        onClick={() => workspace.showSelectionActions({
+          selectedText: 'beta',
+          startOffset: 6,
+          endOffset: 10,
+        }, { top: 0, left: 0 })}
       >
         Select beta
       </button>
       <button
         type="button"
-        onClick={() => workspace.createSelectionAnchor('gamma', { top: 0, left: 0 })}
+        onClick={() => workspace.showSelectionActions({
+          selectedText: 'gamma',
+          startOffset: 11,
+          endOffset: 16,
+        }, { top: 0, left: 0 })}
       >
         Select gamma
       </button>
       <button
         type="button"
         onClick={() => {
-          void workspace.runExplainForActiveAnchor();
+          void workspace.runAnchorSkillForPendingSelection('explain');
         }}
       >
         Explain
@@ -87,11 +96,12 @@ describe('workspace anchored explain flow', () => {
     render(<WorkspaceHarness />);
 
     await user.click(screen.getByRole('button', { name: 'Select beta' }));
+    expect(screen.getByText('Active: none')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Analyze in French' }));
+    await user.click(screen.getByRole('button', { name: 'Explain' }));
     await screen.findByText('Active: beta');
     const anchorAId = readStoredAnchors(TEST_USER_ID).activeAnchorId;
 
-    await user.click(screen.getByRole('button', { name: 'Analyze in French' }));
-    await user.click(screen.getByRole('button', { name: 'Explain' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     const request = vi.mocked(fetch).mock.calls[0]?.[1];
     expect(JSON.parse(String(request?.body))).toMatchObject({ user_language: 'fr' });
@@ -112,8 +122,8 @@ describe('workspace anchored explain flow', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Select gamma' }));
-    await screen.findByText('Active: gamma');
-    const anchorBId = readStoredAnchors(TEST_USER_ID).activeAnchorId;
+    expect(screen.getByText('Active: beta')).toBeInTheDocument();
+    expect(readStoredAnchors(TEST_USER_ID).anchorsById).toHaveProperty(anchorAId ?? '');
 
     await act(async () => {
       enqueueSse('chunk', {
@@ -136,7 +146,7 @@ describe('workspace anchored explain flow', () => {
       const anchorArtifacts = artifacts.artifactsByAnchorId[anchorAId ?? ''] ?? [];
       expect(anchorArtifacts[0]?.content).toBe('First second');
       expect(anchorArtifacts[0]?.traceId).toBe('trace-a');
-      expect(artifacts.artifactsByAnchorId[anchorBId ?? '']).toBeUndefined();
+      expect(Object.keys(readStoredAnchors(TEST_USER_ID).anchorsById)).toHaveLength(1);
     });
   });
 });

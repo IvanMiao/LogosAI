@@ -31,6 +31,8 @@ interface ReaderWorkspaceProps {
   onMobileContextOpenChange: (open: boolean) => void;
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
+  onRunPendingSelectionSkill: (skill: AnchorSkill) => void;
+  onStartPendingSelectionNote: () => void;
   onClearActiveAnchor: () => void;
   onRetryArtifact: (artifact: Artifact) => void;
   onOpenLibrary: () => void;
@@ -46,6 +48,8 @@ export function ReaderWorkspace({
   onMobileContextOpenChange,
   onRunSkill,
   onStartNote,
+  onRunPendingSelectionSkill,
+  onStartPendingSelectionNote,
   onClearActiveAnchor,
   onRetryArtifact,
   onOpenLibrary,
@@ -187,10 +191,10 @@ export function ReaderWorkspace({
       anchors={workspace.anchors}
       anchorMarkStatusById={workspace.anchorMarkStatusById}
       selectionToolbarPlacement={workspace.selectionToolbarPlacement}
-      onCreateSelectionAnchor={workspace.createSelectionAnchor}
+      onShowSelectionActions={workspace.showSelectionActions}
       onDismissSelectionToolbar={workspace.dismissSelectionToolbar}
-      onRunSkill={onRunSkill}
-      onStartNote={onStartNote}
+      onRunSkill={onRunPendingSelectionSkill}
+      onStartNote={onStartPendingSelectionNote}
       onSelectAnchor={handleSelectAnchor}
       onCloseReadParagraph={handleCloseReadParagraph}
     />

@@ -3,7 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { writeStoredAnchors } from '@/features/anchors';
+import { readStoredAnchors, writeStoredAnchors } from '@/features/anchors';
 import { writeStoredArtifacts } from '@/features/artifacts';
 import { WorkspacePage } from '@/pages/workspace';
 import {
@@ -164,6 +164,10 @@ describe('workspace hardening', () => {
     const sourceParagraph = screen.getByText(workspaceDocument.text);
     const selectionRange = {
       commonAncestorContainer: sourceParagraph.firstChild,
+      startContainer: sourceParagraph.firstChild,
+      startOffset: 2,
+      endContainer: sourceParagraph.firstChild,
+      endOffset: 14,
       getBoundingClientRect: () => ({ left: 120, top: 180 }),
     };
     vi.spyOn(window, 'getSelection').mockReturnValue({
@@ -182,6 +186,41 @@ describe('workspace hardening', () => {
     expect(screen.getAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(2);
     await user.keyboard('{Escape}');
     expect(screen.queryAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(0);
+  });
+
+  it('keeps Close Reading open until a selection action is confirmed', async () => {
+    const user = userEvent.setup();
+    writeStoredDocument(workspaceDocument, TEST_USER_ID);
+    writeCloseReadingArtifacts();
+    renderWorkspace();
+    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    expect(screen.getByText('Latest close reading content.')).toBeInTheDocument();
+
+    const sourceParagraph = screen.getByText(workspaceDocument.text);
+    const selectionRange = {
+      commonAncestorContainer: sourceParagraph.firstChild,
+      startContainer: sourceParagraph.firstChild,
+      startOffset: 2,
+      endContainer: sourceParagraph.firstChild,
+      endOffset: 14,
+      getBoundingClientRect: () => ({ left: 120, top: 180 }),
+    };
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      rangeCount: 1,
+      getRangeAt: () => selectionRange,
+      toString: () => 'calm reading',
+    } as unknown as Selection);
+
+    fireEvent.mouseUp(sourceParagraph);
+
+    expect(screen.getByText('Latest close reading content.')).toBeInTheDocument();
+    expect(Object.keys(readStoredAnchors(TEST_USER_ID).anchorsById)).toEqual([
+      'paragraph-anchor',
+    ]);
+
+    await user.click(screen.getAllByRole('button', { name: 'Explain' })[0]);
+    await waitFor(() => expect(Object.keys(readStoredAnchors(TEST_USER_ID).anchorsById))
+      .toHaveLength(2));
   });
 
   it('opens paragraph Close Read as a primary reading pane', async () => {

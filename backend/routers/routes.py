@@ -1,5 +1,3 @@
-from hashlib import sha256
-from time import perf_counter
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -8,7 +6,6 @@ from fastapi.responses import StreamingResponse
 from llm.agent import TextAnalysisLangchain
 from llm.state import create_initial_state
 from monitoring import capture_exception
-from observability.factory import get_observability_client
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
 from schemas.anchors import AnchorExplainRequest, AnchorRunRequest, AnchorSkill
@@ -20,8 +17,6 @@ api_router = APIRouter(
 )
 
 _ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro"}
-_PROMPT_VERSION = "anchor-skills:v1"
-_observability = get_observability_client()
 
 
 def _require_agent(
@@ -78,20 +73,6 @@ def _build_anchor_prompt(request: AnchorExplainRequest, skill: AnchorSkill) -> s
             f"Full source document:\n{request.document.text}",
         ]
     )
-
-
-def _prompt_hash(prompt_text: str) -> str:
-    return sha256(prompt_text.encode("utf-8")).hexdigest()[:16]
-
-
-def _record_anchor_stage(trace_id: str, stage: str, skill: AnchorSkill) -> None:
-    span_name_by_stage = {
-        "detect": "llm.detect",
-        "correct": "llm.correct",
-        "interpret": f"llm.{skill}",
-    }
-    span_name = span_name_by_stage.get(stage, "llm.interpret")
-    _observability.record_span(trace_id, span_name, {"stage": stage})
 
 
 def _stream_headers() -> dict[str, str]:
@@ -191,43 +172,10 @@ def _stream_anchor_skill(
     trace_id = f"trace-{uuid4().hex}"
     anchor_id = request.anchor.id
     prompt_text = _build_anchor_prompt(request, skill)
-    trace_started_at = perf_counter()
-    first_token_latency_ms: int | None = None
-
-    _observability.start_trace(
-        trace_id,
-        {
-            "request_id": request_id,
-            "user_action": skill,
-            "document_id": request.document.id,
-            "anchor_id": anchor_id,
-            "model": request.model,
-            "prompt_version": _PROMPT_VERSION,
-            "prompt_hash": _prompt_hash(prompt_text),
-            "input_token_count": "unknown",
-            "output_token_count": "unknown",
-        },
-    )
-    _observability.record_span(
-        trace_id,
-        "workspace.action",
-        {"user_action": skill},
-    )
-    _observability.record_span(
-        trace_id,
-        "anchor.resolve",
-        {
-            "scope": request.anchor.scope,
-            "quote_length": len(request.anchor.quote),
-        },
-    )
 
     async def event_generator():
-        nonlocal first_token_latency_ms
         final_result = ""
         yield ": stream-start\n\n"
-        _observability.record_span(trace_id, "skill.run", {"skill": skill})
-        _observability.record_span(trace_id, "sse.stream", {"status": "started"})
 
         try:
             async for event in agent.analyze_stream(
@@ -239,7 +187,6 @@ def _stream_anchor_skill(
                 if event_type == "stage":
                     stage = event.get("stage", "")
                     if stage:
-                        _record_anchor_stage(trace_id, stage, skill)
                         yield to_sse_event(
                             "stage",
                             _anchor_event_payload(
@@ -254,17 +201,6 @@ def _stream_anchor_skill(
                 if event_type == "chunk":
                     delta = event.get("delta", "")
                     if delta:
-                        if first_token_latency_ms is None:
-                            first_token_latency_ms = int(
-                                (perf_counter() - trace_started_at) * 1000
-                            )
-                            _observability.record_span(
-                                trace_id,
-                                "sse.stream",
-                                {
-                                    "first_token_latency_ms": first_token_latency_ms,
-                                },
-                            )
                         final_result += delta
                         yield to_sse_event(
                             "chunk",
@@ -285,15 +221,6 @@ def _stream_anchor_skill(
             if not final_result:
                 raise ValueError("Analysis failed - no interpretation generated")
 
-            _observability.finish_trace(
-                trace_id,
-                "success",
-                {
-                    "first_token_latency_ms": first_token_latency_ms,
-                    "total_latency_ms": int((perf_counter() - trace_started_at) * 1000),
-                    "status": "success",
-                },
-            )
             yield to_sse_event(
                 "done",
                 _anchor_event_payload(
@@ -311,16 +238,6 @@ def _stream_anchor_skill(
                     "model": request.model,
                     "skill": skill,
                     "trace_id": trace_id,
-                },
-            )
-            _observability.finish_trace(
-                trace_id,
-                "error",
-                {
-                    "error_type": type(e).__name__,
-                    "first_token_latency_ms": first_token_latency_ms,
-                    "total_latency_ms": int((perf_counter() - trace_started_at) * 1000),
-                    "status": "error",
                 },
             )
             yield to_sse_event(

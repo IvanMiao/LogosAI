@@ -65,8 +65,23 @@ export function WorkspacePage({
     void workspace.runAnchorSkillForActiveAnchor(skill);
   };
 
+  const handleRunPendingSelectionSkill = (skill: AnchorSkill) => {
+    openContextPanel();
+    void workspace.runAnchorSkillForPendingSelection(skill);
+  };
+
   const handleStartNote = () => {
     setNoteEditorAnchorId(workspace.activeAnchor?.id ?? null);
+    openContextPanel();
+  };
+
+  const handleStartPendingSelectionNote = () => {
+    const anchor = workspace.startNoteForPendingSelection();
+    if (!anchor) {
+      return;
+    }
+
+    setNoteEditorAnchorId(anchor.id);
     openContextPanel();
   };
 
@@ -106,6 +121,8 @@ export function WorkspacePage({
             onMobileContextOpenChange={setIsMobileContextOpen}
             onRunSkill={handleRunSkill}
             onStartNote={handleStartNote}
+            onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
+            onStartPendingSelectionNote={handleStartPendingSelectionNote}
             onClearActiveAnchor={handleClearActiveAnchor}
             onRetryArtifact={handleRetryArtifact}
             onOpenLibrary={() => setIsLibraryOpen(true)}

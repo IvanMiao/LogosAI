@@ -29,14 +29,14 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 | --- | --- | --- |
 | 文本入口 | 支持 paste、`.txt`、`.md` 和 legacy history；多篇文本作为 Reading sessions 管理。 | 一个 session 同时只有一个 active document。 |
 | Reader | 支持桌面/移动布局和字体、字号、行距偏好。 | 尚未经过正式可用性测试。 |
-| Selection actions | 支持 Explain、Translate、Vocab、Note。 | 选区定位仍以首个 normalized quote 反查，重复文本可能错位。 |
+| Selection actions | 支持 Explain、Translate、Vocab、Note；普通拖选只显示操作菜单，确认动作后才保存 selection。 | source offset 来自真实 DOM range；无法唯一恢复的旧 anchor 不会静默猜测。 |
 | Close Read | 支持 document 和 paragraph scope。 | 继续走 legacy `/api/analyze/stream`。 |
 | Artifact | 支持 explanation、translation、vocabulary、close reading 和 note，并随 session 同步至 D1。 | 当前同步为 aggregate replacement，尚无冲突 UI。 |
 | Streaming | 支持 stage、chunk、done、error，以及 stop、retry、partial output。 | Anchor flow 还没有 client request ID 和严格的截断恢复。 |
 | 恢复 | D1 是 durable source of truth；user-scoped `localStorage` 是即时缓存与离线 fallback。 | 多设备并发修改目前 last-writer-wins。 |
 | 登录 | Better Auth 支持 email/password；Google/GitHub 在配置 OAuth 凭据后启用。 | 尚未接入邮件验证与密码重置邮件服务。 |
 | API key | 每用户在 Settings 中配置 Gemini key；Worker 以 AES-GCM 加密后写入 D1。 | 不提供端到端加密；AI 请求期间 Worker 需要短暂解密。 |
-| Observability | 有 no-op protocol 和 Langfuse adapter 骨架。 | sink 健康状态、完整 span 和 token usage 尚未验证。 |
+| Observability | Sentry 仅记录经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
 | Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
 | Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
 | PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、auth、history 和 API 都不依赖 PostgreSQL。 |

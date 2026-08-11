@@ -11,6 +11,7 @@ import {
 import { getReaderFontClassName } from '../reading-typography';
 import type {
   AnchorMarkStatus,
+  PendingSelection,
   ReaderPreferences,
   SelectionToolbarPlacement,
   WorkspaceController,
@@ -26,7 +27,7 @@ interface ReadingSurfaceProps {
   anchors: TextAnchor[];
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   selectionToolbarPlacement: SelectionToolbarPlacement | null;
-  onCreateSelectionAnchor: WorkspaceController['createSelectionAnchor'];
+  onShowSelectionActions: WorkspaceController['showSelectionActions'];
   onDismissSelectionToolbar: WorkspaceController['dismissSelectionToolbar'];
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
@@ -41,7 +42,6 @@ interface AnchorMarkProps {
 }
 
 interface SelectionToolbarProps {
-  activeAnchor: TextAnchor | null;
   placement: SelectionToolbarPlacement | null;
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
@@ -71,6 +71,53 @@ function isAnchorStartInParagraph(
     && activeAnchor.startOffset < paragraph.endOffset;
 }
 
+function getParagraphElement(node: Node): HTMLElement | null {
+  const element = node instanceof HTMLElement ? node : node.parentElement;
+  return element?.closest<HTMLElement>('[data-paragraph-start]') ?? null;
+}
+
+function getOffsetWithinParagraph(
+  paragraph: HTMLElement,
+  container: Node,
+  offset: number,
+): number | null {
+  const paragraphStart = Number(paragraph.dataset.paragraphStart);
+  if (!Number.isInteger(paragraphStart)) {
+    return null;
+  }
+
+  const prefixRange = document.createRange();
+  prefixRange.selectNodeContents(paragraph);
+  prefixRange.setEnd(container, offset);
+  return paragraphStart + prefixRange.toString().length;
+}
+
+function getSelectionOffsets(
+  range: Range,
+): Pick<PendingSelection, 'startOffset' | 'endOffset'> | null {
+  const startParagraph = getParagraphElement(range.startContainer);
+  const endParagraph = getParagraphElement(range.endContainer);
+  if (!startParagraph || !endParagraph) {
+    return null;
+  }
+
+  const startOffset = getOffsetWithinParagraph(
+    startParagraph,
+    range.startContainer,
+    range.startOffset,
+  );
+  const endOffset = getOffsetWithinParagraph(
+    endParagraph,
+    range.endContainer,
+    range.endOffset,
+  );
+  if (startOffset === null || endOffset === null || endOffset <= startOffset) {
+    return null;
+  }
+
+  return { startOffset, endOffset };
+}
+
 function AnchorMark({
   anchor,
   status,
@@ -91,12 +138,11 @@ function AnchorMark({
 }
 
 function SelectionToolbar({
-  activeAnchor,
   placement,
   onRunSkill,
   onStartNote,
 }: SelectionToolbarProps): ReactElement | null {
-  if (!activeAnchor || !placement) {
+  if (!placement) {
     return null;
   }
 
@@ -138,7 +184,7 @@ export function ReadingSurface({
   anchors,
   anchorMarkStatusById,
   selectionToolbarPlacement,
-  onCreateSelectionAnchor,
+  onShowSelectionActions,
   onDismissSelectionToolbar,
   onRunSkill,
   onStartNote,
@@ -219,11 +265,19 @@ export function ReadingSurface({
       return;
     }
 
+    const offsets = getSelectionOffsets(range);
+    if (!offsets) {
+      return;
+    }
+
     const rect = range.getBoundingClientRect();
-    onCreateSelectionAnchor(selectedText, {
-      top: Math.max(56, rect.top - 8),
-      left: Math.max(12, Math.min(rect.left, window.innerWidth - 260)),
-    });
+    onShowSelectionActions(
+      { selectedText, ...offsets },
+      {
+        top: Math.max(56, rect.top - 8),
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - 260)),
+      },
+    );
   };
 
   return (
@@ -280,13 +334,17 @@ export function ReadingSurface({
                   />
                 ))}
               </div>
-              <p className="mb-7 whitespace-pre-wrap">{paragraph.text}</p>
+              <p
+                data-paragraph-start={paragraph.startOffset}
+                className="mb-7 whitespace-pre-wrap"
+              >
+                {paragraph.text}
+              </p>
             </div>
           );
         })}
       </article>
       <SelectionToolbar
-        activeAnchor={activeAnchor}
         placement={selectionToolbarPlacement}
         onRunSkill={onRunSkill}
         onStartNote={onStartNote}

@@ -63,6 +63,12 @@ export interface SelectionToolbarPlacement {
   left: number;
 }
 
+export interface PendingSelection {
+  selectedText: string;
+  startOffset: number;
+  endOffset: number;
+}
+
 export type AnchorMarkStatus = 'active' | 'draft' | 'saved';
 
 export interface WorkspaceController {
@@ -87,11 +93,13 @@ export interface WorkspaceController {
   setPasteText: (text: string) => void;
   importPastedText: () => void;
   importTextFile: (file: File | null) => Promise<void>;
-  createSelectionAnchor: (
-    selectedText: string,
+  showSelectionActions: (
+    selection: PendingSelection,
     placement: SelectionToolbarPlacement,
   ) => void;
   dismissSelectionToolbar: () => void;
+  runAnchorSkillForPendingSelection: (skill: AnchorSkill) => Promise<void>;
+  startNoteForPendingSelection: () => TextAnchor | null;
   setActiveAnchorId: (anchorId: string) => void;
   selectArtifact: (artifactId: string) => void;
   deleteArtifact: (artifactId: string) => void;
