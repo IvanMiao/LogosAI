@@ -94,7 +94,7 @@ LOGOSAI_PORT=8001 docker compose up --build
 
 ## Error Monitoring
 
-Sentry error monitoring is optional. With no DSN configured, both SDKs remain
+Sentry error monitoring is optional. With no DSN configured, all SDKs remain
 disabled and the application behaves as before.
 
 - Backend runtime: set `SENTRY_DSN`; optionally set `SENTRY_ENVIRONMENT` and
@@ -103,6 +103,9 @@ disabled and the application behaves as before.
   `VITE_SENTRY_ENVIRONMENT`. Set `SENTRY_ORG`, `SENTRY_PROJECT`,
   `SENTRY_RELEASE`, and the build-only `SENTRY_AUTH_TOKEN` to upload source
   maps during `cd cloudflare && npm run deploy`.
+- Cloudflare Worker: set `SENTRY_DSN` as a Wrangler secret; optionally set
+  `SENTRY_ENVIRONMENT` and `SENTRY_RELEASE` as Wrangler secrets. The Worker
+  captures unexpected Hono, D1, and AI gateway failures.
 
 The default configuration sends errors only: tracing, replay, session
 tracking, and breadcrumbs are off. Request bodies, cookies, user identity,
