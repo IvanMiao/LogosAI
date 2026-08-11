@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createSentryOptions,
   scrubWorkerErrorEvent,
+  scrubWorkerEvent,
 } from '../src/monitoring/sentry';
 import type { CloudflareBindings } from '../src/env';
 
@@ -25,7 +26,7 @@ describe('Worker Sentry monitoring', () => {
     expect(createSentryOptions(createBindings())).toBeUndefined();
   });
 
-  it('uses private, errors-only defaults', () => {
+  it('uses private defaults with sampled production tracing', () => {
     expect(createSentryOptions(createBindings({
       SENTRY_DSN: 'https://public@example.invalid/1',
       SENTRY_ENVIRONMENT: 'staging',
@@ -35,9 +36,28 @@ describe('Worker Sentry monitoring', () => {
       environment: 'staging',
       release: 'logosai@1.2.3',
       sendDefaultPii: false,
-      tracesSampleRate: 0,
+      tracesSampleRate: 0.1,
       maxBreadcrumbs: 0,
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpBodies: [],
+        urlQueryParams: false,
+        databaseQueryData: false,
+      },
     });
+  });
+
+  it('accepts a bounded tracing sample rate and defaults to full development tracing', () => {
+    expect(createSentryOptions(createBindings({
+      SENTRY_DSN: 'https://public@example.invalid/1',
+      SENTRY_ENVIRONMENT: 'development',
+    }))?.tracesSampleRate).toBe(1);
+
+    expect(createSentryOptions(createBindings({
+      SENTRY_DSN: 'https://public@example.invalid/1',
+      SENTRY_TRACES_SAMPLE_RATE: '0.25',
+    }))?.tracesSampleRate).toBe(0.25);
   });
 
   it('removes request content, identity, and sensitive fields', () => {
@@ -67,5 +87,16 @@ describe('Worker Sentry monitoring', () => {
       prompt: '[Filtered]',
       nested: { api_key: '[Filtered]' },
     });
+  });
+
+  it('removes sensitive transaction fields before they are sent', () => {
+    const event = scrubWorkerEvent({
+      type: 'transaction',
+      transaction: '/api/analyze',
+      contexts: { trace: { trace_id: 'trace-id', span_id: 'span-id' } },
+      extra: { document: 'private source' },
+    });
+
+    expect(event.extra).toMatchObject({ document: '[Filtered]' });
   });
 });
