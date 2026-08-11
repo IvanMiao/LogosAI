@@ -4,7 +4,28 @@ import { splitTrustedOrigins } from '../env';
 
 type AuthEnvironment = Omit<CloudflareBindings, 'LOGOSAI_DB'>;
 
-function getSocialProviders(env: AuthEnvironment) {
+interface GitHubProfile {
+  id?: string | number;
+  email?: string | null;
+}
+
+/**
+ * Better Auth requires every user to have an email address. GitHub can omit
+ * it even after `user:email` is requested, so retain its stable account ID in
+ * a reserved, non-deliverable address instead of rejecting the reader.
+ */
+export function mapGitHubProfileToUser(profile: GitHubProfile): { email: string } {
+  const email = profile.email?.trim();
+  if (email) return { email };
+
+  if (profile.id === undefined || profile.id === null || profile.id === '') {
+    throw new Error('GitHub did not provide a stable account ID.');
+  }
+
+  return { email: `github-${profile.id}@github.oauth.invalid` };
+}
+
+export function getSocialProviders(env: AuthEnvironment) {
   return {
     ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ? {
@@ -19,6 +40,7 @@ function getSocialProviders(env: AuthEnvironment) {
           github: {
             clientId: env.GITHUB_CLIENT_ID,
             clientSecret: env.GITHUB_CLIENT_SECRET,
+            mapProfileToUser: mapGitHubProfileToUser,
           },
         }
       : {}),
