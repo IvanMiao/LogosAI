@@ -78,6 +78,23 @@ npx wrangler secret put GITHUB_CLIENT_SECRET
 value. Setting the Fly secret makes direct requests to the public FastAPI
 hostname fail before the Gemini key is processed.
 
+## Error monitoring
+
+Worker error monitoring is optional. Set `SENTRY_DSN` as a Wrangler secret to
+report unexpected Worker, Hono, D1, and AI gateway failures. `SENTRY_ENVIRONMENT`
+defaults to `production`, and `SENTRY_RELEASE` should match the deployed release
+when it is available.
+
+```bash
+npx wrangler secret put SENTRY_DSN
+npx wrangler secret put SENTRY_ENVIRONMENT
+npx wrangler secret put SENTRY_RELEASE
+```
+
+Source text, notes, credentials, request bodies, cookies, query strings, and
+user identity are removed before Worker errors are sent to Sentry. Tracing and
+breadcrumbs remain disabled by default.
+
 ## OAuth applications
 
 Create one web OAuth application in each provider and use these exact callback

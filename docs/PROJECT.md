@@ -36,7 +36,7 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 | 恢复 | D1 是 durable source of truth；user-scoped `localStorage` 是即时缓存与离线 fallback。 | 多设备并发修改目前 last-writer-wins。 |
 | 登录 | Better Auth 支持 email/password；Google/GitHub 在配置 OAuth 凭据后启用。 | 尚未接入邮件验证与密码重置邮件服务。 |
 | API key | 每用户在 Settings 中配置 Gemini key；Worker 以 AES-GCM 加密后写入 D1。 | 不提供端到端加密；AI 请求期间 Worker 需要短暂解密。 |
-| Observability | Sentry 仅记录经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
+| Observability | Sentry 记录前端、Cloudflare Worker 与 FastAPI 经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
 | Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
 | Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
 | PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、auth、history 和 API 都不依赖 PostgreSQL。 |
