@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 import sentry_sdk
+from sentry_sdk.integrations.langchain import LangchainIntegration
 
 _FILTERED = "[Filtered]"
 _SENSITIVE_FIELD_NAMES = {
@@ -77,6 +78,8 @@ def init_error_monitoring() -> bool:
         max_request_body_size="never",
         traces_sample_rate=_traces_sample_rate(),
         before_send=scrub_event,
+        before_send_transaction=scrub_event,
+        integrations=[LangchainIntegration(include_prompts=False)],
     )
     return True
 

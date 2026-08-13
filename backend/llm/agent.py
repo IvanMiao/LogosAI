@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 
 from llm.prompts import CORRECTION_SYS_PROMPT, EXAM_SYS_PROMPT
 from llm.state import MultiAgentState, build_analysis_prompt, create_initial_state
+from monitoring.llm import track_llm_stage
 from schemas.analyze import TextDerectives
 
 
@@ -14,6 +15,9 @@ class TextAnalysisLangchain:
         if not gemini_key:
             raise ValueError("Gemini API key is required.")
 
+        self.model = model
+        self.lite_model = "gemini-2.5-flash-lite"
+
         # Main model for interpretation
         self.llm_flash = ChatGoogleGenerativeAI(
             model=model, api_key=gemini_key, temperature=0.3
@@ -21,7 +25,7 @@ class TextAnalysisLangchain:
 
         # Lightweight model for detection and correction
         self.llm_lite = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash-lite", api_key=gemini_key, temperature=0.0
+            model=self.lite_model, api_key=gemini_key, temperature=0.0
         )
 
         self.graph = self._make_workflow()
@@ -63,7 +67,13 @@ class TextAnalysisLangchain:
             HumanMessage(state["text"]),
         ]
         structured_llm = self.llm_lite.with_structured_output(TextDerectives)
-        directives = await structured_llm.ainvoke(detection_messages)
+        with track_llm_stage(
+            "detect",
+            self.lite_model,
+            detection_messages,
+        ) as telemetry:
+            directives = await structured_llm.ainvoke(detection_messages)
+            telemetry.record_response(directives.model_dump_json())
 
         state["text_language"] = directives.language
         state["genre"] = directives.genre
@@ -75,7 +85,15 @@ class TextAnalysisLangchain:
                 SystemMessage(CORRECTION_SYS_PROMPT),
                 HumanMessage(state["text"]),
             ]
-            corrected_response = await self.llm_lite.ainvoke(correction_messages)
+            with track_llm_stage(
+                "correct",
+                self.lite_model,
+                correction_messages,
+            ) as telemetry:
+                corrected_response = await self.llm_lite.ainvoke(correction_messages)
+                telemetry.record_response(
+                    self._content_to_text(corrected_response.content),
+                )
             corrected_text = self._content_to_text(corrected_response.content).strip()
             if corrected_text:
                 state["corrected_text"] = corrected_text
@@ -91,19 +109,27 @@ class TextAnalysisLangchain:
         )
 
         chunks: list[str] = []
-        async for chunk in self.llm_flash.astream(interpretation_messages):
-            delta = self._content_to_text(chunk.content)
-            if not delta:
-                continue
-            chunks.append(delta)
-            yield {"event": "chunk", "delta": delta}
+        with track_llm_stage(
+            "interpret",
+            self.model,
+            interpretation_messages,
+        ) as telemetry:
+            async for chunk in self.llm_flash.astream(interpretation_messages):
+                delta = self._content_to_text(chunk.content)
+                if not delta:
+                    continue
+                telemetry.record_first_token()
+                chunks.append(delta)
+                yield {"event": "chunk", "delta": delta}
 
-        result = "".join(chunks).strip()
-        if not result:
-            fallback = await self.llm_flash.ainvoke(interpretation_messages)
-            result = self._content_to_text(fallback.content).strip()
-            if result:
-                yield {"event": "chunk", "delta": result}
+            result = "".join(chunks).strip()
+            if not result:
+                fallback = await self.llm_flash.ainvoke(interpretation_messages)
+                result = self._content_to_text(fallback.content).strip()
+                if result:
+                    telemetry.record_first_token()
+                    yield {"event": "chunk", "delta": result}
+            telemetry.record_response(result)
 
         if not result:
             raise ValueError("Analysis failed - no interpretation generated")
@@ -115,7 +141,13 @@ class TextAnalysisLangchain:
             messages = [SystemMessage(EXAM_SYS_PROMPT), HumanMessage(state["text"])]
 
             structured_llm = self.llm_lite.with_structured_output(TextDerectives)
-            result = structured_llm.invoke(messages)
+            with track_llm_stage(
+                "detect",
+                self.lite_model,
+                messages,
+            ) as telemetry:
+                result = structured_llm.invoke(messages)
+                telemetry.record_response(result.model_dump_json())
 
             return {
                 "text_language": result.language,
@@ -128,7 +160,13 @@ class TextAnalysisLangchain:
                 SystemMessage(CORRECTION_SYS_PROMPT),
                 HumanMessage(state["text"]),
             ]
-            response = self.llm_lite.invoke(messages)
+            with track_llm_stage(
+                "correct",
+                self.lite_model,
+                messages,
+            ) as telemetry:
+                response = self.llm_lite.invoke(messages)
+                telemetry.record_response(self._content_to_text(response.content))
 
             return {"corrected_text": response.content, "text": response.content}
 
@@ -138,7 +176,13 @@ class TextAnalysisLangchain:
                 state.get("user_language", "EN"),
             )
             messages = (SystemMessage(sys_prompt), HumanMessage(state["text"]))
-            response = self.llm_flash.invoke(messages)
+            with track_llm_stage(
+                "interpret",
+                self.model,
+                messages,
+            ) as telemetry:
+                response = self.llm_flash.invoke(messages)
+                telemetry.record_response(self._content_to_text(response.content))
 
             return {"interpretation": response.content}
 
