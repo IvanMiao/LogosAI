@@ -49,5 +49,7 @@ def make_fake_agent(
     agent.llm_lite = lite_mock
     agent.llm_flash = flash_mock
     agent.graph = MagicMock()
+    agent.model = "gemini-2.5-flash"
+    agent.lite_model = "gemini-2.5-flash-lite"
 
     return agent

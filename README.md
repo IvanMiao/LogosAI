@@ -98,7 +98,11 @@ Sentry error monitoring is optional. With no DSN configured, all SDKs remain
 disabled and the application behaves as before.
 
 - Backend runtime: set `SENTRY_DSN`; optionally set `SENTRY_ENVIRONMENT` and
-  `SENTRY_RELEASE`. `SENTRY_TRACES_SAMPLE_RATE` defaults to `0`.
+  `SENTRY_RELEASE`. `SENTRY_TRACES_SAMPLE_RATE` defaults to `0`. LLM spans
+  include pipeline, stage, model, latency, time-to-first-token, token usage,
+  and outcome. Set `SENTRY_CAPTURE_LLM_CONTENT=true` to additionally send
+  bounded prompts and responses; `SENTRY_LLM_CONTENT_MAX_CHARS` defaults to
+  `4000` and is capped at `20000`.
 - Frontend build: set `VITE_SENTRY_DSN`; optionally set
   `VITE_SENTRY_ENVIRONMENT`. Set `SENTRY_ORG`, `SENTRY_PROJECT`,
   `SENTRY_RELEASE`, and the build-only `SENTRY_AUTH_TOKEN` to upload source
@@ -111,8 +115,9 @@ disabled and the application behaves as before.
 The Worker defaults to 10% production tracing (100% in development); replay,
 session tracking, and breadcrumbs are off. Request bodies, cookies, user identity,
 document fields, notes, and Gemini credentials are removed before events are
-sent. Source maps are deleted from the production bundle after a successful
-upload.
+sent. Backend LLM content is the only deliberate exception and is sent only
+when `SENTRY_CAPTURE_LLM_CONTENT=true`. Source maps are deleted from the
+production bundle after a successful upload.
 
 ## Verification
 

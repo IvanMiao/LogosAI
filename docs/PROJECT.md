@@ -158,6 +158,11 @@ Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同�
 
 每个成熟的 AI action 最终应记录：client/server request ID、trace ID、document/anchor identity、skill、model、prompt version、context policy、first-token/total latency、token usage 或 `unknown`、稳定终态与 error type。
 
+FastAPI 的 Sentry LLM spans 记录 pipeline、detect/correct/interpret stage、模型、
+总耗时、streaming first-token latency、token usage 与异常。完整 prompt 和回答只有在
+`SENTRY_CAPTURE_LLM_CONTENT=true` 时才记录，并受
+`SENTRY_LLM_CONTENT_MAX_CHARS` 限制；API key、cookie、身份和普通 HTTP body 始终过滤。
+
 评估分三层，不能互相替代：
 
 1. Contract tests：anchor identity、SSE ordering、done/error exclusivity、storage、stop 和 retry。
