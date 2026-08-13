@@ -510,7 +510,7 @@ describe('close reading user journeys', () => {
     writeFirstParagraphArtifacts([savedReading], firstParagraphAnchor.id);
     renderWorkspace();
 
-    await importPastedDocument(user, 'A second text for switching.');
+    await importPastedDocument(user, 'A second text for switching.\n\nA searchable passage.');
     expect(within(screen.getByRole('region', { name: 'Reading surface' }))
       .getByText('A second text for switching.')).toBeInTheDocument();
 
@@ -518,8 +518,9 @@ describe('close reading user journeys', () => {
     const library = screen.getByRole('dialog', { name: 'Reading sessions' });
     expect(within(library).getByText(/1 reading entry/)).toBeInTheDocument();
     const searchInput = within(library).getByRole('searchbox', { name: 'Search reading sessions' });
-    await user.type(searchInput, 'second text');
+    await user.type(searchInput, 'searchable passage');
     expect(within(library).queryByText('Two paragraph journey')).not.toBeInTheDocument();
+    expect(within(library).queryByText('A searchable passage.')).not.toBeInTheDocument();
     await user.clear(searchInput);
     await user.click(within(library).getByRole('button', { name: /^Two paragraph journey/ }));
     await user.click(screen.getByRole('button', { name: 'Open context panel' }));
