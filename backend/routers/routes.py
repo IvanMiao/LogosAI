@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from llm.agent import TextAnalysisLangchain
 from llm.state import create_initial_state
 from monitoring import capture_exception
+from monitoring.llm import track_llm_pipeline
 from routers.sse import to_sse_event
 from schemas.analyze import AnalysisRequest, AnalysisResponse
 from schemas.anchors import AnchorExplainRequest, AnchorRunRequest, AnchorSkill
@@ -91,7 +92,8 @@ def get_analyse_info(
     try:
         agent = _require_agent(x_gemini_key, request.model)
         initial_state = create_initial_state(request.text, request.user_language)
-        final_state = agent.graph.invoke(initial_state)
+        with track_llm_pipeline("close_read", request.model):
+            final_state = agent.graph.invoke(initial_state)
         result = final_state.get("interpretation", "")
         if not result:
             raise HTTPException(
@@ -121,28 +123,29 @@ async def stream_analyse_info(
         yield ": stream-start\n\n"
 
         try:
-            async for event in agent.analyze_stream(
-                request.text, request.user_language
-            ):
-                event_type = event.get("event")
+            with track_llm_pipeline("close_read", request.model):
+                async for event in agent.analyze_stream(
+                    request.text, request.user_language
+                ):
+                    event_type = event.get("event")
 
-                if event_type == "stage":
-                    stage = event.get("stage", "")
-                    if stage:
-                        yield to_sse_event("stage", {"stage": stage})
-                    continue
+                    if event_type == "stage":
+                        stage = event.get("stage", "")
+                        if stage:
+                            yield to_sse_event("stage", {"stage": stage})
+                        continue
 
-                if event_type == "chunk":
-                    delta = event.get("delta", "")
-                    if delta:
-                        final_result += delta
-                        yield to_sse_event("chunk", {"delta": delta})
-                    continue
+                    if event_type == "chunk":
+                        delta = event.get("delta", "")
+                        if delta:
+                            final_result += delta
+                            yield to_sse_event("chunk", {"delta": delta})
+                        continue
 
-                if event_type == "done":
-                    result = event.get("result", "").strip()
-                    if result:
-                        final_result = result
+                    if event_type == "done":
+                        result = event.get("result", "").strip()
+                        if result:
+                            final_result = result
 
             if not final_result:
                 raise ValueError("Analysis failed - no interpretation generated")
@@ -178,45 +181,46 @@ def _stream_anchor_skill(
         yield ": stream-start\n\n"
 
         try:
-            async for event in agent.analyze_stream(
-                prompt_text,
-                request.user_language,
-            ):
-                event_type = event.get("event")
+            with track_llm_pipeline(f"anchor.{skill}", request.model):
+                async for event in agent.analyze_stream(
+                    prompt_text,
+                    request.user_language,
+                ):
+                    event_type = event.get("event")
 
-                if event_type == "stage":
-                    stage = event.get("stage", "")
-                    if stage:
-                        yield to_sse_event(
-                            "stage",
-                            _anchor_event_payload(
-                                request_id,
-                                trace_id,
-                                anchor_id,
-                                {"stage": stage},
-                            ),
-                        )
-                    continue
+                    if event_type == "stage":
+                        stage = event.get("stage", "")
+                        if stage:
+                            yield to_sse_event(
+                                "stage",
+                                _anchor_event_payload(
+                                    request_id,
+                                    trace_id,
+                                    anchor_id,
+                                    {"stage": stage},
+                                ),
+                            )
+                        continue
 
-                if event_type == "chunk":
-                    delta = event.get("delta", "")
-                    if delta:
-                        final_result += delta
-                        yield to_sse_event(
-                            "chunk",
-                            _anchor_event_payload(
-                                request_id,
-                                trace_id,
-                                anchor_id,
-                                {"delta": delta},
-                            ),
-                        )
-                    continue
+                    if event_type == "chunk":
+                        delta = event.get("delta", "")
+                        if delta:
+                            final_result += delta
+                            yield to_sse_event(
+                                "chunk",
+                                _anchor_event_payload(
+                                    request_id,
+                                    trace_id,
+                                    anchor_id,
+                                    {"delta": delta},
+                                ),
+                            )
+                        continue
 
-                if event_type == "done":
-                    result = event.get("result", "").strip()
-                    if result:
-                        final_result = result
+                    if event_type == "done":
+                        result = event.get("result", "").strip()
+                        if result:
+                            final_result = result
 
             if not final_result:
                 raise ValueError("Analysis failed - no interpretation generated")
