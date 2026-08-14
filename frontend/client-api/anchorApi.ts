@@ -2,6 +2,7 @@ import type { AnalysisStreamStage, AnalysisModel } from '@/types';
 import type { TextAnchor } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
 import {
+  readApiErrorMessage,
   RemoteApiError,
   reportUnexpectedApiError,
 } from '@/client-api/apiError';
@@ -99,7 +100,7 @@ async function requestAnchorSkill(
   });
 
   if (!response.ok) {
-    throw new RemoteApiError(await readApiError(response));
+    throw new RemoteApiError(await readApiErrorMessage(response));
   }
 
   if (!response.body) {
@@ -114,15 +115,6 @@ export function runAnchorExplain(
   callbacks: AnchorExplainCallbacks,
 ): Promise<AnchorExplainResult> {
   return runAnchorSkill({ ...request, skill: 'explain' }, callbacks);
-}
-
-async function readApiError(response: Response): Promise<string> {
-  try {
-    const errorData = (await response.json()) as { detail?: string };
-    return errorData.detail ?? `HTTP Error! Status: ${response.status}`;
-  } catch {
-    return `HTTP Error! Status: ${response.status}`;
-  }
 }
 
 async function readAnchorStream(

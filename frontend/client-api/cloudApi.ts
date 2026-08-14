@@ -1,16 +1,10 @@
-import { RemoteApiError } from './apiError';
-
-interface CloudErrorBody {
-  message?: string;
-}
+import { readApiErrorMessage, RemoteApiError } from './apiError';
 
 async function getErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = await response.json() as CloudErrorBody;
-    return body.message ?? `Request failed with status ${response.status}.`;
-  } catch {
-    return `Request failed with status ${response.status}.`;
-  }
+  return readApiErrorMessage(
+    response,
+    `Request failed with status ${response.status}.`,
+  );
 }
 
 export async function requestCloudJson<ResponseBody>(

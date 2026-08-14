@@ -83,6 +83,7 @@ function mergeSessions(
   remote: ReadingSessionSnapshot[],
   journal?: WorkspaceSyncJournal,
 ): ReadingSessionSnapshot[] {
+  const knownIds = new Set(journal?.knownSessionIds ?? []);
   const deletedIds = new Set(journal?.deletedSessionIds ?? []);
   const dirtyIds = new Set(journal?.dirtySessionIds ?? []);
   const merged = new Map(
@@ -91,10 +92,19 @@ function mergeSessions(
       .map((session) => [session.document.id, session]),
   );
   for (const localSession of local) {
-    const remoteSession = merged.get(localSession.document.id);
+    const sessionId = localSession.document.id;
+    const remoteSession = merged.get(sessionId);
+    const wasDeletedRemotely = knownIds.has(sessionId) && !remoteSession;
+    if (
+      deletedIds.has(sessionId)
+      || (wasDeletedRemotely && !dirtyIds.has(sessionId))
+    ) {
+      continue;
+    }
+
     merged.set(
-      localSession.document.id,
-      remoteSession && !dirtyIds.has(localSession.document.id)
+      sessionId,
+      remoteSession && !dirtyIds.has(sessionId)
         ? chooseNewerSession(localSession, remoteSession)
         : localSession,
     );
@@ -171,7 +181,7 @@ export function mergeCloudWorkspace(
 ): LocalWorkspaceState {
   const localSessions = buildReadingSessions(localState);
   const mergedSessions = mergeSessions(localSessions, cloudState.sessions, journal);
-  const preferences = cloudState.sessions.length > 0 && !journal?.preferencesDirty
+  const preferences = !journal?.preferencesDirty
     ? cloudState.preferences
     : buildWorkspacePreferences(localState);
   return createLocalWorkspaceState(mergedSessions, preferences);

@@ -153,6 +153,78 @@ describe('workspace cloud state', () => {
     expect(merged.documentLibrary.activeDocumentId).toBeNull();
   });
 
+  it('does not restore a clean local session deleted from another device', () => {
+    const local = createLocalState();
+
+    const merged = mergeCloudWorkspace(local, {
+      preferences: {
+        activeDocumentId: null,
+        readerPreferences: local.readerPreferences,
+        analysisLanguage: 'en',
+      },
+      sessions: [],
+    }, {
+      knownSessionIds: ['document-1'],
+      dirtySessionIds: [],
+      deletedSessionIds: [],
+      preferencesDirty: false,
+    });
+
+    expect(merged.documentLibrary.documentsById).toEqual({});
+    expect(merged.documentLibrary.activeDocumentId).toBeNull();
+  });
+
+  it('keeps a locally changed session when its remote copy was deleted', () => {
+    const local = createLocalState();
+
+    const merged = mergeCloudWorkspace(local, {
+      preferences: {
+        activeDocumentId: null,
+        readerPreferences: local.readerPreferences,
+        analysisLanguage: 'en',
+      },
+      sessions: [],
+    }, {
+      knownSessionIds: ['document-1'],
+      dirtySessionIds: ['document-1'],
+      deletedSessionIds: [],
+      preferencesDirty: false,
+    });
+
+    expect(merged.documentLibrary.documentsById).toHaveProperty('document-1');
+  });
+
+  it('hydrates cloud preferences when the remote session library is empty', () => {
+    const local = createLocalWorkspaceState([], {
+      activeDocumentId: null,
+      readerPreferences: createLocalState().readerPreferences,
+      analysisLanguage: 'en',
+    });
+    const cloudPreferences = {
+      activeDocumentId: null,
+      readerPreferences: {
+        fontFamily: 'sans' as const,
+        closeReadingFontFamily: 'serif' as const,
+        fontSize: 22,
+        lineSpacing: 2,
+      },
+      analysisLanguage: 'fr' as const,
+    };
+
+    const merged = mergeCloudWorkspace(local, {
+      preferences: cloudPreferences,
+      sessions: [],
+    }, {
+      knownSessionIds: [],
+      dirtySessionIds: [],
+      deletedSessionIds: [],
+      preferencesDirty: false,
+    });
+
+    expect(merged.readerPreferences).toEqual(cloudPreferences.readerPreferences);
+    expect(merged.analysisLanguage).toBe('fr');
+  });
+
   it('stores the sync journal under the authenticated user scope', () => {
     const journal: WorkspaceSyncJournal = {
       knownSessionIds: ['document-1'],

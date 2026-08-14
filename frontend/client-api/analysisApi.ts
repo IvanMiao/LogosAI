@@ -1,5 +1,6 @@
 import type { AnalysisStreamStage } from '@/types';
 import {
+  readApiErrorMessage,
   RemoteApiError,
   reportUnexpectedApiError,
 } from '@/client-api/apiError';
@@ -57,7 +58,7 @@ async function requestAnalysisStream(
   });
 
   if (!response.ok) {
-    throw new RemoteApiError(await readApiError(response));
+    throw new RemoteApiError(await readApiErrorMessage(response));
   }
 
   if (!response.body) {
@@ -65,21 +66,6 @@ async function requestAnalysisStream(
   }
 
   return readAnalysisStream(response.body, callbacks);
-}
-
-async function readApiError(response: Response): Promise<string> {
-  let message = `HTTP Error! Status: ${response.status}`;
-
-  try {
-    const errorData = (await response.json()) as { detail?: string };
-    if (errorData.detail) {
-      message = errorData.detail;
-    }
-  } catch {
-    // Ignore JSON parse failure and fall back to the status code message.
-  }
-
-  return message;
 }
 
 async function readAnalysisStream(
