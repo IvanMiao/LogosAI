@@ -4,13 +4,13 @@ import type { AnalysisModel, AnalysisStreamStage, HistoryItem } from '@/types';
 import { prependHistoryItem, readHistory, removeHistoryItem } from '@/utils/historyStorage';
 
 export function useAnalysisPage({
-  apiKey,
   hasApiKey,
   model,
+  userId,
 }: {
-  apiKey: string;
   hasApiKey: boolean;
   model: AnalysisModel;
+  userId?: string;
 }) {
   const [text, setText] = useState('');
   const [language, setLanguage] = useState('en');
@@ -18,7 +18,7 @@ export function useAnalysisPage({
   const [isLoading, setIsLoading] = useState(false);
   const [streamStage, setStreamStage] = useState<AnalysisStreamStage | ''>('');
   const [error, setError] = useState('');
-  const [history, setHistory] = useState<HistoryItem[]>(() => readHistory());
+  const [history, setHistory] = useState<HistoryItem[]>(() => readHistory(userId));
 
   const onAnalyze = useCallback(async () => {
     if (!text.trim()) {
@@ -41,7 +41,6 @@ export function useAnalysisPage({
     try {
       const finalResult = await streamAnalysis(
         {
-          apiKey,
           model,
           text,
           userLanguage: language,
@@ -61,22 +60,22 @@ export function useAnalysisPage({
       };
 
       setResult(finalResult);
-      setHistory(prependHistoryItem(historyItem));
+      setHistory(prependHistoryItem(historyItem, userId));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
       setStreamStage('');
     }
-  }, [apiKey, hasApiKey, language, model, text]);
+  }, [hasApiKey, language, model, text, userId]);
 
   const onDeleteHistory = useCallback((id: number) => {
     try {
-      setHistory(removeHistoryItem(id));
+      setHistory(removeHistoryItem(id, userId));
     } catch (err) {
       console.error('Failed to delete history:', err);
     }
-  }, []);
+  }, [userId]);
 
   const onLoadHistory = useCallback((item: HistoryItem) => {
     setLanguage(item.targetLanguage.toLowerCase() || 'en');

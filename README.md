@@ -1,76 +1,143 @@
 <div align="center">
   <img src="./docs/LOGO.png" alt="LogosAI Logo" width="280" />
-
-  [![Hugging Face Spaces](https://img.shields.io/badge/Hugging%20Face-Spaces-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/IvanMiao/LogosAI)
 </div>
 
-**LogosAI** is an advanced AI-powered platform designed for deep language learning and the rigorous analysis of complex texts. Whether you are deconstructing intricate news articles, academic papers, or dense philosophical works, LogosAI empowers you to understand sophisticated narratives with precision and depth.
+# LogosAI
 
-![LogosAI Interface](./docs/images/UI2.png)
+LogosAI is a source-grounded AI reading workspace for difficult texts. Readers
+can import a text, ask for help on a selected passage, run a close reading, and
+keep notes and AI outputs attached to their source context.
 
-## Tech Stack
+The current Workspace Alpha supports:
 
-LogosAI leverages a modern, type-safe, and scalable technology stack:
+- pasted text and local `.txt` / `.md` files;
+- a reader with persistent typography preferences;
+- selection-level Explain, Translate, Vocab, and Note actions;
+- document- and paragraph-level Close Read;
+- email/password accounts, with Google and GitHub OAuth when configured;
+- Cloudflare D1 reading sessions that keep source text, selections, notes, and
+  AI reading entries together;
+- per-user Gemini BYOK encrypted by the Cloudflare Worker before D1 storage;
+- a user-scoped local cache for immediate restoration and offline-safe edits.
 
-*   **Frontend**: React, TypeScript, Tailwind CSS, Vite
-*   **Backend**: Python, FastAPI, PostgreSQL, LangChain/LangGraph
-*   **Infrastructure**: Docker, Docker Compose
+The Cloudflare Worker is the public application and API origin. It owns auth,
+user data, and credentials, then forwards authenticated AI requests to the
+FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 
-![LogosAI Architecture](./docs/images/UI3.png)
+## Stack
 
-## Getting Started
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS, Radix UI
+- Backend: Python 3.13, FastAPI, Pydantic, LangChain/LangGraph
+- Cloud: Cloudflare Workers, D1, Hono, Better Auth
+- Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
+- Delivery: React static assets, auth, and D1 on Cloudflare Workers; FastAPI on Fly.io
 
-You can run LogosAI using Docker (recommended) or set it up manually.
+PostgreSQL scaffolding remains in the repository but is not part of the active
+Workspace request or persistence path.
 
-### Option 1: Docker (Recommended)
+## Local Development
 
-The backend now serves the built frontend directly, so Docker only starts FastAPI and PostgreSQL.
+Prerequisites: Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
+`npm`, and a logged-in Wrangler CLI.
 
-1.  **Configure Environment**:
-    Copy `.env.copy` to `.env` and add your API credentials.
+Start the backend:
 
-2.  **Launch**:
-    ```bash
-    docker compose up --build -d
-    ```
-    The application will be available at `http://localhost:3000`.
+```bash
+cd backend
+uv sync
+uv run uvicorn app:app --reload
+```
 
-### Option 2: Manual Installation
+Prepare and start the Cloudflare gateway in a second terminal:
 
-**Prerequisites**
-*   Node.js (v18+)
-*   Python (v3.13+)
-*   PostgreSQL (v16+)
+```bash
+cd cloudflare
+npm ci
+cp .dev.vars.example .dev.vars
+# Replace the three local secret placeholders in .dev.vars.
+npm run db:migrate:local
+npm run dev
+```
 
-1.  **Configure Environment**:
-    Copy `.env.copy` to `.env` and configure your API key and Database credentials.
+Start the frontend in a third terminal:
 
-2.  **Backend Setup**:
-    Ensure PostgreSQL is running and accessible.
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
-    ```bash
-    uv sync
-    cd backend
-    uv run uvicorn app:app --reload
-    ```
-    The backend will be available at `http://127.0.0.1:8000`.
+Open `http://localhost:5173`. Vite proxies `/api/*` to the Worker at
+`http://127.0.0.1:8787`; the Worker forwards only AI routes to FastAPI at
+`http://127.0.0.1:8000`. Create an account, then add a Gemini API key from
+Settings before using AI actions. Local notes work without a key.
 
-3.  **Frontend Setup**:
-    ```bash
-    cd ../frontend
-    npm install
-    npm run dev
-    ```
-    The frontend will be available at `http://localhost:5173`.
-    Vite proxies `/api/*` requests to the FastAPI server on `http://127.0.0.1:8000`, so no nginx is required in development either.
+No PostgreSQL instance is required for the default workflow. Cloudflare setup,
+OAuth callback URLs, production secrets, migrations, and deployment order are
+documented in [Cloudflare Operations](./cloudflare/README.md). Optional
+observability configuration is described in [Project Reference](./docs/PROJECT.md).
 
-## Recent Updates
+## Docker
 
-*   **Architecture**: Implemented Dependency Injection and Singleton patterns in the backend for improved state management.
-*   **Persistence**: Migrated to **PostgreSQL** for robust data storage.
-*   **Type Safety**: Complete migration of the frontend codebase to **TypeScript**.
+```bash
+docker compose up --build
+```
 
-## Roadmap
+The Compose file starts only the FastAPI AI service at `http://localhost:8000`.
+Use the Worker and Vite processes from Local Development for the browser app.
+If port `8000` is already in use, select another host port without changing
+the container configuration:
 
-*   [ ] Dark Mode Support
-*   [ ] Agentic Architecture Refactor
+```bash
+LOGOSAI_PORT=8001 docker compose up --build
+```
+
+## Error Monitoring
+
+Sentry error monitoring is optional. With no DSN configured, both SDKs remain
+disabled and the application behaves as before.
+
+- Backend runtime: set `SENTRY_DSN`; optionally set `SENTRY_ENVIRONMENT` and
+  `SENTRY_RELEASE`. `SENTRY_TRACES_SAMPLE_RATE` defaults to `0`.
+- Frontend build: set `VITE_SENTRY_DSN`; optionally set
+  `VITE_SENTRY_ENVIRONMENT`. Set `SENTRY_ORG`, `SENTRY_PROJECT`,
+  `SENTRY_RELEASE`, and the build-only `SENTRY_AUTH_TOKEN` to upload source
+  maps during `cd cloudflare && npm run deploy`.
+
+The default configuration sends errors only: tracing, replay, session
+tracking, and breadcrumbs are off. Request bodies, cookies, user identity,
+document fields, notes, and Gemini credentials are removed before events are
+sent. Source maps are deleted from the production bundle after a successful
+upload.
+
+## Verification
+
+Backend:
+
+```bash
+cd backend
+uv run pytest
+uv run ruff check .
+uv run python -m evals.workspace_alpha
+```
+
+The eval command validates dataset structure only; it is not a model-quality
+evaluation.
+
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm test
+npm run build
+```
+
+## Documentation
+
+- [Project Reference](./docs/PROJECT.md): current product boundaries,
+  architecture, domain language, and runtime contracts.
+- [Roadmap](./docs/ROADMAP.md): the only source of truth for priorities,
+  evidence gates, and deferred work.
+- [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
+  auth, D1 ownership, credential handling, and request boundaries.

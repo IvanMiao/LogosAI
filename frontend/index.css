@@ -1,9 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  --font-mono: "Courier Prime", "Courier New", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", monospace;
+  --font-brand: "Courier Prime", "Courier New", Courier, monospace;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans SC", monospace;
   --shadow-hard: 4px 4px 0px 0px var(--border);
   --shadow-hard-sm: 2px 2px 0px 0px var(--border);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-error-foreground: var(--error-foreground);
+  --color-link: var(--link);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 :root {
@@ -38,6 +63,8 @@
   --destructive: #ff4d4d;
   /* Bright Red */
   --destructive-foreground: #000000;
+  --error-foreground: #b21f2d;
+  --link: #b30088;
 
   --border: #000000;
   /* Pure Black Border */
@@ -72,6 +99,9 @@
   --accent-foreground: #000000;
 
   --destructive: #ff4d4d;
+  --destructive-foreground: #000000;
+  --error-foreground: #ffa3a3;
+  --link: #ff9dec;
   --border: #ffffff;
   --input: #333333;
   --ring: #ffffff;
@@ -87,8 +117,8 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-mono);
-    -webkit-font-smoothing: none;
-    /* Crisp edges */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Default thick borders for structural elements if needed, 
@@ -118,6 +148,24 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  button:active,
+  a:active,
+  [role="button"]:active {
+    scale: 1 !important;
+    translate: 0 !important;
+  }
+}
+
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -135,6 +183,11 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.reader-surface {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Markdown prose styles for ReactMarkdown */
@@ -242,6 +295,36 @@
 
 .prose a:hover {
   color: #334155;
+}
+
+.close-reading-prose > :first-child {
+  margin-top: 0;
+}
+
+.close-reading-prose p {
+  margin-top: 0.9em;
+  margin-bottom: 0.9em;
+  line-height: inherit;
+}
+
+.close-reading-prose h1 {
+  color: #171717;
+  font-size: 1.375em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.close-reading-prose h2 {
+  color: #171717;
+  font-size: 1.1875em;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.close-reading-prose h3 {
+  color: #171717;
+  font-size: 1.0625em;
+  font-weight: 700;
 }
 
 /* Small prose for history panel */

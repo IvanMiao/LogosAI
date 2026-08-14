@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority"
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+  "inline-flex cursor-pointer touch-manipulation items-center justify-center gap-2 whitespace-nowrap text-sm font-bold transition-[background-color,color,border-color,box-shadow,transform] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border-2 border-border shadow-[4px_4px_0px_0px_var(--border)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none motion-reduce:active:translate-x-0 motion-reduce:active:translate-y-0",
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ export const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "border-transparent shadow-none hover:bg-accent hover:text-accent-foreground hover:border-border hover:shadow-[4px_4px_0px_0px_var(--border)]",
-        link: "text-primary underline-offset-4 hover:underline border-none shadow-none active:translate-none active:shadow-none",
+        link: "text-link underline-offset-4 hover:underline border-none shadow-none active:translate-none active:shadow-none",
       },
       size: {
         default: "h-10 px-4 py-2",

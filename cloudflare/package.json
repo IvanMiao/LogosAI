@@ -1,0 +1,28 @@
+{
+  "name": "logosai-cloud",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build:frontend": "npm --prefix ../frontend run build",
+    "deploy": "npm run build:frontend && wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test",
+    "db:migrate:local": "wrangler d1 migrations apply logosai-users --local",
+    "db:migrate:remote": "wrangler d1 migrations apply logosai-users --remote",
+    "cf:whoami": "wrangler whoami"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.26",
+    "hono": "^4.13.1",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260809.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.120.0"
+  }
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { FileText, Copy, Check } from 'lucide-react';
 
 interface ResultCardProps {
@@ -37,7 +37,7 @@ export function ResultCard({ result, isStreaming = false }: ResultCardProps) {
               <FileText className="w-5 h-5 text-foreground" />
             </div>
             <div>
-              <CardTitle className="text-xl text-foreground font-mono">ANALYSIS_OUTPUT</CardTitle>
+              <h2 className="font-mono text-xl font-semibold leading-none tracking-tight text-foreground">ANALYSIS_OUTPUT</h2>
               <CardDescription className="text-xs mt-0.5 font-mono">
                 {isStreaming ? 'STREAMING_LIVE_OUTPUT' : 'GENERATED_INSIGHTS'}
               </CardDescription>

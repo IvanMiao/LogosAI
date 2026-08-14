@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Brain, FileText, Loader2, AlertCircle, Languages, KeyRound } from 'lucide-react';
 import { ResultCard } from '@/components/ResultCard';
 import type { AnalysisStreamStage } from '@/types';
@@ -85,7 +85,7 @@ export function AnalysisPanel({
                 <FileText className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle className="text-xl text-foreground font-mono">INPUT_ZONE</CardTitle>
+                <h1 className="font-mono text-xl font-semibold leading-none tracking-tight text-foreground">INPUT_ZONE</h1>
                 <CardDescription className="text-xs mt-0.5 font-mono">PROVIDE_SOURCE_TEXT</CardDescription>
               </div>
             </div>
@@ -93,12 +93,18 @@ export function AnalysisPanel({
         </CardHeader>
         <CardContent className="space-y-5">
           <div>
-            <label className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2 font-mono">
+            <label
+              htmlFor="analysis-target-language"
+              className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2 font-mono"
+            >
               <Languages className="w-4 h-4" />
               <span>TARGET_LANGUAGE</span>
             </label>
             <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
-              <SelectTrigger className="w-full h-11 border-2 border-border bg-input shadow-[4px_4px_0px_0px_var(--border)]">
+              <SelectTrigger
+                id="analysis-target-language"
+                className="w-full h-11 border-2 border-border bg-input shadow-[4px_4px_0px_0px_var(--border)]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -115,16 +121,22 @@ export function AnalysisPanel({
 
           <div>
             <div className="flex justify-between items-center mb-2.5">
-              <label className="text-sm font-bold text-foreground font-mono">RAW_CONTENT</label>
+              <label
+                htmlFor="analysis-source-text"
+                className="text-sm font-bold text-foreground font-mono"
+              >
+                RAW_CONTENT
+              </label>
               <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 border border-border">{text.length} chars</span>
             </div>
             <Textarea
+              id="analysis-source-text"
               value={text}
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setText(event.target.value)}
               placeholder="INSERT_TEXT_DATA..."
               rows={12}
               disabled={isLoading}
-              className="resize-none text-sm border-2 border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shadow-[4px_4px_0px_0px_var(--border)] font-mono"
+              className="resize-none border-2 border-border font-mono text-base shadow-[4px_4px_0px_0px_var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
             />
           </div>
 
@@ -156,7 +168,7 @@ export function AnalysisPanel({
                 <AlertCircle className="w-5 h-5 text-destructive-foreground" />
               </div>
               <div>
-                <h3 className="text-destructive-foreground font-bold mb-1.5 font-mono">Analysis Error</h3>
+                <h2 className="text-destructive-foreground font-bold mb-1.5 font-mono">Analysis Error</h2>
                 <p className="text-destructive-foreground text-sm leading-relaxed font-mono">{error}</p>
               </div>
             </div>

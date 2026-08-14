@@ -1,111 +1,96 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useUserSettings } from '@/features/user-settings';
 import type { AnalysisModel } from '@/types';
-import {
-  clearStoredApiKey,
-  DEFAULT_MODEL,
-  isApiKeyStorageEvent,
-  isModelStorageEvent,
-  persistSettings,
-  readStoredApiKey,
-  readStoredModel,
-} from '@/utils/settingsStorage';
+
+export const MISSING_API_KEY_ERROR = 'Enter your Gemini API key to continue.';
 
 export interface UseSettingsPageReturn {
   apiKey: string;
   setApiKey: (key: string) => void;
-  savedApiKey: string;
+  apiKeyHint: string | null;
   model: AnalysisModel;
   setModel: (model: AnalysisModel) => void;
   hasApiKey: boolean;
+  isLoading: boolean;
   isSaving: boolean;
+  isClearing: boolean;
   saveSuccess: boolean;
   error: string;
-  saveSettings: () => void;
-  clearApiKey: () => void;
+  saveSettings: () => Promise<void>;
+  clearApiKey: () => Promise<void>;
 }
 
 export function useSettingsPage(): UseSettingsPageReturn {
+  const userSettings = useUserSettings();
   const [apiKey, setApiKey] = useState('');
-  const [savedApiKey, setSavedApiKey] = useState(() => readStoredApiKey());
-  const [model, setModel] = useState<AnalysisModel>(() => readStoredModel());
+  const [model, setModel] = useState<AnalysisModel>(userSettings.model);
   const [isSaving, setIsSaving] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState('');
-  const hasApiKey = savedApiKey.trim().length > 0;
 
   useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (isApiKeyStorageEvent(event)) {
-        setSavedApiKey(event.newValue ?? '');
-      }
-
-      if (isModelStorageEvent(event)) {
-        setModel(event.newValue === 'gemini-2.5-pro' ? 'gemini-2.5-pro' : DEFAULT_MODEL);
-      }
-    };
-
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+    setModel(userSettings.model);
+  }, [userSettings.model]);
 
   useEffect(() => {
-    if (!saveSuccess) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => setSaveSuccess(false), 3000);
+    if (!saveSuccess) return;
+    const timeoutId = window.setTimeout(() => setSaveSuccess(false), 5000);
     return () => window.clearTimeout(timeoutId);
   }, [saveSuccess]);
 
-  const saveSettings = useCallback(() => {
-    if (!hasApiKey && !apiKey.trim()) {
-      setError('Please enter your Gemini API key');
+  const saveSettings = async () => {
+    if (!userSettings.hasApiKey && !apiKey.trim()) {
+      setError(MISSING_API_KEY_ERROR);
       return;
     }
 
     setIsSaving(true);
     setError('');
     setSaveSuccess(false);
-
     try {
-      const nextApiKey = apiKey.trim();
-
-      persistSettings(nextApiKey || savedApiKey, model);
-
-      if (nextApiKey) {
-        setSavedApiKey(nextApiKey);
-      }
-
+      await userSettings.save({
+        model,
+        ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+      });
       setApiKey('');
       setSaveSuccess(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+    } catch (saveError) {
+      setError(saveError instanceof Error
+        ? saveError.message
+        : 'Unable to save settings. Try again.');
     } finally {
       setIsSaving(false);
     }
-  }, [apiKey, hasApiKey, model, savedApiKey]);
+  };
 
-  const clearApiKey = useCallback(() => {
+  const clearApiKey = async () => {
+    setIsClearing(true);
+    setError('');
     try {
-      clearStoredApiKey();
-    } catch {
-      // Ignore storage clearing failures.
+      await userSettings.clearApiKey();
+      setApiKey('');
+    } catch (clearError) {
+      setError(clearError instanceof Error
+        ? clearError.message
+        : 'Unable to remove the API key. Try again.');
+    } finally {
+      setIsClearing(false);
     }
-
-    setSavedApiKey('');
-    setApiKey('');
-  }, []);
+  };
 
   return {
     apiKey,
     setApiKey,
-    savedApiKey,
+    apiKeyHint: userSettings.apiKeyHint,
     model,
     setModel,
-    hasApiKey,
+    hasApiKey: userSettings.hasApiKey,
+    isLoading: userSettings.status === 'loading',
     isSaving,
+    isClearing,
     saveSuccess,
-    error,
+    error: error || userSettings.error,
     saveSettings,
     clearApiKey,
   };

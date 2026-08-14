@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -131,11 +132,31 @@ class TestStreamEndpoint:
 
         fake_agent.analyze_stream = failing_stream
 
-        resp = client.post(
-            "/api/analyze/stream",
-            json={"text": "test", "user_language": "EN"},
-        )
+        with patch("routers.routes.capture_exception") as capture_exception:
+            resp = client.post(
+                "/api/analyze/stream",
+                json={"text": "test", "user_language": "EN"},
+            )
+
         assert resp.status_code == 200
         events = parse_sse_events(resp.text)
         error = next(e for e in events if e["event"] == "error")
         assert "LLM exploded" in error["data"]["message"]
+        capture_exception.assert_called_once()
+
+    def test_sync_error_is_reported_without_changing_response(self, client, fake_agent):
+        fake_agent.graph.invoke.side_effect = RuntimeError("Graph exploded")
+
+        with patch("routers.routes.capture_exception") as capture_exception:
+            resp = client.post(
+                "/api/analyze",
+                json={"text": "test", "user_language": "EN"},
+            )
+
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "result": "",
+            "success": False,
+            "error": "Graph exploded",
+        }
+        capture_exception.assert_called_once()

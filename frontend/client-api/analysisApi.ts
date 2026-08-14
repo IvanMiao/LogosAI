@@ -1,5 +1,10 @@
 import type { AnalysisStreamStage } from '@/types';
 import {
+  readApiErrorMessage,
+  RemoteApiError,
+  reportUnexpectedApiError,
+} from '@/client-api/apiError';
+import {
   consumeSseBuffer,
   type ParsedSseEvent,
   type StreamChunkPayload,
@@ -11,10 +16,10 @@ import {
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
 export interface StreamAnalysisRequest {
-  apiKey: string;
   model: string;
   text: string;
   userLanguage: string;
+  signal?: AbortSignal;
 }
 
 export interface StreamAnalysisCallbacks {
@@ -26,13 +31,25 @@ export async function streamAnalysis(
   request: StreamAnalysisRequest,
   callbacks: StreamAnalysisCallbacks,
 ): Promise<string> {
+  try {
+    return await requestAnalysisStream(request, callbacks);
+  } catch (error) {
+    reportUnexpectedApiError(error, 'stream_analysis');
+    throw error;
+  }
+}
+
+async function requestAnalysisStream(
+  request: StreamAnalysisRequest,
+  callbacks: StreamAnalysisCallbacks,
+): Promise<string> {
   const response = await fetch('/api/analyze/stream', {
     method: 'POST',
     headers: {
       Accept: 'text/event-stream',
       'Content-Type': 'application/json',
-      'X-Gemini-Key': request.apiKey,
     },
+    signal: request.signal,
     body: JSON.stringify({
       text: request.text,
       user_language: request.userLanguage,
@@ -41,7 +58,7 @@ export async function streamAnalysis(
   });
 
   if (!response.ok) {
-    throw new Error(await readApiError(response));
+    throw new RemoteApiError(await readApiErrorMessage(response));
   }
 
   if (!response.body) {
@@ -49,21 +66,6 @@ export async function streamAnalysis(
   }
 
   return readAnalysisStream(response.body, callbacks);
-}
-
-async function readApiError(response: Response): Promise<string> {
-  let message = `HTTP Error! Status: ${response.status}`;
-
-  try {
-    const errorData = (await response.json()) as { detail?: string };
-    if (errorData.detail) {
-      message = errorData.detail;
-    }
-  } catch {
-    // Ignore JSON parse failure and fall back to the status code message.
-  }
-
-  return message;
 }
 
 async function readAnalysisStream(
@@ -115,7 +117,7 @@ async function readAnalysisStream(
 
     if (event.event === 'error') {
       const payload = JSON.parse(event.data) as StreamErrorPayload;
-      throw new Error(payload.message || 'Streaming analysis failed');
+      throw new RemoteApiError(payload.message || 'Streaming analysis failed');
     }
   };
 
