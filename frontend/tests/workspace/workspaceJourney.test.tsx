@@ -453,9 +453,7 @@ describe('close reading user journeys', () => {
     expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[savedSelectionAnchor.id]).toHaveLength(1);
 
     await user.click(within(contextPanel).getByRole('button', { name: 'Close active selection' }));
-    expect(within(contextPanel).getByRole('heading', { name: 'Saved selections · 2' }))
-      .toBeInTheDocument();
-    expect(within(contextPanel).getByRole('heading', { name: 'Close Read sources · 1' }))
+    expect(within(contextPanel).getByRole('heading', { name: 'Saved marks' }))
       .toBeInTheDocument();
 
     await user.click(within(contextPanel).getByRole('button', {
@@ -466,8 +464,75 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Delete selection' }));
     expect(readStoredAnchors(TEST_USER_ID).anchorsById[savedSelectionAnchor.id]).toBeUndefined();
     expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[savedSelectionAnchor.id]).toBeUndefined();
-    expect(within(contextPanel).getByRole('heading', { name: 'Saved selections · 1' }))
+    expect(within(contextPanel).getByRole('status'))
+      .toHaveTextContent('2 saved marks');
+  });
+
+  it('filters saved marks and switches selection without leaving the context panel', async () => {
+    const user = userEvent.setup();
+    writeStoredAnchors({
+      anchorsById: {
+        [savedSelectionAnchor.id]: savedSelectionAnchor,
+        [secondSelectionAnchor.id]: secondSelectionAnchor,
+        [firstParagraphAnchor.id]: firstParagraphAnchor,
+      },
+      activeAnchorId: savedSelectionAnchor.id,
+    }, TEST_USER_ID);
+    writeStoredArtifacts({
+      artifactsByAnchorId: {
+        [savedSelectionAnchor.id]: [{
+          id: 'saved-selection-output',
+          documentId: journeyDocument.id,
+          anchorId: savedSelectionAnchor.id,
+          type: 'explanation',
+          title: 'Explanation',
+          content: 'Saved selection output.',
+          status: 'complete',
+          createdAt: '2026-07-21T12:00:00.000Z',
+          updatedAt: '2026-07-21T12:00:00.000Z',
+        }],
+        [firstParagraphAnchor.id]: [createCloseReading(
+          'close-read-output',
+          'Close Read Paragraph',
+          'Close Read output.',
+          '2026-07-21T10:00:00.000Z',
+        )],
+      },
+      tasksByRequestId: {},
+    }, TEST_USER_ID);
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    const contextPanel = screen.getByRole('complementary', { name: 'Context panel' });
+    const searchInput = within(contextPanel).getByRole('searchbox', { name: 'Search saved marks' });
+    await user.type(searchInput, 'comparison');
+
+    const secondSelectionButton = within(contextPanel).getByRole('button', {
+      name: secondSelectionAnchor.quote,
+    });
+    await user.click(secondSelectionButton);
+
+    expect(searchInput).toHaveValue('comparison');
+    expect(within(contextPanel).getByRole('button', {
+      name: secondSelectionAnchor.quote,
+    })).toHaveAttribute('aria-current', 'true');
+    expect(within(contextPanel).getByText('Choose an action from the selected passage to create an artifact.'))
       .toBeInTheDocument();
+
+    await user.clear(searchInput);
+    await user.click(within(contextPanel).getByRole('button', { name: 'With outputs' }));
+    expect(within(contextPanel).queryByRole('button', {
+      name: secondSelectionAnchor.quote,
+    })).not.toBeInTheDocument();
+
+    await user.selectOptions(within(contextPanel).getByRole('combobox', {
+      name: 'Filter saved marks by type',
+    }), 'close-read');
+    expect(within(contextPanel).getByRole('button', { name: firstParagraphAnchor.quote }))
+      .toBeInTheDocument();
+    expect(within(contextPanel).queryByRole('button', {
+      name: savedSelectionAnchor.quote,
+    })).not.toBeInTheDocument();
   });
 
   it('deletes one Close Reading revision and returns to the remaining version', async () => {

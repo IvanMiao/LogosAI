@@ -1,9 +1,10 @@
-import type { ReactElement } from 'react';
+import { useMemo, useState, type ReactElement } from 'react';
 import {
   Brain,
   Check,
   History,
   MoreHorizontal,
+  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
+import { cn } from '@/utils/className';
 import {
   ArtifactBody,
   ArtifactStatusIcon,
@@ -54,11 +56,23 @@ interface ContextPanelProps {
 
 interface SessionDashboardProps {
   activeDocument: WorkspaceDocument;
+  onRunCloseReadDocument: () => void;
+}
+
+type AnchorScopeFilter = 'all' | 'selection' | 'close-read';
+
+interface SelectionIndexProps {
   anchors: TextAnchor[];
+  activeAnchorId: string | null;
   artifactCountByAnchorId: Record<string, number>;
+  query: string;
+  scopeFilter: AnchorScopeFilter;
+  showOnlyWithOutputs: boolean;
+  onQueryChange: (query: string) => void;
+  onScopeFilterChange: (filter: AnchorScopeFilter) => void;
+  onShowOnlyWithOutputsChange: (showOnlyWithOutputs: boolean) => void;
   onSelectAnchor: (anchorId: string) => void;
   onRequestDeleteAnchor: (anchor: TextAnchor) => void;
-  onRunCloseReadDocument: () => void;
 }
 
 interface ActiveAnchorHeaderProps {
@@ -80,17 +94,10 @@ interface ActiveArtifactProps {
 
 function SessionDashboard({
   activeDocument,
-  anchors,
-  artifactCountByAnchorId,
-  onSelectAnchor,
-  onRequestDeleteAnchor,
   onRunCloseReadDocument,
 }: SessionDashboardProps): ReactElement {
-  const savedSelections = anchors.filter((anchor) => anchor.scope === 'selection');
-  const closeReadSources = anchors.filter((anchor) => anchor.scope !== 'selection');
-
   return (
-    <div className="flex h-full flex-col">
+    <div>
       <div className="border-2 border-border bg-card p-4 shadow-[4px_4px_0px_0px_var(--border)]">
         <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">Current document</p>
         <h2 className="mt-2 text-lg font-black">{activeDocument.title}</h2>
@@ -98,33 +105,16 @@ function SessionDashboard({
       </div>
 
       <div className="mt-6 border-2 border-border bg-card p-4 shadow-[2px_2px_0px_0px_var(--border)]">
-        <p className="text-sm font-bold">{anchors.length} saved {anchors.length === 1 ? 'mark' : 'marks'}</p>
+        <p className="text-sm font-bold">Review saved reading work</p>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Select a passage to explain, translate, save vocabulary, or write a note.
+          Search saved passages or continue with a new Close Reading below.
         </p>
-      </div>
-
-      <div className="mt-5 space-y-5 overflow-y-auto pb-5">
-        <SavedAnchorList
-          title="Saved selections"
-          anchors={savedSelections}
-          artifactCountByAnchorId={artifactCountByAnchorId}
-          onSelectAnchor={onSelectAnchor}
-          onRequestDeleteAnchor={onRequestDeleteAnchor}
-        />
-        <SavedAnchorList
-          title="Close Read sources"
-          anchors={closeReadSources}
-          artifactCountByAnchorId={artifactCountByAnchorId}
-          onSelectAnchor={onSelectAnchor}
-          onRequestDeleteAnchor={onRequestDeleteAnchor}
-        />
       </div>
 
       <Button
         type="button"
         variant="outline"
-        className="mt-auto self-start hover:bg-primary"
+        className="mt-5 hover:bg-primary"
         onClick={onRunCloseReadDocument}
       >
         <Brain className="h-4 w-4" />
@@ -134,57 +124,159 @@ function SessionDashboard({
   );
 }
 
-function SavedAnchorList({
-  title,
+function getAnchorGroup(anchor: TextAnchor): Exclude<AnchorScopeFilter, 'all'> {
+  return anchor.scope === 'selection' ? 'selection' : 'close-read';
+}
+
+function getAnchorGroupLabel(anchor: TextAnchor): string {
+  return getAnchorGroup(anchor) === 'selection' ? 'Selection' : 'Close Read source';
+}
+
+function getVisibleAnchors({
   anchors,
   artifactCountByAnchorId,
-  onSelectAnchor,
-  onRequestDeleteAnchor,
-}: {
-  title: string;
-  anchors: TextAnchor[];
-  artifactCountByAnchorId: Record<string, number>;
-  onSelectAnchor: (anchorId: string) => void;
-  onRequestDeleteAnchor: (anchor: TextAnchor) => void;
-}): ReactElement | null {
-  if (anchors.length === 0) {
-    return null;
+  query,
+  scopeFilter,
+  showOnlyWithOutputs,
+}: Pick<SelectionIndexProps,
+  'anchors' | 'artifactCountByAnchorId' | 'query' | 'scopeFilter' | 'showOnlyWithOutputs'>,
+): TextAnchor[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+
+  return [...anchors]
+    .filter((anchor) => (
+      !normalizedQuery || anchor.quote.toLocaleLowerCase().includes(normalizedQuery)
+    ))
+    .filter((anchor) => scopeFilter === 'all' || getAnchorGroup(anchor) === scopeFilter)
+    .filter((anchor) => !showOnlyWithOutputs || (artifactCountByAnchorId[anchor.id] ?? 0) > 0)
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+}
+
+function getSelectionCountLabel(visibleCount: number, totalCount: number): string {
+  if (visibleCount === totalCount) {
+    return `${totalCount} ${totalCount === 1 ? 'saved mark' : 'saved marks'}`;
   }
 
+  return `${visibleCount} of ${totalCount} saved marks`;
+}
+
+function SelectionIndex({
+  anchors,
+  activeAnchorId,
+  artifactCountByAnchorId,
+  query,
+  scopeFilter,
+  showOnlyWithOutputs,
+  onQueryChange,
+  onScopeFilterChange,
+  onShowOnlyWithOutputsChange,
+  onSelectAnchor,
+  onRequestDeleteAnchor,
+}: SelectionIndexProps): ReactElement {
+  const visibleAnchors = useMemo(() => getVisibleAnchors({
+    anchors,
+    artifactCountByAnchorId,
+    query,
+    scopeFilter,
+    showOnlyWithOutputs,
+  }), [anchors, artifactCountByAnchorId, query, scopeFilter, showOnlyWithOutputs]);
+  const hasActiveFilters = Boolean(query || scopeFilter !== 'all' || showOnlyWithOutputs);
+  const clearFilters = () => {
+    onQueryChange('');
+    onScopeFilterChange('all');
+    onShowOnlyWithOutputsChange(false);
+  };
+
   return (
-    <section>
-      <h3 className="text-xs font-black uppercase tracking-wide text-muted-foreground">
-        {title} · {anchors.length}
-      </h3>
-      <div className="mt-2 divide-y-2 divide-border border-2 border-border bg-card shadow-[2px_2px_0px_0px_var(--border)]">
-        {[...anchors]
-          .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
-          .map((anchor) => (
-            <div key={anchor.id} className="flex items-center gap-2 px-3 py-2">
-              <button
-                type="button"
-                aria-label={anchor.quote}
-                onClick={() => onSelectAnchor(anchor.id)}
-                className="min-w-0 flex-1 bg-transparent py-1 text-left text-sm leading-5 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <span className="line-clamp-2">{anchor.quote}</span>
-                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
-                  {formatOutputCount(artifactCountByAnchorId[anchor.id] ?? 0)}
-                </span>
-              </button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 shrink-0 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
-                aria-label={`Delete saved ${anchor.scope}: ${anchor.quote}`}
-                onClick={() => onRequestDeleteAnchor(anchor)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+    <section className="mt-5" aria-labelledby="saved-marks-heading">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 id="saved-marks-heading" className="text-xs font-black uppercase tracking-wide text-muted-foreground">
+          Saved marks
+        </h3>
+        <p role="status" className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          {getSelectionCountLabel(visibleAnchors.length, anchors.length)}
+        </p>
       </div>
+      <label className="relative mt-2 block">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        <span className="sr-only">Search saved marks</span>
+        <input
+          type="search"
+          value={query}
+          placeholder="Search saved passages…"
+          onChange={(event) => onQueryChange(event.target.value)}
+          className="h-11 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+        />
+      </label>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <label>
+          <span className="sr-only">Filter saved marks by type</span>
+          <select
+            value={scopeFilter}
+            onChange={(event) => onScopeFilterChange(event.target.value as AnchorScopeFilter)}
+            className="h-11 min-w-40 border-2 border-border bg-card px-3 text-sm font-bold shadow-[4px_4px_0px_0px_var(--border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="all">All mark types</option>
+            <option value="selection">Selections</option>
+            <option value="close-read">Close Read sources</option>
+          </select>
+        </label>
+        <Button
+          type="button"
+          size="sm"
+          variant={showOnlyWithOutputs ? 'secondary' : 'outline'}
+          className="h-11"
+          aria-pressed={showOnlyWithOutputs}
+          onClick={() => onShowOnlyWithOutputsChange(!showOnlyWithOutputs)}
+        >
+          With outputs
+        </Button>
+      </div>
+      {visibleAnchors.length > 0 ? (
+        <ul className="mt-3 divide-y-2 divide-border border-2 border-border bg-card shadow-[2px_2px_0px_0px_var(--border)]">
+          {visibleAnchors.map((anchor) => {
+            const isActive = anchor.id === activeAnchorId;
+            return (
+              <li key={anchor.id} className={cn('flex items-center gap-2 px-3 py-2', isActive && 'bg-secondary/40')}>
+                <button
+                  type="button"
+                  aria-current={isActive ? 'true' : undefined}
+                  aria-label={anchor.quote}
+                  onClick={() => onSelectAnchor(anchor.id)}
+                  className="min-h-11 min-w-0 flex-1 bg-transparent py-1 text-left text-sm leading-5 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="line-clamp-2">{anchor.quote}</span>
+                  <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
+                    {getAnchorGroupLabel(anchor)} · {formatOutputCount(artifactCountByAnchorId[anchor.id] ?? 0)}
+                  </span>
+                </button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-11 w-11 shrink-0 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
+                  aria-label={`Delete saved ${anchor.scope}: ${anchor.quote}`}
+                  onClick={() => onRequestDeleteAnchor(anchor)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="mt-3 border-2 border-dashed border-border bg-card p-4 text-sm leading-6 text-muted-foreground">
+          <p>{anchors.length === 0
+            ? 'Select a passage in the text to save it here.'
+            : 'No saved marks match these filters.'}
+          </p>
+          {hasActiveFilters ? (
+            <Button type="button" size="sm" variant="ghost" className="mt-2" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
@@ -368,23 +460,37 @@ export function ContextPanel({
   onStopArtifact,
   onRetryArtifact,
 }: ContextPanelProps): ReactElement {
+  const [selectionQuery, setSelectionQuery] = useState('');
+  const [scopeFilter, setScopeFilter] = useState<AnchorScopeFilter>('all');
+  const [showOnlyWithOutputs, setShowOnlyWithOutputs] = useState(false);
+  const selectionIndex = (
+    <SelectionIndex
+      anchors={anchors}
+      activeAnchorId={activeAnchor?.id ?? null}
+      artifactCountByAnchorId={artifactCountByAnchorId}
+      query={selectionQuery}
+      scopeFilter={scopeFilter}
+      showOnlyWithOutputs={showOnlyWithOutputs}
+      onQueryChange={setSelectionQuery}
+      onScopeFilterChange={setScopeFilter}
+      onShowOnlyWithOutputsChange={setShowOnlyWithOutputs}
+      onSelectAnchor={onSelectAnchor}
+      onRequestDeleteAnchor={onRequestDeleteAnchor}
+    />
+  );
+
   if (!activeAnchor) {
     return (
-      <aside aria-label="Context panel" className="h-full bg-background p-4 font-mono">
+      <aside aria-label="Context panel" className="h-full overflow-y-auto bg-background p-4 font-mono">
         <div className="mb-5 flex items-center gap-2 border-2 border-border bg-card px-3 py-2 shadow-[4px_4px_0px_0px_var(--border)]">
           <span className="h-3 w-3 border border-border bg-secondary" aria-hidden="true" />
           <p className="text-xs font-black uppercase tracking-[0.18em]">Context</p>
         </div>
-        <div className="min-h-[calc(100vh-13rem)]">
-          <SessionDashboard
-            activeDocument={activeDocument}
-            anchors={anchors}
-            artifactCountByAnchorId={artifactCountByAnchorId}
-            onSelectAnchor={onSelectAnchor}
-            onRequestDeleteAnchor={onRequestDeleteAnchor}
-            onRunCloseReadDocument={onRunCloseReadDocument}
-          />
-        </div>
+        <SessionDashboard
+          activeDocument={activeDocument}
+          onRunCloseReadDocument={onRunCloseReadDocument}
+        />
+        {selectionIndex}
       </aside>
     );
   }
@@ -402,6 +508,7 @@ export function ContextPanel({
         onOpenNoteEditor={onOpenNoteEditor}
         onRunSkill={onRunSkill}
       />
+      {selectionIndex}
       {isNoteEditorOpen ? (
         <label className="mt-5 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
           Note
