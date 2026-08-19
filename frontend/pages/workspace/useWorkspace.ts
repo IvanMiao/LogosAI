@@ -32,6 +32,12 @@ import {
   type Artifact,
   type ArtifactStorageState,
 } from '@/features/artifacts';
+import type {
+  AnalysisLanguage,
+  ReaderPreferences,
+  WorkspaceDocument,
+  WorkspaceDocumentLibrary,
+} from '@/features/reading';
 import {
   buildReadingSessionStats,
   createWorkspaceDocument,
@@ -61,14 +67,10 @@ import {
 } from '@/utils/historyStorage';
 import type {
   AnchorMarkStatus,
-  AnalysisLanguage,
   ImportState,
-  ReaderPreferences,
   PendingSelection,
   SelectionToolbarPlacement,
   WorkspaceController,
-  WorkspaceDocument,
-  WorkspaceDocumentLibrary,
   WorkspacePageProps,
   WorkspaceSyncStatus,
   WorkspaceViewModel,

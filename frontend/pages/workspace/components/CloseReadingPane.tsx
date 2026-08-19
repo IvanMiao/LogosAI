@@ -8,8 +8,8 @@ import {
 import { Button } from '@/components/ui/button';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
+import type { ReaderPreferences } from '@/features/reading';
 import { cn } from '@/utils/className';
-import type { ReaderPreferences } from '../workspace.types';
 import {
   ArtifactBody,
   ArtifactStatusIcon,

@@ -11,12 +11,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Artifact } from '@/features/artifacts';
+import type { ReaderPreferences } from '@/features/reading';
 import { cn } from '@/utils/className';
 import {
   getCloseReadingFontSize,
   getReaderFontClassName,
 } from '../reading-typography';
-import type { ReaderPreferences } from '../workspace.types';
 
 interface ArtifactBodyProps {
   artifact: Artifact;

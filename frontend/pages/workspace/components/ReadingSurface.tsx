@@ -3,6 +3,7 @@ import { Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { TextAnchor } from '@/features/anchors';
+import type { ReaderPreferences, WorkspaceDocument } from '@/features/reading';
 import { cn } from '@/utils/className';
 import {
   splitDocumentParagraphsWithOffsets,
@@ -12,10 +13,8 @@ import { getReaderFontClassName } from '../reading-typography';
 import type {
   AnchorMarkStatus,
   PendingSelection,
-  ReaderPreferences,
   SelectionToolbarPlacement,
   WorkspaceController,
-  WorkspaceDocument,
 } from '../workspace.types';
 
 interface ReadingSurfaceProps {

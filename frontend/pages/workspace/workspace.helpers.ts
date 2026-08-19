@@ -1,11 +1,11 @@
 import type { AnchorStorageState } from '@/features/anchors';
 import type { ArtifactStorageState } from '@/features/artifacts';
-import { createClientId } from '@/utils/createClientId';
 import type {
   DocumentSourceType,
   ReadingSessionStats,
   WorkspaceDocument,
-} from './workspace.types';
+} from '@/features/reading';
+import { createClientId } from '@/utils/createClientId';
 
 const SUPPORTED_TEXT_FILE_EXTENSIONS = ['.txt', '.md'];
 const MARKDOWN_TITLE_PATTERN = /^#\s+(.+)$/m;

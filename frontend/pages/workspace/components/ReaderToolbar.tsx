@@ -23,15 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/utils/className';
-import { formatDocumentMeta } from '../workspace.helpers';
 import type {
   AnalysisLanguage,
   ReaderFontFamily,
   ReaderPreferences,
-  WorkspaceController,
   WorkspaceDocument,
-} from '../workspace.types';
+} from '@/features/reading';
+import { cn } from '@/utils/className';
+import { formatDocumentMeta } from '../workspace.helpers';
+import type { WorkspaceController } from '../workspace.types';
 
 const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [
   { label: '中文', value: 'zh' },

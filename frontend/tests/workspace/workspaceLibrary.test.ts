@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   addDocumentToLibrary,
   closeLibraryDocument,
@@ -9,7 +10,6 @@ import {
 } from '@/pages/workspace/workspace-library';
 import { createEmptyDocumentLibrary } from '@/pages/workspace/workspace-storage';
 import { createWorkspaceDocument } from '@/pages/workspace/workspace.helpers';
-import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
 
 const firstDocument: WorkspaceDocument = {
   id: 'document-first',

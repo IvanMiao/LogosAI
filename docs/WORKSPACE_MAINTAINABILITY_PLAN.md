@@ -17,7 +17,7 @@
 | 轮次 | 状态 | 主题 | 主要结果 |
 | --- | --- | --- | --- |
 | 1 | [x] 已完成 | 建立基线与 Worker CI | 从最新 `main` 建分支，记录绿灯基线，Cloudflare checks 进入 CI |
-| 2 | [ ] 未开始 | 纠正领域类型所有权 | `client-api` 不再依赖 `pages/workspace` |
+| 2 | [x] 已完成 | 纠正领域类型所有权 | `client-api` 不再依赖 `pages/workspace` |
 | 3 | [ ] 未开始 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
 | 4 | [ ] 未开始 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
 | 5 | [ ] 未开始 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
@@ -81,6 +81,12 @@
 - `rg "@/pages/" frontend/client-api` 无结果。
 - 类型形状、序列化字段和 API payload 不变。
 - Frontend lint、typecheck、tests、build 通过。
+
+### 实施记录
+
+- 新增 `frontend/features/reading/`，集中拥有 Reading domain 与 session boundary types。
+- `client-api` 对 `pages/**` 的反向依赖已清零；HTTP 与 storage 字段未改变。
+- Frontend 15 个 test files、88 个 tests 通过；lint、typecheck、build 通过。
 
 ## 第 3 轮：让 Reading session 逻辑拥有明确归属
 

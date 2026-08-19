@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   DEFAULT_ANALYSIS_LANGUAGE,
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
@@ -18,7 +19,6 @@ import {
   writeStoredDocumentLibrary,
   writeStoredReaderPreferences,
 } from '@/pages/workspace/workspace-storage';
-import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
 
 const document: WorkspaceDocument = {
   id: 'document-test',

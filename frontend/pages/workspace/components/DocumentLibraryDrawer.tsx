@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { formatDate } from '@/utils/formatters';
 import type { HistoryItem } from '@/types';
-import type { ReadingSessionStats, WorkspaceDocument } from '../workspace.types';
+import type { ReadingSessionStats, WorkspaceDocument } from '@/features/reading';
 import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
 
 interface DocumentLibraryDrawerProps {

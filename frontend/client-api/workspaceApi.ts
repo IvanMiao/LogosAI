@@ -1,28 +1,12 @@
-import type { TextAnchor } from '@/features/anchors';
-import type { Artifact } from '@/features/artifacts';
 import type {
-  AnalysisLanguage,
-  ReaderPreferences,
-  WorkspaceDocument,
-} from '@/pages/workspace/workspace.types';
+  ReadingSessionSnapshot,
+  WorkspacePreferencesPayload,
+} from '@/features/reading';
 import { requestCloudEmpty, requestCloudJson } from './cloudApi';
-
-export interface ReadingSessionSnapshot {
-  document: WorkspaceDocument;
-  activeAnchorId: string | null;
-  anchors: TextAnchor[];
-  artifacts: Artifact[];
-}
 
 export interface StoredReadingSession extends ReadingSessionSnapshot {
   revision: number;
   syncedAt: string;
-}
-
-export interface WorkspacePreferencesPayload {
-  activeDocumentId: string | null;
-  readerPreferences: ReaderPreferences;
-  analysisLanguage: AnalysisLanguage;
 }
 
 export interface CloudWorkspaceState {

@@ -1,4 +1,4 @@
-import type { ReaderFontFamily } from './workspace.types';
+import type { ReaderFontFamily } from '@/features/reading';
 
 const CLOSE_READING_FONT_SIZE_OFFSET = 2;
 const MIN_CLOSE_READING_FONT_SIZE = 15;

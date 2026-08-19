@@ -1,6 +1,6 @@
 import type { AnalysisStreamStage, AnalysisModel } from '@/types';
 import type { TextAnchor } from '@/features/anchors';
-import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   readApiErrorMessage,
   RemoteApiError,
