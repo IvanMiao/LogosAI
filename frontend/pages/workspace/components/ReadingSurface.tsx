@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AnchorSkill } from '@/client-api/anchorApi';
-import type { TextAnchor } from '@/features/anchors';
+import { getSelectionOffsets, type TextAnchor } from '@/features/anchors';
 import type { ReaderPreferences, WorkspaceDocument } from '@/features/reading';
 import { cn } from '@/utils/className';
 import {
@@ -12,7 +12,6 @@ import {
 import { getReaderFontClassName } from '../reading-typography';
 import type {
   AnchorMarkStatus,
-  PendingSelection,
   SelectionToolbarPlacement,
   WorkspaceController,
 } from '../workspace.types';
@@ -68,53 +67,6 @@ function isAnchorStartInParagraph(
 
   return activeAnchor.startOffset >= paragraph.startOffset
     && activeAnchor.startOffset < paragraph.endOffset;
-}
-
-function getParagraphElement(node: Node): HTMLElement | null {
-  const element = node instanceof HTMLElement ? node : node.parentElement;
-  return element?.closest<HTMLElement>('[data-paragraph-start]') ?? null;
-}
-
-function getOffsetWithinParagraph(
-  paragraph: HTMLElement,
-  container: Node,
-  offset: number,
-): number | null {
-  const paragraphStart = Number(paragraph.dataset.paragraphStart);
-  if (!Number.isInteger(paragraphStart)) {
-    return null;
-  }
-
-  const prefixRange = document.createRange();
-  prefixRange.selectNodeContents(paragraph);
-  prefixRange.setEnd(container, offset);
-  return paragraphStart + prefixRange.toString().length;
-}
-
-function getSelectionOffsets(
-  range: Range,
-): Pick<PendingSelection, 'startOffset' | 'endOffset'> | null {
-  const startParagraph = getParagraphElement(range.startContainer);
-  const endParagraph = getParagraphElement(range.endContainer);
-  if (!startParagraph || !endParagraph) {
-    return null;
-  }
-
-  const startOffset = getOffsetWithinParagraph(
-    startParagraph,
-    range.startContainer,
-    range.startOffset,
-  );
-  const endOffset = getOffsetWithinParagraph(
-    endParagraph,
-    range.endContainer,
-    range.endOffset,
-  );
-  if (startOffset === null || endOffset === null || endOffset <= startOffset) {
-    return null;
-  }
-
-  return { startOffset, endOffset };
 }
 
 function AnchorMark({

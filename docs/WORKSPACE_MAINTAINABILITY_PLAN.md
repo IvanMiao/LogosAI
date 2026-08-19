@@ -19,7 +19,7 @@
 | 1 | [x] 已完成 | 建立基线与 Worker CI | 从最新 `main` 建分支，记录绿灯基线，Cloudflare checks 进入 CI |
 | 2 | [x] 已完成 | 纠正领域类型所有权 | `client-api` 不再依赖 `pages/workspace` |
 | 3 | [x] 已完成 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
-| 4 | [ ] 未开始 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
+| 4 | [x] 已完成 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
 | 5 | [ ] 未开始 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
 | 6 | [ ] 未开始 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
 | 7 | [ ] 未开始 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
@@ -143,6 +143,12 @@
 - `ReadingSurface.tsx` 不再包含 offset 算法细节。
 - 选中第二个相同句子时仍产生第二处真实 offset。
 - Workspace Journey contract 不变，相关 tests 全部通过。
+
+### 实施记录
+
+- DOM `Range` → document offset 已移入 `features/anchors/selection-offsets.ts`。
+- 新增单段、跨段、Unicode、空选区和第二个重复 quote 的直接单元测试。
+- `ReadingSurface` 只负责读取 browser selection 和触发 UI action。
 
 ## 第 5 轮：拆出 Document library 与阅读偏好
 
