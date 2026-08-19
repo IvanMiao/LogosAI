@@ -22,6 +22,7 @@ import type { Artifact } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
 import { cn } from '@/utils/className';
+import type { WorkspaceSessionArtifact } from '../workspace.types';
 import {
   ArtifactBody,
   ArtifactStatusIcon,
@@ -31,6 +32,7 @@ import {
   formatArtifactTimestamp,
   getArtifactLabel,
 } from './artifact-display.helpers';
+import { SessionOutputIndex } from './SessionOutputIndex';
 
 interface ContextPanelProps {
   activeDocument: WorkspaceDocument;
@@ -38,12 +40,14 @@ interface ContextPanelProps {
   anchors: TextAnchor[];
   activeArtifacts: Artifact[];
   activeArtifact: Artifact | null;
+  sessionArtifacts: WorkspaceSessionArtifact[];
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
   isNoteEditorOpen: boolean;
   onClearActiveAnchor: () => void;
   onSelectAnchor: (anchorId: string) => void;
   onSelectArtifact: (artifactId: string) => void;
+  onOpenSessionArtifact: (artifactId: string) => void;
   onRequestDeleteAnchor: (anchor: TextAnchor) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onNoteDraftChange: (content: string) => void;
@@ -445,12 +449,14 @@ export function ContextPanel({
   anchors,
   activeArtifacts,
   activeArtifact,
+  sessionArtifacts,
   artifactCountByAnchorId,
   noteDraftContent,
   isNoteEditorOpen,
   onClearActiveAnchor,
   onSelectAnchor,
   onSelectArtifact,
+  onOpenSessionArtifact,
   onRequestDeleteAnchor,
   onRequestDeleteArtifact,
   onNoteDraftChange,
@@ -478,6 +484,12 @@ export function ContextPanel({
       onRequestDeleteAnchor={onRequestDeleteAnchor}
     />
   );
+  const sessionOutputIndex = (
+    <SessionOutputIndex
+      outputs={sessionArtifacts}
+      onOpenArtifact={onOpenSessionArtifact}
+    />
+  );
 
   if (!activeAnchor) {
     return (
@@ -491,6 +503,7 @@ export function ContextPanel({
           onRunCloseReadDocument={onRunCloseReadDocument}
         />
         {selectionIndex}
+        {sessionOutputIndex}
       </aside>
     );
   }
@@ -509,6 +522,7 @@ export function ContextPanel({
         onRunSkill={onRunSkill}
       />
       {selectionIndex}
+      {sessionOutputIndex}
       {isNoteEditorOpen ? (
         <label className="mt-5 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
           Note

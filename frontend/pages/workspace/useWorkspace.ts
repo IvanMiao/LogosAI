@@ -8,7 +8,7 @@ import {
   resolveAnchor,
   type TextAnchor,
 } from '@/features/anchors';
-import type { Artifact } from '@/features/artifacts';
+import type { Artifact, ArtifactStorageState } from '@/features/artifacts';
 import {
   buildReadingSessionStats,
   type DocumentParagraph,
@@ -16,6 +16,7 @@ import {
 import type {
   WorkspaceController,
   WorkspacePageProps,
+  WorkspaceSessionArtifact,
   WorkspaceSyncStatus,
   WorkspaceViewModel,
 } from './workspace.types';
@@ -26,6 +27,24 @@ import { useReadingPreferences } from './useReadingPreferences';
 import { useReadingSelection } from './useReadingSelection';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
+
+function getSessionArtifacts(
+  artifactStorage: ArtifactStorageState,
+  anchorsById: Record<string, TextAnchor>,
+  documentId: string | undefined,
+): WorkspaceSessionArtifact[] {
+  if (!documentId) {
+    return [];
+  }
+
+  return Object.values(artifactStorage.artifactsByAnchorId)
+    .flat()
+    .flatMap((artifact) => {
+      const anchor = anchorsById[artifact.anchorId];
+      return artifact.documentId === documentId && anchor ? [{ artifact, anchor }] : [];
+    })
+    .sort((left, right) => right.artifact.updatedAt.localeCompare(left.artifact.updatedAt));
+}
 
 function buildWorkspaceViewModel({
   hasApiKey,
@@ -78,6 +97,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     importState,
     workspaceError,
     setPasteText,
+    setSessionTitle,
     importPastedText: importPastedTextIntoLibrary,
     importTextFile: importTextFileIntoLibrary,
     openDocument: openLibraryDocument,
@@ -178,6 +198,11 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const sessionStatsByDocumentId = useMemo(() => {
     return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
   }, [anchorStorage, artifactStorage, documents]);
+  const sessionArtifacts = useMemo(() => getSessionArtifacts(
+    artifactStorage,
+    anchorStorage.anchorsById,
+    activeDocument?.id,
+  ), [activeDocument?.id, anchorStorage.anchorsById, artifactStorage]);
 
   const resetTransientDocumentState = useCallback(() => {
     resetSelectionState();
@@ -208,6 +233,15 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     if (activateStoredAnchor(anchorId)) {
       resetSelectedArtifact();
     }
+  };
+
+  const openSessionArtifact = (artifactId: string) => {
+    const sessionArtifact = sessionArtifacts.find(({ artifact }) => artifact.id === artifactId);
+    if (!sessionArtifact || !activateStoredAnchor(sessionArtifact.anchor.id)) {
+      return;
+    }
+
+    selectArtifact(sessionArtifact.artifact.id);
   };
 
   const deleteArtifact = (artifactId: string) => {
@@ -473,6 +507,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activeAnchorId,
     activeArtifacts,
     activeArtifact,
+    sessionArtifacts,
     artifactCountByAnchorId,
     noteDraftContent,
     anchorMarkStatusById,
@@ -483,6 +518,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     analysisLanguage,
     selectionToolbarPlacement,
     setPasteText,
+    setSessionTitle,
     importPastedText,
     importTextFile,
     showSelectionActions,
@@ -491,6 +527,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     startNoteForPendingSelection,
     setActiveAnchorId,
     selectArtifact,
+    openSessionArtifact,
     deleteArtifact,
     deleteAnchor,
     clearActiveAnchor,

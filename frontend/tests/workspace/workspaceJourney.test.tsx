@@ -464,8 +464,7 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Delete selection' }));
     expect(readStoredAnchors(TEST_USER_ID).anchorsById[savedSelectionAnchor.id]).toBeUndefined();
     expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[savedSelectionAnchor.id]).toBeUndefined();
-    expect(within(contextPanel).getByRole('status'))
-      .toHaveTextContent('2 saved marks');
+    expect(within(contextPanel).getByText('2 saved marks')).toBeInTheDocument();
   });
 
   it('filters saved marks and switches selection without leaving the context panel', async () => {
@@ -585,13 +584,84 @@ describe('close reading user journeys', () => {
     const searchInput = within(library).getByRole('searchbox', { name: 'Search reading sessions' });
     await user.type(searchInput, 'searchable passage');
     expect(within(library).queryByText('Two paragraph journey')).not.toBeInTheDocument();
-    expect(within(library).queryByText('A searchable passage.')).not.toBeInTheDocument();
+    expect(within(library).getByText(/^Text match:/)).toHaveTextContent('A searchable passage.');
+    expect(within(library).getByText(/Last opened/)).toBeInTheDocument();
     await user.clear(searchInput);
     await user.click(within(library).getByRole('button', { name: /^Two paragraph journey/ }));
     await user.click(screen.getByRole('button', { name: 'Open context panel' }));
 
     expect(screen.getByText(savedReading.content)).toBeInTheDocument();
     expect(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId[firstParagraphAnchor.id]).toHaveLength(1);
+  });
+
+  it('uses a custom title when starting a new reading session', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    await user.click(screen.getByRole('button', { name: 'New session' }));
+    await user.type(screen.getByRole('textbox', { name: /Session title/ }), 'My source notes');
+    await user.click(screen.getByRole('button', { name: 'Paste text' }));
+    await user.type(screen.getByPlaceholderText('Paste source text here...'), 'An imported text.');
+    await user.click(screen.getByRole('button', { name: 'Start reading' }));
+
+    expect(screen.getByRole('button', { name: 'Rename My source notes' })).toBeInTheDocument();
+    expect(Object.values(readStoredDocumentLibrary(TEST_USER_ID).documentsById))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ title: 'My source notes' })]));
+  });
+
+  it('finds and opens outputs from another saved selection in the session index', async () => {
+    const user = userEvent.setup();
+    const firstOutput: Artifact = {
+      id: 'first-session-output',
+      documentId: journeyDocument.id,
+      anchorId: savedSelectionAnchor.id,
+      type: 'explanation',
+      title: 'Explanation',
+      content: 'Output for the first saved selection.',
+      status: 'complete',
+      createdAt: '2026-07-21T10:00:00.000Z',
+      updatedAt: '2026-07-21T10:00:00.000Z',
+    };
+    const secondOutput: Artifact = {
+      id: 'second-session-output',
+      documentId: journeyDocument.id,
+      anchorId: secondSelectionAnchor.id,
+      type: 'translation',
+      title: 'Translation',
+      content: 'A distinctive output from the comparison selection.',
+      status: 'complete',
+      createdAt: '2026-07-21T11:00:00.000Z',
+      updatedAt: '2026-07-21T11:00:00.000Z',
+    };
+    writeStoredAnchors({
+      anchorsById: {
+        [savedSelectionAnchor.id]: savedSelectionAnchor,
+        [secondSelectionAnchor.id]: secondSelectionAnchor,
+      },
+      activeAnchorId: savedSelectionAnchor.id,
+    }, TEST_USER_ID);
+    writeStoredArtifacts({
+      artifactsByAnchorId: {
+        [savedSelectionAnchor.id]: [firstOutput],
+        [secondSelectionAnchor.id]: [secondOutput],
+      },
+      tasksByRequestId: {},
+    }, TEST_USER_ID);
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    const contextPanel = screen.getByRole('complementary', { name: 'Context panel' });
+    await user.click(within(contextPanel).getByText('Session outputs · 2 outputs'));
+    await user.type(within(contextPanel).getByRole('searchbox', {
+      name: 'Search session outputs',
+    }), 'distinctive output');
+
+    expect(within(contextPanel).getByText('Matches output text')).toBeInTheDocument();
+    await user.click(within(contextPanel).getByRole('button', {
+      name: `Open Translation for ${secondSelectionAnchor.quote}`,
+    }));
+    expect(within(contextPanel).getByText(secondOutput.content)).toBeInTheDocument();
   });
 
   it('renames the current text and keeps the title after reloading', async () => {

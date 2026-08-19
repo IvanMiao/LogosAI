@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDate } from '@/utils/formatters';
+import { formatDateTime } from '@/utils/formatters';
 import type { HistoryItem } from '@/types';
 import type { ReadingSessionStats, WorkspaceDocument } from '@/features/reading';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
@@ -33,6 +33,7 @@ interface DocumentListItemProps {
   document: WorkspaceDocument;
   stats: ReadingSessionStats;
   isActive: boolean;
+  searchContext: string;
   onOpen: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
@@ -42,6 +43,7 @@ function DocumentListItem({
   document,
   stats,
   isActive,
+  searchContext,
   onOpen,
   onRename,
   onDelete,
@@ -73,8 +75,13 @@ function DocumentListItem({
             {isActive ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
             <span className="truncate text-sm font-black">{document.title}</span>
           </span>
+          {searchContext ? (
+            <span className="mt-2 block line-clamp-2 font-sans text-xs leading-5 text-muted-foreground">
+              {searchContext}
+            </span>
+          ) : null}
           <span className="mt-2 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {formatDocumentMeta(document)} · {formatDate(document.lastOpenedAt ?? document.updatedAt)}
+            {formatDocumentMeta(document)} · Last opened {formatDateTime(document.lastOpenedAt ?? document.updatedAt)}
           </span>
           <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {stats.selectionCount} {stats.selectionCount === 1 ? 'selection' : 'selections'}
@@ -164,6 +171,33 @@ function getSessionCountLabel(visibleCount: number, totalCount: number): string 
   }
 
   return `${visibleCount} of ${totalCount} sessions`;
+}
+
+function getTextMatchExcerpt(text: string, query: string): string {
+  const matchIndex = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+  if (matchIndex < 0) {
+    return '';
+  }
+
+  const excerptStart = Math.max(0, matchIndex - 32);
+  const excerptEnd = Math.min(text.length, matchIndex + query.length + 56);
+  const excerpt = text.slice(excerptStart, excerptEnd).replace(/\s+/g, ' ').trim();
+  const prefix = excerptStart > 0 ? '…' : '';
+  const suffix = excerptEnd < text.length ? '…' : '';
+  return `${prefix}${excerpt}${suffix}`;
+}
+
+function getSearchContext(document: WorkspaceDocument, query: string): string {
+  if (!query) {
+    return '';
+  }
+
+  if (document.title.toLocaleLowerCase().includes(query)) {
+    return 'Title match';
+  }
+
+  const excerpt = getTextMatchExcerpt(document.text, query);
+  return excerpt ? `Text match: “${excerpt}”` : '';
 }
 
 export function DocumentLibraryDrawer({
@@ -260,6 +294,7 @@ export function DocumentLibraryDrawer({
                   entryCount: 0,
                 }}
                 isActive={document.id === activeDocumentId}
+                searchContext={getSearchContext(document, normalizedQuery)}
                 onOpen={() => openDocument(document.id)}
                 onRename={(title) => onRenameDocument(document.id, title)}
                 onDelete={() => requestDelete(document)}

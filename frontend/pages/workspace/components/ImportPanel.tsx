@@ -6,6 +6,7 @@ import type { ImportState } from '../workspace.types';
 interface ImportPanelProps {
   importState: ImportState;
   onPasteTextChange: (text: string) => void;
+  onSessionTitleChange: (title: string) => void;
   onImportPastedText: () => void;
   onImportTextFile: (file: File | null) => Promise<void>;
 }
@@ -13,6 +14,7 @@ interface ImportPanelProps {
 export function ImportPanel({
   importState,
   onPasteTextChange,
+  onSessionTitleChange,
   onImportPastedText,
   onImportTextFile,
 }: ImportPanelProps): ReactElement {
@@ -42,6 +44,18 @@ export function ImportPanel({
             </p>
           </div>
         </div>
+
+        <label htmlFor="workspace-session-title" className="mt-8 block text-sm font-black">
+          Session title <span className="font-normal text-muted-foreground">(optional)</span>
+          <input
+            id="workspace-session-title"
+            value={importState.sessionTitle}
+            maxLength={160}
+            onChange={(event) => onSessionTitleChange(event.target.value)}
+            placeholder="Defaults to the file name or first line"
+            className="mt-2 h-11 w-full border-2 border-border bg-input px-3 text-base font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+          />
+        </label>
 
         {isPasteEditorOpen ? (
           <div className="mt-8 border-t-2 border-border pt-5">
