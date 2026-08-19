@@ -22,7 +22,7 @@
 | 4 | [x] 已完成 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
 | 5 | [x] 已完成 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
 | 6 | [x] 已完成 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
-| 7 | [ ] 未开始 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
+| 7 | [x] 已完成 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
 | 8 | [ ] 未开始 | 收窄 UI 依赖并总体验证 | 展示组件不再通过索引类型依赖巨型 controller，完成全量回归 |
 
 ## 第 1 轮：建立可比较的基线
@@ -248,6 +248,13 @@ create running Artifact
 - abort、network error、missing key、retry 与 metadata replacement 都有测试。
 - `error` 后不会把 Artifact 标为 complete；stop 保留 partial content。
 - 不修改 FastAPI、Worker gateway 或 AI 语义。
+
+### 实施记录
+
+- 新增 `useArtifactTasks`，统一 Artifact 创建、metadata、chunk、complete/fail/stop 与 controller cleanup。
+- Close Read 与 Anchor Skill 仅作为独立 transport adapter 注入，API request shape 未改变。
+- 新增 success、metadata replacement、network failure、abort/partial、retry 与 missing-config tests。
+- `useWorkspace` 缩减到 519 行；17 个 test files、98 个 tests 与全部前端检查通过。
 
 ## 第 8 轮：收窄展示层依赖并完成回归
 

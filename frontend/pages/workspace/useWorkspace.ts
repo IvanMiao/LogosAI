@@ -1,21 +1,14 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { runAnchorSkill, type AnchorSkill } from '@/client-api/anchorApi';
 import { streamAnalysis } from '@/client-api/analysisApi';
 import type { HistoryItem } from '@/types';
-import { createClientId } from '@/utils/createClientId';
 import {
   createAnchorFromRange,
   getAnchorsForDocument,
   resolveAnchor,
   type TextAnchor,
 } from '@/features/anchors';
-import {
-  appendArtifactContent,
-  createStreamingArtifact,
-  prependArtifact,
-  updateArtifact,
-  type Artifact,
-} from '@/features/artifacts';
+import type { Artifact } from '@/features/artifacts';
 import {
   buildReadingSessionStats,
   type DocumentParagraph,
@@ -27,6 +20,7 @@ import type {
   WorkspaceViewModel,
 } from './workspace.types';
 import { useArtifactCollection } from './useArtifactCollection';
+import { useArtifactTasks } from './useArtifactTasks';
 import { useReadingLibrary } from './useReadingLibrary';
 import { useReadingPreferences } from './useReadingPreferences';
 import { useReadingSelection } from './useReadingSelection';
@@ -54,10 +48,6 @@ function buildWorkspaceViewModel({
   };
 }
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'AbortError';
-}
-
 function getArtifactTypeForSkill(skill: AnchorSkill): Artifact['type'] {
   const typeBySkill: Record<AnchorSkill, Artifact['type']> = {
     explain: 'explanation',
@@ -78,20 +68,8 @@ function getArtifactTitleForSkill(skill: AnchorSkill): string {
   return titleBySkill[skill];
 }
 
-function clearRunningController(
-  tasks: Record<string, AbortController>,
-  controller: AbortController,
-) {
-  for (const [requestId, runningController] of Object.entries(tasks)) {
-    if (runningController === controller) {
-      delete tasks[requestId];
-    }
-  }
-}
-
 export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const { userId, hasApiKey, model } = props;
-  const runningTasksRef = useRef<Record<string, AbortController>>({});
   const {
     documentLibrary,
     activeDocument,
@@ -156,6 +134,12 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activeAnchorId,
     anchors,
   });
+  const {
+    runArtifactTask,
+    createFailedArtifact,
+    stopArtifact,
+    abortTasksFor,
+  } = useArtifactTasks({ artifactStorage, updateArtifacts });
 
   const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
     documentLibrary,
@@ -226,14 +210,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     }
   };
 
-  const abortTasksFor = (matchesTask: (artifactId: string, anchorId: string) => boolean) => {
-    for (const task of Object.values(artifactStorage.tasksByRequestId)) {
-      if (matchesTask(task.artifactId, task.anchorId)) {
-        runningTasksRef.current[task.requestId]?.abort();
-      }
-    }
-  };
-
   const deleteArtifact = (artifactId: string) => {
     abortTasksFor((taskArtifactId) => taskArtifactId === artifactId);
     removeArtifact(artifactId);
@@ -266,19 +242,13 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     message: string,
     type: Artifact['type'] = 'close_read',
   ) => {
-    const artifact = {
-      ...createStreamingArtifact({
-        documentId: anchor.documentId,
-        anchorId: anchor.id,
-        title,
-        requestId: createClientId('request'),
-        type,
-      }),
-      status: 'failed' as const,
-      errorMessage: message,
-    };
-
-    updateArtifacts((current) => prependArtifact(current, artifact));
+    createFailedArtifact({
+      documentId: anchor.documentId,
+      anchorId: anchor.id,
+      title,
+      message,
+      type,
+    });
   };
 
   const runCloseRead = async (anchor: TextAnchor, text: string, title: string) => {
@@ -293,48 +263,26 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    const requestId = createClientId('request');
-    const artifact = createStreamingArtifact({
+    await runArtifactTask({
       documentId: anchor.documentId,
       anchorId: anchor.id,
       title,
-      requestId,
-    });
-    const abortController = new AbortController();
-    runningTasksRef.current[requestId] = abortController;
-    updateArtifacts((current) => prependArtifact(current, artifact));
-
-    try {
-      const finalResult = await streamAnalysis(
-        {
-          model,
-          text,
-          userLanguage: analysisLanguage,
-          signal: abortController.signal,
-        },
-        {
-          onChunk: (chunk) => {
-            updateArtifacts((current) => appendArtifactContent(current, artifact.id, chunk));
+      execute: async ({ signal, onChunk }) => {
+        const finalResult = await streamAnalysis(
+          {
+            model,
+            text,
+            userLanguage: analysisLanguage,
+            signal,
           },
-          onStage: () => undefined,
-        },
-      );
-      updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
-        ...item,
-        content: finalResult,
-        status: 'complete',
-        updatedAt: new Date().toISOString(),
-      })));
-    } catch (error) {
-      updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
-        ...item,
-        status: isAbortError(error) ? 'stopped' : 'failed',
-        errorMessage: isAbortError(error) ? undefined : error instanceof Error ? error.message : String(error),
-        updatedAt: new Date().toISOString(),
-      })));
-    } finally {
-      clearRunningController(runningTasksRef.current, abortController);
-    }
+          {
+            onChunk,
+            onStage: () => undefined,
+          },
+        );
+        return { content: finalResult };
+      },
+    });
   };
 
   const runAnchorSkillForAnchor = async (anchor: TextAnchor, skill: AnchorSkill) => {
@@ -355,62 +303,35 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    const pendingRequestId = createClientId('pending');
-    const artifact = createStreamingArtifact({
+    await runArtifactTask({
       documentId: activeDocument.id,
       anchorId: anchor.id,
       title,
-      requestId: pendingRequestId,
       type: artifactType,
+      requestIdPrefix: 'pending',
+      execute: async ({ signal, onChunk, onMetadata }) => {
+        const finalResult = await runAnchorSkill(
+          {
+            model,
+            document: activeDocument,
+            anchor,
+            skill,
+            userLanguage: analysisLanguage,
+            signal,
+          },
+          {
+            onChunk,
+            onStage: () => undefined,
+            onMetadata,
+          },
+        );
+        return {
+          content: finalResult.result,
+          requestId: finalResult.requestId,
+          traceId: finalResult.traceId,
+        };
+      },
     });
-    const abortController = new AbortController();
-    runningTasksRef.current[pendingRequestId] = abortController;
-    updateArtifacts((current) => prependArtifact(current, artifact));
-
-    try {
-      const finalResult = await runAnchorSkill(
-        {
-          model,
-          document: activeDocument,
-          anchor,
-          skill,
-          userLanguage: analysisLanguage,
-          signal: abortController.signal,
-        },
-        {
-          onChunk: (chunk) => {
-            updateArtifacts((current) => appendArtifactContent(current, artifact.id, chunk));
-          },
-          onStage: () => undefined,
-          onMetadata: (metadata) => {
-            runningTasksRef.current[metadata.requestId] = abortController;
-            updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
-              ...item,
-              requestId: metadata.requestId,
-              traceId: metadata.traceId,
-              updatedAt: new Date().toISOString(),
-            })));
-          },
-        },
-      );
-      updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
-        ...item,
-        content: finalResult.result,
-        requestId: finalResult.requestId,
-        traceId: finalResult.traceId,
-        status: 'complete',
-        updatedAt: new Date().toISOString(),
-      })));
-    } catch (error) {
-      updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
-        ...item,
-        status: isAbortError(error) ? 'stopped' : 'failed',
-        errorMessage: isAbortError(error) ? undefined : error instanceof Error ? error.message : String(error),
-        updatedAt: new Date().toISOString(),
-      })));
-    } finally {
-      clearRunningController(runningTasksRef.current, abortController);
-    }
   };
 
   const runExplainForActiveAnchor = async () => {
@@ -472,14 +393,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     if (anchor) {
       await runCloseRead(anchor, paragraph.text, 'Close Read Paragraph');
     }
-  };
-
-  const stopArtifact = (artifact: Artifact) => {
-    if (!artifact.requestId) {
-      return;
-    }
-
-    runningTasksRef.current[artifact.requestId]?.abort();
   };
 
   const retryArtifact = async (artifact: Artifact) => {
