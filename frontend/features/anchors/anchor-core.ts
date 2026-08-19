@@ -224,6 +224,30 @@ export function getActiveAnchorIdForDocument(
   return legacyAnchor?.documentId === documentId ? legacyAnchor.id : null;
 }
 
+export function getAnchorsForDocument(
+  anchorsById: Record<string, TextAnchor>,
+  documentId: string | undefined,
+): TextAnchor[] {
+  if (!documentId) {
+    return [];
+  }
+
+  return Object.values(anchorsById).filter((anchor) => anchor.documentId === documentId);
+}
+
+export function getActiveAnchor(
+  anchorsById: Record<string, TextAnchor>,
+  activeAnchorId: string | null,
+  documentId: string | undefined,
+): TextAnchor | null {
+  if (!activeAnchorId || !documentId) {
+    return null;
+  }
+
+  const anchor = anchorsById[activeAnchorId];
+  return anchor?.documentId === documentId ? anchor : null;
+}
+
 export function setActiveAnchorForDocument(
   storage: AnchorStorageState,
   documentId: string,

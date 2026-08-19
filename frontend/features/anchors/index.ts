@@ -1,7 +1,9 @@
 export {
   createAnchorFromRange,
   createAnchorFromSelection,
+  getActiveAnchor,
   getActiveAnchorIdForDocument,
+  getAnchorsForDocument,
   hashAnchorQuote,
   normalizeAnchorQuote,
   removeAnchorsForDocument,

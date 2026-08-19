@@ -21,7 +21,7 @@
 | 3 | [x] 已完成 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
 | 4 | [x] 已完成 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
 | 5 | [x] 已完成 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
-| 6 | [ ] 未开始 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
+| 6 | [x] 已完成 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
 | 7 | [ ] 未开始 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
 | 8 | [ ] 未开始 | 收窄 UI 依赖并总体验证 | 展示组件不再通过索引类型依赖巨型 controller，完成全量回归 |
 
@@ -210,6 +210,13 @@
 - Selection 改变不会改变已运行 Task 的 source identity。
 - Note draft、active Artifact 与 Anchor marks 行为不变。
 - Explain、note、hardening、journey tests 全部通过。
+
+### 实施记录
+
+- 新增 `useReadingSelection`，封装 Anchor storage、pending selection 与 active Anchor。
+- 新增 `useArtifactCollection`，封装 Artifact storage、note draft、active Artifact 与 UI projection。
+- Anchor selectors 移入 `features/anchors/anchor-core.ts`；跨 aggregate 删除仍由 facade 编排。
+- `useWorkspace` 缩减到 606 行；16 个 test files、93 个 tests 与全部前端检查通过。
 
 ## 第 7 轮：统一 streaming Task lifecycle
 

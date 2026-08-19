@@ -1,95 +1,37 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { runAnchorSkill, type AnchorSkill } from '@/client-api/anchorApi';
 import { streamAnalysis } from '@/client-api/analysisApi';
 import type { HistoryItem } from '@/types';
 import { createClientId } from '@/utils/createClientId';
 import {
   createAnchorFromRange,
-  createAnchorFromSelection,
-  getActiveAnchorIdForDocument,
-  readStoredAnchors,
-  removeAnchorsForDocument,
+  getAnchorsForDocument,
   resolveAnchor,
-  setActiveAnchorForDocument,
-  writeStoredAnchors,
-  type AnchorStorageState,
   type TextAnchor,
 } from '@/features/anchors';
 import {
   appendArtifactContent,
   createStreamingArtifact,
-  getActiveArtifact,
-  getArtifactsForAnchor,
-  getNoteDraft,
   prependArtifact,
-  readStoredArtifacts,
-  removeArtifact,
-  removeArtifactsForAnchor,
-  removeArtifactsForDocument,
   updateArtifact,
-  upsertNoteDraft,
-  writeStoredArtifacts,
   type Artifact,
-  type ArtifactStorageState,
 } from '@/features/artifacts';
 import {
   buildReadingSessionStats,
   type DocumentParagraph,
 } from '@/features/reading/reading-core';
 import type {
-  AnchorMarkStatus,
-  PendingSelection,
-  SelectionToolbarPlacement,
   WorkspaceController,
   WorkspacePageProps,
   WorkspaceSyncStatus,
   WorkspaceViewModel,
 } from './workspace.types';
+import { useArtifactCollection } from './useArtifactCollection';
 import { useReadingLibrary } from './useReadingLibrary';
 import { useReadingPreferences } from './useReadingPreferences';
+import { useReadingSelection } from './useReadingSelection';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
-
-function getAnchorsForDocument(
-  anchorsById: Record<string, TextAnchor>,
-  documentId: string | undefined,
-): TextAnchor[] {
-  if (!documentId) {
-    return [];
-  }
-
-  return Object.values(anchorsById).filter((anchor) => anchor.documentId === documentId);
-}
-
-function getActiveAnchor(
-  anchorsById: Record<string, TextAnchor>,
-  activeAnchorId: string | null,
-  documentId: string | undefined,
-): TextAnchor | null {
-  if (!activeAnchorId || !documentId) {
-    return null;
-  }
-
-  const anchor = anchorsById[activeAnchorId];
-  return anchor?.documentId === documentId ? anchor : null;
-}
-
-function getAnchorMarkStatusById({
-  anchors,
-  activeAnchorId,
-  artifactStorage,
-}: {
-  anchors: TextAnchor[];
-  activeAnchorId: string | null;
-  artifactStorage: ArtifactStorageState;
-}): Record<string, AnchorMarkStatus> {
-  return anchors.reduce<Record<string, AnchorMarkStatus>>((statuses, anchor) => {
-    const artifacts = getArtifactsForAnchor(artifactStorage, anchor.id);
-    const hasDraft = Boolean(getNoteDraft(artifacts));
-    const status = anchor.id === activeAnchorId ? 'active' : hasDraft ? 'draft' : 'saved';
-    return { ...statuses, [anchor.id]: status };
-  }, {});
-}
 
 function buildWorkspaceViewModel({
   hasApiKey,
@@ -175,16 +117,45 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     updateAnalysisLanguage,
     hydrateReadingPreferences,
   } = useReadingPreferences(userId);
-  const [anchorStorage, setAnchorStorage] = useState<AnchorStorageState>(
-    () => readStoredAnchors(userId),
-  );
-  const [artifactStorage, setArtifactStorage] = useState<ArtifactStorageState>(
-    () => readStoredArtifacts(userId),
-  );
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
-  const [selectionToolbarPlacement, setSelectionToolbarPlacement] =
-    useState<SelectionToolbarPlacement | null>(null);
-  const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
+  const {
+    anchorStorage,
+    activeAnchor,
+    activeAnchorId,
+    anchors,
+    selectionToolbarPlacement,
+    showSelectionActions,
+    dismissSelectionToolbar,
+    resetSelectionState,
+    confirmPendingSelection: confirmSelection,
+    setActiveAnchorId: activateStoredAnchor,
+    clearActiveAnchor: clearStoredActiveAnchor,
+    activateAnchor: storeActiveAnchor,
+    removeAnchor,
+    removeDocumentAnchors,
+    hydrateAnchorStorage,
+  } = useReadingSelection({ userId, activeDocument });
+  const {
+    artifactStorage,
+    activeArtifacts,
+    activeArtifact,
+    artifactCountByAnchorId,
+    noteDraftContent,
+    anchorMarkStatusById,
+    selectArtifact,
+    resetSelectedArtifact,
+    deleteArtifact: removeArtifact,
+    removeArtifactsForAnchor,
+    removeArtifactsForDocument,
+    updateNoteDraft,
+    updateArtifacts,
+    hydrateArtifactStorage,
+  } = useArtifactCollection({
+    userId,
+    activeDocument,
+    activeAnchor,
+    activeAnchorId,
+    anchors,
+  });
 
   const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
     documentLibrary,
@@ -201,12 +172,15 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   ]);
   const hydrateWorkspace = useCallback((state: LocalWorkspaceState) => {
     hydrateDocumentLibrary(state.documentLibrary);
-    setAnchorStorage(state.anchorStorage);
-    setArtifactStorage(state.artifactStorage);
+    hydrateAnchorStorage(state.anchorStorage);
+    hydrateArtifactStorage(state.artifactStorage);
     hydrateReadingPreferences(state.readerPreferences, state.analysisLanguage);
-    writeStoredAnchors(state.anchorStorage, userId);
-    writeStoredArtifacts(state.artifactStorage, userId);
-  }, [hydrateDocumentLibrary, hydrateReadingPreferences, userId]);
+  }, [
+    hydrateAnchorStorage,
+    hydrateArtifactStorage,
+    hydrateDocumentLibrary,
+    hydrateReadingPreferences,
+  ]);
   const cloudSync = useWorkspaceCloudSync({
     enabled: props.cloudSyncEnabled ?? false,
     userId,
@@ -220,57 +194,11 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const sessionStatsByDocumentId = useMemo(() => {
     return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
   }, [anchorStorage, artifactStorage, documents]);
-  const activeAnchorId = getActiveAnchorIdForDocument(
-    anchorStorage,
-    activeDocument?.id,
-  );
-  const activeAnchor = getActiveAnchor(
-    anchorStorage.anchorsById,
-    activeAnchorId,
-    activeDocument?.id,
-  );
-  const anchors = getAnchorsForDocument(anchorStorage.anchorsById, activeDocument?.id);
-  const activeArtifacts = getArtifactsForAnchor(artifactStorage, activeAnchor?.id ?? null);
-  const selectedArtifact = activeArtifacts.find((artifact) => artifact.id === selectedArtifactId);
-  const activeArtifact = selectedArtifact ?? getActiveArtifact(activeArtifacts);
-  const noteDraftContent = getNoteDraft(activeArtifacts)?.content ?? '';
-  const artifactCountByAnchorId = Object.fromEntries(
-    anchors.map((anchor) => [
-      anchor.id,
-      getArtifactsForAnchor(artifactStorage, anchor.id).length,
-    ]),
-  );
-  const anchorMarkStatusById = getAnchorMarkStatusById({
-    anchors,
-    activeAnchorId,
-    artifactStorage,
-  });
-
-  const writeAnchors = (state: AnchorStorageState) => {
-    setAnchorStorage(state);
-    writeStoredAnchors(state, userId);
-  };
-
-  const writeArtifacts = (state: ArtifactStorageState) => {
-    setArtifactStorage(state);
-    writeStoredArtifacts(state, userId);
-  };
-
-  const updateArtifacts = (
-    updater: (current: ArtifactStorageState) => ArtifactStorageState,
-  ) => {
-    setArtifactStorage((current) => {
-      const nextState = updater(current);
-      writeStoredArtifacts(nextState, userId);
-      return nextState;
-    });
-  };
 
   const resetTransientDocumentState = useCallback(() => {
-    setSelectionToolbarPlacement(null);
-    setPendingSelection(null);
-    setSelectedArtifactId(null);
-  }, []);
+    resetSelectionState();
+    resetSelectedArtifact();
+  }, [resetSelectedArtifact, resetSelectionState]);
 
   const importPastedText = () => {
     if (importPastedTextIntoLibrary()) {
@@ -284,65 +212,17 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     }
   };
 
-  const showSelectionActions = (
-    selection: PendingSelection,
-    placement: SelectionToolbarPlacement,
-  ) => {
-    setPendingSelection(selection);
-    setSelectionToolbarPlacement(placement);
-  };
-
   const confirmPendingSelection = (): TextAnchor | null => {
-    if (!activeDocument || !pendingSelection) {
-      return null;
+    const anchor = confirmSelection();
+    if (anchor) {
+      resetSelectedArtifact();
     }
-
-    const anchor = createAnchorFromSelection({
-      documentId: activeDocument.id,
-      documentText: activeDocument.text,
-      selectedText: pendingSelection.selectedText,
-      startOffset: pendingSelection.startOffset,
-      endOffset: pendingSelection.endOffset,
-    });
-    if (!anchor) {
-      return null;
-    }
-
-    const nextState = setActiveAnchorForDocument({
-      anchorsById: {
-        ...anchorStorage.anchorsById,
-        [anchor.id]: anchor,
-      },
-      activeAnchorId: anchorStorage.activeAnchorId,
-      activeAnchorIdByDocumentId: anchorStorage.activeAnchorIdByDocumentId,
-    }, activeDocument.id, anchor.id);
-
-    writeAnchors(nextState);
-    setPendingSelection(null);
-    setSelectionToolbarPlacement(null);
-    setSelectedArtifactId(null);
     return anchor;
   };
 
   const setActiveAnchorId = (anchorId: string) => {
-    const anchor = anchorStorage.anchorsById[anchorId];
-    if (!anchor || anchor.documentId !== activeDocument?.id) {
-      return;
-    }
-
-    writeAnchors(setActiveAnchorForDocument(anchorStorage, activeDocument.id, anchorId));
-    setSelectionToolbarPlacement(null);
-    setSelectedArtifactId(null);
-  };
-
-  const dismissSelectionToolbar = () => {
-    setPendingSelection(null);
-    setSelectionToolbarPlacement(null);
-  };
-
-  const selectArtifact = (artifactId: string) => {
-    if (activeArtifacts.some((artifact) => artifact.id === artifactId)) {
-      setSelectedArtifactId(artifactId);
+    if (activateStoredAnchor(anchorId)) {
+      resetSelectedArtifact();
     }
   };
 
@@ -356,64 +236,28 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
 
   const deleteArtifact = (artifactId: string) => {
     abortTasksFor((taskArtifactId) => taskArtifactId === artifactId);
-    writeArtifacts(removeArtifact(artifactStorage, artifactId));
-    setSelectedArtifactId((currentId) => currentId === artifactId ? null : currentId);
+    removeArtifact(artifactId);
   };
 
   const deleteAnchor = (anchorId: string) => {
-    const anchor = anchorStorage.anchorsById[anchorId];
-    if (!anchor) {
+    if (!anchorStorage.anchorsById[anchorId]) {
       return;
     }
 
     abortTasksFor((_, taskAnchorId) => taskAnchorId === anchorId);
-    const nextAnchorsById = { ...anchorStorage.anchorsById };
-    delete nextAnchorsById[anchorId];
-    const nextStorage = {
-      ...anchorStorage,
-      anchorsById: nextAnchorsById,
-    };
-    const nextActiveStorage = activeAnchorId === anchorId
-      ? setActiveAnchorForDocument(nextStorage, activeDocument?.id ?? anchor.documentId, null)
-      : nextStorage;
-    writeAnchors(nextActiveStorage);
-    writeArtifacts(removeArtifactsForAnchor(artifactStorage, anchorId));
-    setSelectionToolbarPlacement(null);
-    setSelectedArtifactId(null);
+    removeAnchor(anchorId);
+    removeArtifactsForAnchor(anchorId);
+    resetSelectedArtifact();
   };
 
   const clearActiveAnchor = () => {
-    if (activeDocument) {
-      writeAnchors(setActiveAnchorForDocument(anchorStorage, activeDocument.id, null));
-    }
-    setSelectionToolbarPlacement(null);
-    setSelectedArtifactId(null);
+    clearStoredActiveAnchor();
+    resetSelectedArtifact();
   };
 
   const activateAnchor = (anchor: TextAnchor) => {
-    const nextStorage = {
-      ...anchorStorage,
-      anchorsById: {
-        ...anchorStorage.anchorsById,
-        [anchor.id]: anchor,
-      },
-    };
-    writeAnchors(setActiveAnchorForDocument(nextStorage, anchor.documentId, anchor.id));
-    setSelectionToolbarPlacement(null);
-    setSelectedArtifactId(null);
-  };
-
-  const updateNoteDraft = (content: string) => {
-    if (!activeDocument || !activeAnchor) {
-      return;
-    }
-
-    writeArtifacts(upsertNoteDraft({
-      storage: artifactStorage,
-      documentId: activeDocument.id,
-      anchorId: activeAnchor.id,
-      content,
-    }));
+    storeActiveAnchor(anchor);
+    resetSelectedArtifact();
   };
 
   const failCloseReadBeforeRequest = (
@@ -699,8 +543,8 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       return;
     }
 
-    writeAnchors(removeAnchorsForDocument(anchorStorage, documentId));
-    writeArtifacts(removeArtifactsForDocument(artifactStorage, documentId));
+    removeDocumentAnchors(documentId);
+    removeArtifactsForDocument(documentId);
     resetTransientDocumentState();
   };
 
