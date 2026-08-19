@@ -11,13 +11,13 @@ import {
   fingerprint,
   mergeCloudWorkspace,
   type LocalWorkspaceState,
-} from './workspace-cloud-state';
+} from '@/features/reading/reading-cloud-state';
 import type { WorkspaceSyncStatus } from './workspace.types';
 import {
   readWorkspaceSyncJournal,
   writeWorkspaceSyncJournal,
   type WorkspaceSyncJournal,
-} from './workspace-sync-journal';
+} from '@/features/reading/reading-sync-journal';
 
 const SYNC_DEBOUNCE_MS = 1_500;
 

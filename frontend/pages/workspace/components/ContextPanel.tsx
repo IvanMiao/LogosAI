@@ -19,7 +19,7 @@ import {
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
-import { formatDocumentMeta } from '../workspace.helpers';
+import { formatDocumentMeta } from '@/features/reading/reading-core';
 import {
   ArtifactBody,
   ArtifactStatusIcon,

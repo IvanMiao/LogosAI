@@ -4,12 +4,12 @@ import {
   createLocalWorkspaceState,
   mergeCloudWorkspace,
   type LocalWorkspaceState,
-} from '@/pages/workspace/workspace-cloud-state';
+} from '@/features/reading/reading-cloud-state';
 import {
   readWorkspaceSyncJournal,
   writeWorkspaceSyncJournal,
   type WorkspaceSyncJournal,
-} from '@/pages/workspace/workspace-sync-journal';
+} from '@/features/reading/reading-sync-journal';
 
 const NOW = '2026-08-09T12:00:00.000Z';
 
@@ -71,7 +71,7 @@ function createLocalState(): LocalWorkspaceState {
   };
 }
 
-describe('workspace cloud state', () => {
+describe('reading cloud state', () => {
   beforeEach(() => localStorage.clear());
 
   it('round-trips documents, anchors, and artifacts by session', () => {

@@ -30,7 +30,7 @@ import type {
   WorkspaceDocument,
 } from '@/features/reading';
 import { cn } from '@/utils/className';
-import { formatDocumentMeta } from '../workspace.helpers';
+import { formatDocumentMeta } from '@/features/reading/reading-core';
 import type { WorkspaceController } from '../workspace.types';
 
 const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [

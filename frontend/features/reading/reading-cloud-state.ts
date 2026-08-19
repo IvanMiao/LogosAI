@@ -1,14 +1,16 @@
-import type { CloudWorkspaceState } from '@/client-api/workspaceApi';
 import type { AnchorStorageState, TextAnchor } from '@/features/anchors';
 import type { Artifact, ArtifactStorageState } from '@/features/artifacts';
 import type {
   AnalysisLanguage,
-  ReadingSessionSnapshot,
   ReaderPreferences,
   WorkspaceDocumentLibrary,
+} from './reading.types';
+import type {
+  CloudWorkspaceState,
+  ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
-} from '@/features/reading';
-import type { WorkspaceSyncJournal } from './workspace-sync-journal';
+} from './reading-session.types';
+import type { WorkspaceSyncJournal } from './reading-sync-journal';
 
 export interface LocalWorkspaceState {
   documentLibrary: WorkspaceDocumentLibrary;

@@ -1,18 +1,9 @@
 import type {
+  CloudWorkspaceState,
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
 } from '@/features/reading';
 import { requestCloudEmpty, requestCloudJson } from './cloudApi';
-
-export interface StoredReadingSession extends ReadingSessionSnapshot {
-  revision: number;
-  syncedAt: string;
-}
-
-export interface CloudWorkspaceState {
-  preferences: WorkspacePreferencesPayload;
-  sessions: StoredReadingSession[];
-}
 
 export function getCloudWorkspace(): Promise<CloudWorkspaceState> {
   return requestCloudJson<CloudWorkspaceState>('/api/workspace');

@@ -12,7 +12,7 @@ import {
   MIN_CLOSE_READING_SOURCE_WIDTH,
   readStoredCloseReadingSourceWidth,
   writeStoredCloseReadingSourceWidth,
-} from './workspace-storage';
+} from '@/features/reading/reading-storage';
 
 type CloseReadingGridStyle = CSSProperties & {
   '--close-reading-source-width': string;

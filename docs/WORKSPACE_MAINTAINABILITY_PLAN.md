@@ -18,7 +18,7 @@
 | --- | --- | --- | --- |
 | 1 | [x] 已完成 | 建立基线与 Worker CI | 从最新 `main` 建分支，记录绿灯基线，Cloudflare checks 进入 CI |
 | 2 | [x] 已完成 | 纠正领域类型所有权 | `client-api` 不再依赖 `pages/workspace` |
-| 3 | [ ] 未开始 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
+| 3 | [x] 已完成 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
 | 4 | [ ] 未开始 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
 | 5 | [ ] 未开始 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
 | 6 | [ ] 未开始 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
@@ -110,6 +110,13 @@
 - `pages/workspace` 不再拥有 Reading session 的纯 CRUD、storage 和 merge 实现。
 - 旧 localStorage 数据仍可读取，dirty session 与 deletion tombstone 行为不变。
 - Workspace storage、library、cloud-state、hardening tests 全部通过。
+
+### 实施记录
+
+- Reading core、library、storage、cloud state 与 sync journal 已移入 `features/reading/`。
+- Cloud response types 同步归入 Reading session boundary，feature 不依赖 `client-api` 或 page。
+- 领域单测移入 `tests/reading/`；15 个 test files、88 个 tests 通过。
+- Frontend lint、typecheck、build 通过；storage keys、migration 与 merge 规则未改变。
 
 ## 第 4 轮：把 source position 从渲染中抽离
 

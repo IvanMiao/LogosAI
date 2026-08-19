@@ -10,7 +10,7 @@ import {
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
   readStoredCloseReadingSourceWidth,
   writeStoredDocument,
-} from '@/pages/workspace/workspace-storage';
+} from '@/features/reading/reading-storage';
 import { writeHistory } from '@/utils/historyStorage';
 
 const workspaceDocument = {

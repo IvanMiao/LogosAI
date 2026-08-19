@@ -4,7 +4,7 @@ import type {
   DocumentSourceType,
   ReadingSessionStats,
   WorkspaceDocument,
-} from '@/features/reading';
+} from './reading.types';
 import { createClientId } from '@/utils/createClientId';
 
 const SUPPORTED_TEXT_FILE_EXTENSIONS = ['.txt', '.md'];

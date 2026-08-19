@@ -18,7 +18,7 @@ import {
   writeStoredDocument,
   writeStoredDocumentLibrary,
   writeStoredReaderPreferences,
-} from '@/pages/workspace/workspace-storage';
+} from '@/features/reading/reading-storage';
 
 const document: WorkspaceDocument = {
   id: 'document-test',
@@ -29,7 +29,7 @@ const document: WorkspaceDocument = {
   updatedAt: '2026-06-30T00:00:00.000Z',
 };
 
-describe('workspace storage', () => {
+describe('reading storage', () => {
   beforeEach(() => {
     localStorage.clear();
   });

@@ -18,3 +18,13 @@ export interface WorkspacePreferencesPayload {
   readerPreferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
 }
+
+export interface StoredReadingSession extends ReadingSessionSnapshot {
+  revision: number;
+  syncedAt: string;
+}
+
+export interface CloudWorkspaceState {
+  preferences: WorkspacePreferencesPayload;
+  sessions: StoredReadingSession[];
+}

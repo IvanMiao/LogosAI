@@ -9,7 +9,7 @@ import type {
   WorkspaceDocument,
 } from '@/features/reading';
 import type { AnchorSkill } from '@/client-api/anchorApi';
-import type { DocumentParagraph } from './workspace.helpers';
+import type { DocumentParagraph } from '@/features/reading/reading-core';
 
 export interface WorkspacePageProps {
   userId: string;

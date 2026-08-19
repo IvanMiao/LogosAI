@@ -1,5 +1,7 @@
 export type {
+  CloudWorkspaceState,
   ReadingSessionSnapshot,
+  StoredReadingSession,
   WorkspacePreferencesPayload,
 } from './reading-session.types';
 export type {

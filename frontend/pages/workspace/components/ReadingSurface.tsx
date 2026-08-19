@@ -8,7 +8,7 @@ import { cn } from '@/utils/className';
 import {
   splitDocumentParagraphsWithOffsets,
   type DocumentParagraph,
-} from '../workspace.helpers';
+} from '@/features/reading/reading-core';
 import { getReaderFontClassName } from '../reading-typography';
 import type {
   AnchorMarkStatus,

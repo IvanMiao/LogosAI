@@ -2,7 +2,7 @@ import { useRef, useState, type ReactElement } from 'react';
 import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
-import type { DocumentParagraph } from '../workspace.helpers';
+import type { DocumentParagraph } from '@/features/reading/reading-core';
 import type { WorkspaceController } from '../workspace.types';
 import { useWorkspacePanels } from '../useWorkspacePanels';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';

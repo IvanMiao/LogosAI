@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { readStoredAnchors } from '@/features/anchors';
 import { readStoredArtifacts } from '@/features/artifacts';
 import { useWorkspace } from '@/pages/workspace/useWorkspace';
-import { writeStoredDocument } from '@/pages/workspace/workspace-storage';
+import { writeStoredDocument } from '@/features/reading/reading-storage';
 
 const document = {
   id: 'document-1',

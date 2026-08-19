@@ -43,7 +43,7 @@ import {
   createWorkspaceDocument,
   type DocumentParagraph,
   isSupportedTextFile,
-} from './workspace.helpers';
+} from '@/features/reading/reading-core';
 import {
   addDocumentToLibrary,
   closeLibraryDocument,
@@ -51,7 +51,7 @@ import {
   openLibraryDocument,
   removeDocumentFromLibrary,
   renameLibraryDocument,
-} from './workspace-library';
+} from '@/features/reading/reading-library';
 import {
   getActiveDocument,
   readStoredAnalysisLanguage,
@@ -60,7 +60,7 @@ import {
   writeStoredAnalysisLanguage,
   writeStoredDocumentLibrary,
   writeStoredReaderPreferences,
-} from './workspace-storage';
+} from '@/features/reading/reading-storage';
 import {
   readHistory,
   removeHistoryItem,
@@ -76,7 +76,7 @@ import type {
   WorkspaceViewModel,
 } from './workspace.types';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
-import type { LocalWorkspaceState } from './workspace-cloud-state';
+import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 
 function getAnchorsForDocument(
   anchorsById: Record<string, TextAnchor>,
