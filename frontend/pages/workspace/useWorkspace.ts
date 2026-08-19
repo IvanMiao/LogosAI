@@ -32,42 +32,12 @@ import {
   type Artifact,
   type ArtifactStorageState,
 } from '@/features/artifacts';
-import type {
-  AnalysisLanguage,
-  ReaderPreferences,
-  WorkspaceDocument,
-  WorkspaceDocumentLibrary,
-} from '@/features/reading';
 import {
   buildReadingSessionStats,
-  createWorkspaceDocument,
   type DocumentParagraph,
-  isSupportedTextFile,
 } from '@/features/reading/reading-core';
-import {
-  addDocumentToLibrary,
-  closeLibraryDocument,
-  listLibraryDocuments,
-  openLibraryDocument,
-  removeDocumentFromLibrary,
-  renameLibraryDocument,
-} from '@/features/reading/reading-library';
-import {
-  getActiveDocument,
-  readStoredAnalysisLanguage,
-  readStoredDocumentLibrary,
-  readStoredReaderPreferences,
-  writeStoredAnalysisLanguage,
-  writeStoredDocumentLibrary,
-  writeStoredReaderPreferences,
-} from '@/features/reading/reading-storage';
-import {
-  readHistory,
-  removeHistoryItem,
-} from '@/utils/historyStorage';
 import type {
   AnchorMarkStatus,
-  ImportState,
   PendingSelection,
   SelectionToolbarPlacement,
   WorkspaceController,
@@ -75,6 +45,8 @@ import type {
   WorkspaceSyncStatus,
   WorkspaceViewModel,
 } from './workspace.types';
+import { useReadingLibrary } from './useReadingLibrary';
+import { useReadingPreferences } from './useReadingPreferences';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 
@@ -178,20 +150,31 @@ function clearRunningController(
 export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const { userId, hasApiKey, model } = props;
   const runningTasksRef = useRef<Record<string, AbortController>>({});
-  const [documentLibrary, setDocumentLibrary] = useState<WorkspaceDocumentLibrary>(
-    () => readStoredDocumentLibrary(userId),
-  );
-  const [importState, setImportState] = useState<ImportState>({
-    pasteText: '',
-    importError: '',
-  });
-  const [history, setHistory] = useState<HistoryItem[]>(() => readHistory(userId));
-  const [readerPreferences, setReaderPreferences] = useState<ReaderPreferences>(
-    () => readStoredReaderPreferences(userId),
-  );
-  const [analysisLanguage, setAnalysisLanguage] = useState<AnalysisLanguage>(
-    () => readStoredAnalysisLanguage(userId),
-  );
+  const {
+    documentLibrary,
+    activeDocument,
+    documents,
+    history,
+    importState,
+    workspaceError,
+    setPasteText,
+    importPastedText: importPastedTextIntoLibrary,
+    importTextFile: importTextFileIntoLibrary,
+    openDocument: openLibraryDocument,
+    renameDocument: renameLibraryDocument,
+    removeDocument: removeLibraryDocument,
+    startNewDocument: closeLibraryDocument,
+    openHistoryAsDocument: addHistoryDocument,
+    deleteHistoryItem,
+    hydrateDocumentLibrary,
+  } = useReadingLibrary(userId);
+  const {
+    readerPreferences,
+    analysisLanguage,
+    updateReaderPreference,
+    updateAnalysisLanguage,
+    hydrateReadingPreferences,
+  } = useReadingPreferences(userId);
   const [anchorStorage, setAnchorStorage] = useState<AnchorStorageState>(
     () => readStoredAnchors(userId),
   );
@@ -202,7 +185,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const [selectionToolbarPlacement, setSelectionToolbarPlacement] =
     useState<SelectionToolbarPlacement | null>(null);
   const [pendingSelection, setPendingSelection] = useState<PendingSelection | null>(null);
-  const [workspaceError, setWorkspaceError] = useState('');
 
   const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
     documentLibrary,
@@ -218,17 +200,13 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     readerPreferences,
   ]);
   const hydrateWorkspace = useCallback((state: LocalWorkspaceState) => {
-    setDocumentLibrary(state.documentLibrary);
+    hydrateDocumentLibrary(state.documentLibrary);
     setAnchorStorage(state.anchorStorage);
     setArtifactStorage(state.artifactStorage);
-    setReaderPreferences(state.readerPreferences);
-    setAnalysisLanguage(state.analysisLanguage);
-    writeStoredDocumentLibrary(state.documentLibrary, userId);
+    hydrateReadingPreferences(state.readerPreferences, state.analysisLanguage);
     writeStoredAnchors(state.anchorStorage, userId);
     writeStoredArtifacts(state.artifactStorage, userId);
-    writeStoredReaderPreferences(state.readerPreferences, userId);
-    writeStoredAnalysisLanguage(state.analysisLanguage, userId);
-  }, [userId]);
+  }, [hydrateDocumentLibrary, hydrateReadingPreferences, userId]);
   const cloudSync = useWorkspaceCloudSync({
     enabled: props.cloudSyncEnabled ?? false,
     userId,
@@ -238,11 +216,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const viewModel = useMemo(
     () => buildWorkspaceViewModel({ hasApiKey, syncStatus: cloudSync.status }),
     [cloudSync.status, hasApiKey],
-  );
-  const activeDocument = getActiveDocument(documentLibrary);
-  const documents = useMemo(
-    () => listLibraryDocuments(documentLibrary),
-    [documentLibrary],
   );
   const sessionStatsByDocumentId = useMemo(() => {
     return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
@@ -273,10 +246,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     artifactStorage,
   });
 
-  const setPasteText = (text: string) => {
-    setImportState((current) => ({ ...current, pasteText: text, importError: '' }));
-  };
-
   const writeAnchors = (state: AnchorStorageState) => {
     setAnchorStorage(state);
     writeStoredAnchors(state, userId);
@@ -297,82 +266,22 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     });
   };
 
-  const commitDocumentLibrary = (nextLibrary: WorkspaceDocumentLibrary): boolean => {
-    if (!writeStoredDocumentLibrary(nextLibrary, userId)) {
-      setWorkspaceError('This change could not be saved. Check browser storage and try again.');
-      return false;
-    }
-
-    setDocumentLibrary(nextLibrary);
-    setWorkspaceError('');
-    return true;
-  };
-
-  const resetTransientDocumentState = () => {
+  const resetTransientDocumentState = useCallback(() => {
     setSelectionToolbarPlacement(null);
     setPendingSelection(null);
     setSelectedArtifactId(null);
-  };
-
-  const addDocument = (document: WorkspaceDocument): boolean => {
-    const wasAdded = commitDocumentLibrary(addDocumentToLibrary(documentLibrary, document));
-    if (wasAdded) resetTransientDocumentState();
-    return wasAdded;
-  };
+  }, []);
 
   const importPastedText = () => {
-    const text = importState.pasteText.trim();
-    if (!text) {
-      setImportState((current) => ({
-        ...current,
-        importError: 'Paste some text before importing.',
-      }));
-      return;
-    }
-
-    if (addDocument(createWorkspaceDocument(text, 'paste'))) {
-      setImportState({ pasteText: '', importError: '' });
+    if (importPastedTextIntoLibrary()) {
+      resetTransientDocumentState();
     }
   };
 
   const importTextFile = async (file: File | null) => {
-    if (!file) {
-      return;
+    if (await importTextFileIntoLibrary(file)) {
+      resetTransientDocumentState();
     }
-
-    if (!isSupportedTextFile(file.name)) {
-      setImportState((current) => ({
-        ...current,
-        importError: 'Only .txt and .md files are supported in Workspace Alpha.',
-      }));
-      return;
-    }
-
-    const text = (await file.text()).trim();
-    if (!text) {
-      setImportState((current) => ({ ...current, importError: 'The selected file is empty.' }));
-      return;
-    }
-
-    if (addDocument(createWorkspaceDocument(text, 'file', file.name))) {
-      setImportState({ pasteText: '', importError: '' });
-    }
-  };
-
-  const updateReaderPreference = <Key extends keyof ReaderPreferences>(
-    key: Key,
-    value: ReaderPreferences[Key],
-  ) => {
-    setReaderPreferences((current) => {
-      const nextPreferences = { ...current, [key]: value };
-      writeStoredReaderPreferences(nextPreferences, userId);
-      return nextPreferences;
-    });
-  };
-
-  const updateAnalysisLanguage = (language: AnalysisLanguage) => {
-    setAnalysisLanguage(language);
-    writeStoredAnalysisLanguage(language, userId);
   };
 
   const showSelectionActions = (
@@ -762,19 +671,19 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   };
 
   const startNewDocument = () => {
-    if (commitDocumentLibrary(closeLibraryDocument(documentLibrary))) {
+    if (closeLibraryDocument()) {
       resetTransientDocumentState();
     }
   };
 
   const openDocument = (documentId: string) => {
-    if (commitDocumentLibrary(openLibraryDocument(documentLibrary, documentId))) {
+    if (openLibraryDocument(documentId)) {
       resetTransientDocumentState();
     }
   };
 
   const renameDocument = (documentId: string, title: string) => {
-    commitDocumentLibrary(renameLibraryDocument(documentLibrary, documentId, title));
+    renameLibraryDocument(documentId, title);
   };
 
   const deleteDocument = (documentId: string) => {
@@ -786,8 +695,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       getAnchorsForDocument(anchorStorage.anchorsById, documentId).map((anchor) => anchor.id),
     );
     abortTasksFor((_, anchorId) => documentAnchorIds.has(anchorId));
-    const nextLibrary = removeDocumentFromLibrary(documentLibrary, documentId);
-    if (!commitDocumentLibrary(nextLibrary)) {
+    if (!removeLibraryDocument(documentId)) {
       return;
     }
 
@@ -797,15 +705,9 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   };
 
   const openHistoryAsDocument = (item: HistoryItem) => {
-    addDocument(createWorkspaceDocument(
-      item.prompt,
-      'history',
-      `Legacy analysis ${item.id}`,
-    ));
-  };
-
-  const deleteHistoryItem = (id: number) => {
-    setHistory(removeHistoryItem(id, userId));
+    if (addHistoryDocument(item)) {
+      resetTransientDocumentState();
+    }
   };
 
   return {

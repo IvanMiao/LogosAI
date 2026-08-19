@@ -20,7 +20,7 @@
 | 2 | [x] 已完成 | 纠正领域类型所有权 | `client-api` 不再依赖 `pages/workspace` |
 | 3 | [x] 已完成 | 下沉 Reading session 纯逻辑 | library、storage、cloud state、sync journal 离开 page 层 |
 | 4 | [x] 已完成 | 隔离 selection offset | DOM `Range` 转换成为可单测模块 |
-| 5 | [ ] 未开始 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
+| 5 | [x] 已完成 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
 | 6 | [ ] 未开始 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
 | 7 | [ ] 未开始 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
 | 8 | [ ] 未开始 | 收窄 UI 依赖并总体验证 | 展示组件不再通过索引类型依赖巨型 controller，完成全量回归 |
@@ -176,6 +176,13 @@
 - `WorkspaceController` 的调用方式暂时不变。
 - import、storage failure、library switch、preference persistence tests 通过。
 - `useWorkspace` 不再直接包含 file import 和 preference persistence 的实现细节。
+
+### 实施记录
+
+- 新增 `useReadingLibrary`，封装 Document library、import、legacy history 与持久化失败状态。
+- 新增 `useReadingPreferences`，封装 Reader preferences、analysis language 与 cloud hydration。
+- `useWorkspace` 保留 Document 删除后的 Anchor/Artifact/Task 清理，避免 hooks 循环依赖。
+- Frontend 16 个 test files、93 个 tests 通过；lint、typecheck、build 通过。
 
 ## 第 6 轮：拆出 Anchor selection 与 Artifact state
 
