@@ -1,6 +1,6 @@
 # Workspace 可维护性改造计划
 
-- 状态：In progress
+- 状态：**Complete**
 - 计划轮数：**8 轮**
 - 目标分支：`codex/maintenance-workspace-boundaries`
 - 基线：实施前从最新 `origin/main` 创建分支
@@ -23,7 +23,7 @@
 | 5 | [x] 已完成 | 拆出 library 与 preferences hooks | `useWorkspace` 不再直接管理导入、文档库和阅读偏好细节 |
 | 6 | [x] 已完成 | 拆出 selection 与 artifact state | Anchor/Artifact 派生状态和写入职责形成清晰边界 |
 | 7 | [x] 已完成 | 统一 Task lifecycle | Close Read 与 Anchor Skill 共享 streaming 状态机，但保留不同 transport |
-| 8 | [ ] 未开始 | 收窄 UI 依赖并总体验证 | 展示组件不再通过索引类型依赖巨型 controller，完成全量回归 |
+| 8 | [x] 已完成 | 收窄 UI 依赖并总体验证 | 展示组件不再通过索引类型依赖巨型 controller，完成全量回归 |
 
 ## 第 1 轮：建立可比较的基线
 
@@ -277,6 +277,29 @@ create running Artifact
 - `useWorkspace` 只保留组合、跨领域协调和稳定 facade。
 - Frontend、Cloudflare、backend 全量检查通过。
 - HTTP payload、D1 schema、storage keys、用户可见文案和 Workspace Journey contract 无变化。
+
+### 实施记录
+
+- `WorkspacePage` 作为 composition root，将 facade 显式切分为 Reader 所需的 state 与 actions。
+- `ReaderWorkspace`、`ReadingSurface`、`ReaderToolbar`、`ImportPanel` 均改用最小 props，不再 import 或索引 `WorkspaceController`。
+- 删除未被调用的 `runExplainForActiveAnchor` compatibility action；具体技能仍统一经 `runAnchorSkillForActiveAnchor` 执行。
+- Frontend lint、typecheck、build 通过；17 个 test files、98 个 tests 通过。
+- Cloudflare typecheck 通过；5 个 test files、10 个 tests 通过。
+- Backend Ruff check、format check 通过；24 个 tests 通过。
+- API payload、D1 schema、storage keys、用户可见文案与 Workspace Journey contract 均未修改。
+
+## 每轮提交记录
+
+| 轮次 | Commit | 主题 |
+| --- | --- | --- |
+| 1 | `3d05f98` | `chore: establish maintainability refactor baseline` |
+| 2 | `5a42f40` | `refactor: move reading types into feature boundary` |
+| 3 | `86bc982` | `refactor: move reading logic into feature boundary` |
+| 4 | `1db30f1` | `refactor: isolate selection offset calculation` |
+| 5 | `87ff484` | `refactor: extract reading library and preferences hooks` |
+| 6 | `aa2a853` | `refactor: extract selection and artifact state hooks` |
+| 7 | `6c2bb9d` | `refactor: unify artifact task lifecycle` |
+| 8 | 本文档所在 commit | `refactor: narrow workspace presentation boundaries` |
 
 ## 每轮统一验证规则
 

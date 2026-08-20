@@ -31,7 +31,6 @@ import type {
 } from '@/features/reading';
 import { cn } from '@/utils/className';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
-import type { WorkspaceController } from '../workspace.types';
 
 const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [
   { label: '中文', value: 'zh' },
@@ -67,8 +66,11 @@ interface ReaderToolbarProps {
   analysisLanguage: AnalysisLanguage;
   isContextPanelOpen: boolean;
   isDeepReadingOpen: boolean;
-  onPreferenceChange: WorkspaceController['updateReaderPreference'];
-  onAnalysisLanguageChange: WorkspaceController['updateAnalysisLanguage'];
+  onPreferenceChange: <Key extends keyof ReaderPreferences>(
+    key: Key,
+    value: ReaderPreferences[Key],
+  ) => void;
+  onAnalysisLanguageChange: (language: AnalysisLanguage) => void;
   onContextPanelToggle: () => void;
   onClearDocument: () => void;
   onOpenLibrary: () => void;

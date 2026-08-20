@@ -334,10 +334,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     });
   };
 
-  const runExplainForActiveAnchor = async () => {
-    await runAnchorSkillForActiveAnchor('explain');
-  };
-
   const runAnchorSkillForActiveAnchor = async (skill: AnchorSkill) => {
     if (!activeAnchor) {
       return;
@@ -499,7 +495,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     deleteAnchor,
     clearActiveAnchor,
     updateNoteDraft,
-    runExplainForActiveAnchor,
     runAnchorSkillForActiveAnchor,
     runCloseReadDocument,
     runCloseReadParagraph,

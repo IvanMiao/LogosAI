@@ -12,8 +12,8 @@ import {
 import { getReaderFontClassName } from '../reading-typography';
 import type {
   AnchorMarkStatus,
+  PendingSelection,
   SelectionToolbarPlacement,
-  WorkspaceController,
 } from '../workspace.types';
 
 interface ReadingSurfaceProps {
@@ -25,12 +25,15 @@ interface ReadingSurfaceProps {
   anchors: TextAnchor[];
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   selectionToolbarPlacement: SelectionToolbarPlacement | null;
-  onShowSelectionActions: WorkspaceController['showSelectionActions'];
-  onDismissSelectionToolbar: WorkspaceController['dismissSelectionToolbar'];
+  onShowSelectionActions: (
+    selection: PendingSelection,
+    placement: SelectionToolbarPlacement,
+  ) => void;
+  onDismissSelectionToolbar: () => void;
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
   onSelectAnchor: (anchorId: string) => void;
-  onCloseReadParagraph: WorkspaceController['runCloseReadParagraph'];
+  onCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
 }
 
 interface AnchorMarkProps {

@@ -94,6 +94,36 @@ export function WorkspacePage({
     void workspace.retryArtifact(artifact);
   };
 
+  const readerWorkspaceState = workspace.activeDocument ? {
+    activeDocument: workspace.activeDocument,
+    activeAnchor: workspace.activeAnchor,
+    anchors: workspace.anchors,
+    activeArtifacts: workspace.activeArtifacts,
+    activeArtifact: workspace.activeArtifact,
+    artifactCountByAnchorId: workspace.artifactCountByAnchorId,
+    noteDraftContent: workspace.noteDraftContent,
+    anchorMarkStatusById: workspace.anchorMarkStatusById,
+    readerPreferences: workspace.readerPreferences,
+    analysisLanguage: workspace.analysisLanguage,
+    selectionToolbarPlacement: workspace.selectionToolbarPlacement,
+  } : null;
+  const readerWorkspaceActions = {
+    setActiveAnchorId: workspace.setActiveAnchorId,
+    selectArtifact: workspace.selectArtifact,
+    deleteArtifact: workspace.deleteArtifact,
+    deleteAnchor: workspace.deleteAnchor,
+    updateNoteDraft: workspace.updateNoteDraft,
+    runCloseReadDocument: workspace.runCloseReadDocument,
+    runCloseReadParagraph: workspace.runCloseReadParagraph,
+    stopArtifact: workspace.stopArtifact,
+    showSelectionActions: workspace.showSelectionActions,
+    dismissSelectionToolbar: workspace.dismissSelectionToolbar,
+    updateReaderPreference: workspace.updateReaderPreference,
+    updateAnalysisLanguage: workspace.updateAnalysisLanguage,
+    clearDocument: workspace.clearDocument,
+    renameDocument: workspace.renameDocument,
+  };
+
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <WorkspaceHeader
@@ -110,9 +140,10 @@ export function WorkspacePage({
         </p>
       ) : null}
       <main id="main-content" data-route-focus tabIndex={-1}>
-        {workspace.activeDocument ? (
+        {readerWorkspaceState ? (
           <ReaderWorkspace
-            workspace={workspace}
+            reading={readerWorkspaceState}
+            actions={readerWorkspaceActions}
             isDesktopViewport={isDesktopViewport}
             isDesktopContextOpen={isDesktopContextOpen}
             isMobileContextOpen={isMobileContextOpen}

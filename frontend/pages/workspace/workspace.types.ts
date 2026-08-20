@@ -81,7 +81,6 @@ export interface WorkspaceController {
   deleteAnchor: (anchorId: string) => void;
   clearActiveAnchor: () => void;
   updateNoteDraft: (content: string) => void;
-  runExplainForActiveAnchor: () => Promise<void>;
   runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
   runCloseReadDocument: () => Promise<void>;
   runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;

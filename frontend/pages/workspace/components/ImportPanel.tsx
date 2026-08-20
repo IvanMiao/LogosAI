@@ -1,10 +1,10 @@
 import { useRef, useState, type ChangeEvent, type ReactElement } from 'react';
 import { BookOpen, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { WorkspaceController } from '../workspace.types';
+import type { ImportState } from '../workspace.types';
 
 interface ImportPanelProps {
-  importState: WorkspaceController['importState'];
+  importState: ImportState;
   onPasteTextChange: (text: string) => void;
   onImportPastedText: () => void;
   onImportTextFile: (file: File | null) => Promise<void>;

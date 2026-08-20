@@ -2,8 +2,17 @@ import { useRef, useState, type ReactElement } from 'react';
 import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
+import type {
+  AnalysisLanguage,
+  ReaderPreferences,
+  WorkspaceDocument,
+} from '@/features/reading';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
-import type { WorkspaceController } from '../workspace.types';
+import type {
+  AnchorMarkStatus,
+  PendingSelection,
+  SelectionToolbarPlacement,
+} from '../workspace.types';
 import { useWorkspacePanels } from '../useWorkspacePanels';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
 import {
@@ -21,8 +30,46 @@ import {
   type WorkspaceDeletionTarget,
 } from './WorkspaceDeleteDialog';
 
+interface ReaderWorkspaceState {
+  activeDocument: WorkspaceDocument;
+  activeAnchor: TextAnchor | null;
+  anchors: TextAnchor[];
+  activeArtifacts: Artifact[];
+  activeArtifact: Artifact | null;
+  artifactCountByAnchorId: Record<string, number>;
+  noteDraftContent: string;
+  anchorMarkStatusById: Record<string, AnchorMarkStatus>;
+  readerPreferences: ReaderPreferences;
+  analysisLanguage: AnalysisLanguage;
+  selectionToolbarPlacement: SelectionToolbarPlacement | null;
+}
+
+interface ReaderWorkspaceActions {
+  setActiveAnchorId: (anchorId: string) => void;
+  selectArtifact: (artifactId: string) => void;
+  deleteArtifact: (artifactId: string) => void;
+  deleteAnchor: (anchorId: string) => void;
+  updateNoteDraft: (content: string) => void;
+  runCloseReadDocument: () => Promise<void>;
+  runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
+  stopArtifact: (artifact: Artifact) => void;
+  showSelectionActions: (
+    selection: PendingSelection,
+    placement: SelectionToolbarPlacement,
+  ) => void;
+  dismissSelectionToolbar: () => void;
+  updateReaderPreference: <Key extends keyof ReaderPreferences>(
+    key: Key,
+    value: ReaderPreferences[Key],
+  ) => void;
+  updateAnalysisLanguage: (language: AnalysisLanguage) => void;
+  clearDocument: () => void;
+  renameDocument: (documentId: string, title: string) => void;
+}
+
 interface ReaderWorkspaceProps {
-  workspace: WorkspaceController;
+  reading: ReaderWorkspaceState;
+  actions: ReaderWorkspaceActions;
   isDesktopViewport: boolean;
   isDesktopContextOpen: boolean;
   isMobileContextOpen: boolean;
@@ -39,7 +86,8 @@ interface ReaderWorkspaceProps {
 }
 
 export function ReaderWorkspace({
-  workspace,
+  reading,
+  actions,
   isDesktopViewport,
   isDesktopContextOpen,
   isMobileContextOpen,
@@ -63,16 +111,13 @@ export function ReaderWorkspace({
   });
   const focusButtonRef = useRef<HTMLButtonElement | null>(null);
   const [deletionTarget, setDeletionTarget] = useState<WorkspaceDeletionTarget | null>(null);
-  const activeDocument = workspace.activeDocument;
-  if (!activeDocument) {
-    throw new Error('ReaderWorkspace requires an active document.');
-  }
+  const { activeDocument } = reading;
 
-  const isNoteEditorOpen = workspace.activeAnchor?.id === noteEditorAnchorId
-    || workspace.noteDraftContent.length > 0;
-  const closeReadings = getCloseReadingArtifacts(workspace.activeArtifacts);
+  const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
+    || reading.noteDraftContent.length > 0;
+  const closeReadings = getCloseReadingArtifacts(reading.activeArtifacts);
   const activeCloseReading = getDisplayedCloseReading({
-    activeArtifact: workspace.activeArtifact,
+    activeArtifact: reading.activeArtifact,
     closeReadings,
     selectedArtifactId: panels.selectedCloseReadingId,
   });
@@ -87,14 +132,14 @@ export function ReaderWorkspace({
 
   const handleSelectAnchor = (anchorId: string) => {
     panels.selectCloseReading(null);
-    workspace.setActiveAnchorId(anchorId);
+    actions.setActiveAnchorId(anchorId);
     panels.openPanel();
   };
 
   const handleCloseReadParagraph = async (paragraph: DocumentParagraph) => {
     panels.selectCloseReading(null);
     panels.openPanel();
-    await workspace.runCloseReadParagraph(paragraph);
+    await actions.runCloseReadParagraph(paragraph);
   };
 
   const requestDeleteAnchor = (anchor: TextAnchor) => {
@@ -103,7 +148,7 @@ export function ReaderWorkspace({
       id: anchor.id,
       label: anchor.quote,
       scope: anchor.scope,
-      outputCount: workspace.artifactCountByAnchorId[anchor.id] ?? 0,
+      outputCount: reading.artifactCountByAnchorId[anchor.id] ?? 0,
     });
   };
 
@@ -117,9 +162,9 @@ export function ReaderWorkspace({
 
   const confirmDeletion = () => {
     if (deletionTarget?.kind === 'anchor') {
-      workspace.deleteAnchor(deletionTarget.id);
+      actions.deleteAnchor(deletionTarget.id);
     } else if (deletionTarget?.kind === 'artifact') {
-      workspace.deleteArtifact(deletionTarget.id);
+      actions.deleteArtifact(deletionTarget.id);
     }
     panels.selectCloseReading(null);
     setDeletionTarget(null);
@@ -128,26 +173,26 @@ export function ReaderWorkspace({
   const contextPanel = (
     <ContextPanel
       activeDocument={activeDocument}
-      activeAnchor={workspace.activeAnchor}
-      anchors={workspace.anchors}
-      activeArtifacts={workspace.activeArtifacts}
-      activeArtifact={workspace.activeArtifact}
-      artifactCountByAnchorId={workspace.artifactCountByAnchorId}
-      noteDraftContent={workspace.noteDraftContent}
+      activeAnchor={reading.activeAnchor}
+      anchors={reading.anchors}
+      activeArtifacts={reading.activeArtifacts}
+      activeArtifact={reading.activeArtifact}
+      artifactCountByAnchorId={reading.artifactCountByAnchorId}
+      noteDraftContent={reading.noteDraftContent}
       isNoteEditorOpen={isNoteEditorOpen}
       onClearActiveAnchor={onClearActiveAnchor}
       onSelectAnchor={handleSelectAnchor}
-      onSelectArtifact={workspace.selectArtifact}
+      onSelectArtifact={actions.selectArtifact}
       onRequestDeleteAnchor={requestDeleteAnchor}
       onRequestDeleteArtifact={requestDeleteArtifact}
-      onNoteDraftChange={workspace.updateNoteDraft}
+      onNoteDraftChange={actions.updateNoteDraft}
       onOpenNoteEditor={onStartNote}
       onRunSkill={onRunSkill}
       onRunCloseReadDocument={() => {
         panels.selectCloseReading(null);
-        void workspace.runCloseReadDocument();
+        void actions.runCloseReadDocument();
       }}
-      onStopArtifact={workspace.stopArtifact}
+      onStopArtifact={actions.stopArtifact}
       onRetryArtifact={onRetryArtifact}
     />
   );
@@ -155,7 +200,7 @@ export function ReaderWorkspace({
   const renderCloseReadingPane = (
     mode: CloseReadingPaneMode,
   ): ReactElement | null => {
-    if (!activeCloseReading || !workspace.activeAnchor) {
+    if (!activeCloseReading || !reading.activeAnchor) {
       return null;
     }
 
@@ -163,8 +208,8 @@ export function ReaderWorkspace({
       <CloseReadingPane
         artifact={activeCloseReading}
         closeReadings={closeReadings}
-        activeAnchor={workspace.activeAnchor}
-        readingPreferences={workspace.readerPreferences}
+        activeAnchor={reading.activeAnchor}
+        readingPreferences={reading.readerPreferences}
         mode={mode}
         focusButtonRef={focusButtonRef}
         onFocus={() => panels.focusCloseReading(activeCloseReading.id)}
@@ -172,7 +217,7 @@ export function ReaderWorkspace({
         onClose={panels.closePanel}
         onSelectArtifact={panels.selectCloseReading}
         onRequestDeleteArtifact={requestDeleteArtifact}
-        onStopArtifact={workspace.stopArtifact}
+        onStopArtifact={actions.stopArtifact}
         onRetryArtifact={(artifact) => {
           panels.selectCloseReading(null);
           onRetryArtifact(artifact);
@@ -184,15 +229,15 @@ export function ReaderWorkspace({
   const readingSurface = (
     <ReadingSurface
       activeDocument={activeDocument}
-      preferences={workspace.readerPreferences}
+      preferences={reading.readerPreferences}
       isIndependentScroll={isDesktopViewport && isCloseReadingOpen}
       sourceRevealRequest={panels.sourceRevealRequest}
-      activeAnchor={workspace.activeAnchor}
-      anchors={workspace.anchors}
-      anchorMarkStatusById={workspace.anchorMarkStatusById}
-      selectionToolbarPlacement={workspace.selectionToolbarPlacement}
-      onShowSelectionActions={workspace.showSelectionActions}
-      onDismissSelectionToolbar={workspace.dismissSelectionToolbar}
+      activeAnchor={reading.activeAnchor}
+      anchors={reading.anchors}
+      anchorMarkStatusById={reading.anchorMarkStatusById}
+      selectionToolbarPlacement={reading.selectionToolbarPlacement}
+      onShowSelectionActions={actions.showSelectionActions}
+      onDismissSelectionToolbar={actions.dismissSelectionToolbar}
       onRunSkill={onRunPendingSelectionSkill}
       onStartNote={onStartPendingSelectionNote}
       onSelectAnchor={handleSelectAnchor}
@@ -205,16 +250,16 @@ export function ReaderWorkspace({
       <h1 className="sr-only">{activeDocument.title}</h1>
       <ReaderToolbar
         activeDocument={activeDocument}
-        preferences={workspace.readerPreferences}
-        analysisLanguage={workspace.analysisLanguage}
+        preferences={reading.readerPreferences}
+        analysisLanguage={reading.analysisLanguage}
         isContextPanelOpen={panels.isContextOpen}
         isDeepReadingOpen={isCloseReadingOpen}
-        onPreferenceChange={workspace.updateReaderPreference}
-        onAnalysisLanguageChange={workspace.updateAnalysisLanguage}
+        onPreferenceChange={actions.updateReaderPreference}
+        onAnalysisLanguageChange={actions.updateAnalysisLanguage}
         onContextPanelToggle={panels.togglePanel}
-        onClearDocument={workspace.clearDocument}
+        onClearDocument={actions.clearDocument}
         onOpenLibrary={onOpenLibrary}
-        onRenameDocument={(title) => workspace.renameDocument(activeDocument.id, title)}
+        onRenameDocument={(title) => actions.renameDocument(activeDocument.id, title)}
       />
       {isDesktopViewport ? (
         <>
