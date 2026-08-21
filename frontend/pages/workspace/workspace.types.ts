@@ -26,6 +26,7 @@ export interface WorkspaceViewModel {
   apiKeyStatusTone: ApiKeyStatusTone;
   cloudSyncLabel: string;
   cloudSyncTone: WorkspaceSyncStatus;
+  cloudSyncNotice: string;
 }
 
 export interface ImportState {
@@ -65,6 +66,7 @@ export interface WorkspaceController {
   sessionArtifacts: WorkspaceSessionArtifact[];
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
+  artifactStageById: Record<string, string>;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   history: HistoryItem[];
   workspaceError: string;
@@ -90,6 +92,7 @@ export interface WorkspaceController {
   deleteAnchor: (anchorId: string) => void;
   clearActiveAnchor: () => void;
   updateNoteDraft: (content: string) => void;
+  saveNoteDraft: () => void;
   runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
   runCloseReadDocument: () => Promise<void>;
   runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;

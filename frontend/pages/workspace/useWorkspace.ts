@@ -26,6 +26,7 @@ import { useReadingLibrary } from './useReadingLibrary';
 import { useReadingPreferences } from './useReadingPreferences';
 import { useReadingSelection } from './useReadingSelection';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
+import { MISSING_API_KEY_MESSAGE } from './workspace-copy';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 
 function getSessionArtifacts(
@@ -49,8 +50,10 @@ function getSessionArtifacts(
 function buildWorkspaceViewModel({
   hasApiKey,
   syncStatus,
+  syncError,
 }: Pick<WorkspacePageProps, 'hasApiKey'> & {
   syncStatus: WorkspaceSyncStatus;
+  syncError: string;
 }): WorkspaceViewModel {
   const syncLabelByStatus: Record<WorkspaceSyncStatus, string> = {
     loading: 'Loading cloud workspace',
@@ -59,11 +62,15 @@ function buildWorkspaceViewModel({
     offline: 'Cloud sync offline. Select to retry.',
     error: 'Cloud sync failed. Select to retry.',
   };
+  const isSyncBroken = syncStatus === 'offline' || syncStatus === 'error';
   return {
     apiKeyStatusLabel: hasApiKey ? 'API key ready' : 'API key missing',
     apiKeyStatusTone: hasApiKey ? 'ready' : 'missing',
     cloudSyncLabel: syncLabelByStatus[syncStatus],
     cloudSyncTone: syncStatus,
+    // Only surfaced while sync is actually broken: a stale message left on
+    // screen after recovery would be worse than no message.
+    cloudSyncNotice: isSyncBroken ? syncError : '',
   };
 }
 
@@ -145,6 +152,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     removeArtifactsForAnchor,
     removeArtifactsForDocument,
     updateNoteDraft,
+    saveNoteDraft,
     updateArtifacts,
     hydrateArtifactStorage,
   } = useArtifactCollection({
@@ -155,6 +163,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     anchors,
   });
   const {
+    artifactStageById,
     runArtifactTask,
     createFailedArtifact,
     stopArtifact,
@@ -192,8 +201,12 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     onHydrate: hydrateWorkspace,
   });
   const viewModel = useMemo(
-    () => buildWorkspaceViewModel({ hasApiKey, syncStatus: cloudSync.status }),
-    [cloudSync.status, hasApiKey],
+    () => buildWorkspaceViewModel({
+      hasApiKey,
+      syncStatus: cloudSync.status,
+      syncError: cloudSync.error,
+    }),
+    [cloudSync.error, cloudSync.status, hasApiKey],
   );
   const sessionStatsByDocumentId = useMemo(() => {
     return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
@@ -289,11 +302,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activateAnchor(anchor);
 
     if (!hasApiKey) {
-      failCloseReadBeforeRequest(
-        anchor,
-        title,
-        'Missing Gemini API key. Configure it in Settings.',
-      );
+      failCloseReadBeforeRequest(anchor, title, MISSING_API_KEY_MESSAGE);
       return;
     }
 
@@ -301,7 +310,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       documentId: anchor.documentId,
       anchorId: anchor.id,
       title,
-      execute: async ({ signal, onChunk }) => {
+      execute: async ({ signal, onChunk, onStage }) => {
         const finalResult = await streamAnalysis(
           {
             model,
@@ -311,7 +320,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           },
           {
             onChunk,
-            onStage: () => undefined,
+            onStage,
           },
         );
         return { content: finalResult };
@@ -331,7 +340,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       failCloseReadBeforeRequest(
         anchor,
         title,
-        'Missing Gemini API key. Configure it in Settings.',
+        MISSING_API_KEY_MESSAGE,
         artifactType,
       );
       return;
@@ -343,7 +352,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       title,
       type: artifactType,
       requestIdPrefix: 'pending',
-      execute: async ({ signal, onChunk, onMetadata }) => {
+      execute: async ({ signal, onChunk, onMetadata, onStage }) => {
         const finalResult = await runAnchorSkill(
           {
             model,
@@ -355,7 +364,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           },
           {
             onChunk,
-            onStage: () => undefined,
+            onStage,
             onMetadata,
           },
         );
@@ -510,6 +519,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     sessionArtifacts,
     artifactCountByAnchorId,
     noteDraftContent,
+    artifactStageById,
     anchorMarkStatusById,
     history,
     workspaceError,
@@ -532,6 +542,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     deleteAnchor,
     clearActiveAnchor,
     updateNoteDraft,
+    saveNoteDraft,
     runAnchorSkillForActiveAnchor,
     runCloseReadDocument,
     runCloseReadParagraph,

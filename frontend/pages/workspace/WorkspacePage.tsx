@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from 'react';
+import { Link } from 'react-router-dom';
 import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { Artifact } from '@/features/artifacts';
 import { useAuth } from '@/features/auth';
@@ -11,6 +12,7 @@ import {
 } from './components';
 import { useWorkspace } from './useWorkspace';
 import { useWorkspaceViewport } from './useWorkspaceViewport';
+import { SETTINGS_PATH } from './workspace-copy';
 import type { WorkspacePageProps } from './workspace.types';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
@@ -103,6 +105,7 @@ export function WorkspacePage({
     sessionArtifacts: workspace.sessionArtifacts,
     artifactCountByAnchorId: workspace.artifactCountByAnchorId,
     noteDraftContent: workspace.noteDraftContent,
+    artifactStageById: workspace.artifactStageById,
     anchorMarkStatusById: workspace.anchorMarkStatusById,
     readerPreferences: workspace.readerPreferences,
     analysisLanguage: workspace.analysisLanguage,
@@ -115,6 +118,7 @@ export function WorkspacePage({
     deleteArtifact: workspace.deleteArtifact,
     deleteAnchor: workspace.deleteAnchor,
     updateNoteDraft: workspace.updateNoteDraft,
+    saveNoteDraft: workspace.saveNoteDraft,
     runCloseReadDocument: workspace.runCloseReadDocument,
     runCloseReadParagraph: workspace.runCloseReadParagraph,
     stopArtifact: workspace.stopArtifact,
@@ -141,6 +145,19 @@ export function WorkspacePage({
           {workspace.workspaceError}
         </p>
       ) : null}
+      {workspace.viewModel.cloudSyncNotice ? (
+        <p role="status" className="border-b-2 border-border bg-accent px-4 py-2 text-center font-mono text-sm font-bold">
+          {workspace.viewModel.cloudSyncNotice}
+        </p>
+      ) : null}
+      {workspace.viewModel.apiKeyStatusTone === 'missing' ? (
+        <p className="border-b-2 border-border bg-secondary px-4 py-2 text-center font-mono text-sm font-bold">
+          Add your Gemini API key before running AI actions.{' '}
+          <Link to={SETTINGS_PATH} className="underline">Open Settings</Link>
+          {'. '}
+          <span className="font-normal">Notes work without a key.</span>
+        </p>
+      ) : null}
       <main id="main-content" data-route-focus tabIndex={-1}>
         {readerWorkspaceState ? (
           <ReaderWorkspace
@@ -157,6 +174,7 @@ export function WorkspacePage({
             onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
             onStartPendingSelectionNote={handleStartPendingSelectionNote}
             onClearActiveAnchor={handleClearActiveAnchor}
+            onCloseNoteEditor={() => setNoteEditorAnchorId(null)}
             onRetryArtifact={handleRetryArtifact}
             onOpenLibrary={() => setIsLibraryOpen(true)}
           />
