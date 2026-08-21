@@ -467,6 +467,63 @@ describe('close reading user journeys', () => {
     expect(within(contextPanel).getByText('2 saved marks')).toBeInTheDocument();
   });
 
+  it('keeps saved passages marked in the source and reopens them from the text', async () => {
+    const user = userEvent.setup();
+    writeStoredAnchors({
+      anchorsById: {
+        [savedSelectionAnchor.id]: savedSelectionAnchor,
+        [secondSelectionAnchor.id]: secondSelectionAnchor,
+        [firstParagraphAnchor.id]: firstParagraphAnchor,
+      },
+      activeAnchorId: null,
+    }, TEST_USER_ID);
+    writeStoredArtifacts({
+      artifactsByAnchorId: {
+        [secondSelectionAnchor.id]: [{
+          id: 'second-selection-output',
+          documentId: journeyDocument.id,
+          anchorId: secondSelectionAnchor.id,
+          type: 'explanation',
+          title: 'Explanation',
+          content: 'Second selection explanation.',
+          status: 'complete',
+          createdAt: '2026-07-21T12:00:00.000Z',
+          updatedAt: '2026-07-21T12:00:00.000Z',
+        }],
+      },
+      tasksByRequestId: {},
+    }, TEST_USER_ID);
+    renderWorkspace();
+
+    const readingSurface = screen.getByRole('region', { name: 'Reading surface' });
+
+    // Both saved passages carry a standing mark in the text, and the text around
+    // them is untouched, so the source reads normally.
+    const savedPassageMark = within(readingSurface).getByRole('button', {
+      name: `Saved passage, has saved work: ${savedSelectionAnchor.quote}`,
+    });
+    expect(savedPassageMark).toBeInTheDocument();
+    expect(within(readingSurface).getByRole('button', {
+      name: `Saved passage, has saved work: ${secondSelectionAnchor.quote}`,
+    })).toBeInTheDocument();
+    expect(within(readingSurface).getByText('First', { exact: false })).toBeInTheDocument();
+
+    // A paragraph-scoped Close Read source is not underlined inline, otherwise a
+    // whole paragraph would be marked.
+    expect(within(readingSurface).queryByRole('button', {
+      name: `Saved passage, has saved work: ${firstParagraphQuote}`,
+    })).not.toBeInTheDocument();
+
+    await user.click(savedPassageMark);
+
+    const contextPanel = screen.getByRole('complementary', { name: 'Context panel' });
+    expect(within(contextPanel).getByRole('button', { name: savedSelectionAnchor.quote }))
+      .toHaveAttribute('aria-current', 'true');
+    expect(within(readingSurface).getByRole('button', {
+      name: `Saved passage, currently open: ${savedSelectionAnchor.quote}`,
+    })).toBeInTheDocument();
+  });
+
   it('filters saved marks and switches selection without leaving the context panel', async () => {
     const user = userEvent.setup();
     writeStoredAnchors({

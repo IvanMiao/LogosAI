@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react';
 import { Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AnchorSkill } from '@/client-api/anchorApi';
@@ -15,6 +22,11 @@ import type {
   PendingSelection,
   SelectionToolbarPlacement,
 } from '../workspace.types';
+import {
+  buildParagraphSegments,
+  getParagraphScopedAnchors,
+  type ParagraphSegment,
+} from './reading-surface.helpers';
 
 interface ReadingSurfaceProps {
   activeDocument: WorkspaceDocument;
@@ -60,6 +72,31 @@ function getAnchorMarkClassName(status: AnchorMarkStatus): string {
   return 'bg-secondary';
 }
 
+/**
+ * Marks stay quiet enough for sustained reading: an underline carries the
+ * meaning so it never depends on colour alone, and only the active passage adds
+ * a wash. Border style also differs per state for the same reason.
+ */
+function getPassageMarkClassName(status: AnchorMarkStatus): string {
+  if (status === 'active') {
+    return 'border-b-2 border-solid border-b-border bg-secondary/30';
+  }
+
+  if (status === 'draft') {
+    return 'border-b-2 border-dotted border-b-muted-foreground';
+  }
+
+  return 'border-b-2 border-dashed border-b-muted-foreground';
+}
+
+function getPassageMarkDescription(status: AnchorMarkStatus): string {
+  if (status === 'active') {
+    return 'currently open';
+  }
+
+  return status === 'draft' ? 'has a note' : 'has saved work';
+}
+
 function isAnchorStartInParagraph(
   activeAnchor: TextAnchor | null,
   paragraph: DocumentParagraph,
@@ -88,6 +125,51 @@ function AnchorMark({
         getAnchorMarkClassName(status),
       )}
     />
+  );
+}
+
+function PassageMark({
+  segment,
+  anchorsById,
+  anchorMarkStatusById,
+  onSelectAnchor,
+}: {
+  segment: ParagraphSegment;
+  anchorsById: Record<string, TextAnchor>;
+  anchorMarkStatusById: Record<string, AnchorMarkStatus>;
+  onSelectAnchor: (anchorId: string) => void;
+}): ReactElement {
+  // The innermost anchor wins when passages overlap, so clicking a nested
+  // passage opens the one the reader actually pointed at.
+  const anchorId = [...segment.anchorIds].sort((left, right) => {
+    const leftAnchor = anchorsById[left];
+    const rightAnchor = anchorsById[right];
+    const leftLength = leftAnchor ? leftAnchor.endOffset - leftAnchor.startOffset : 0;
+    const rightLength = rightAnchor ? rightAnchor.endOffset - rightAnchor.startOffset : 0;
+    return leftLength - rightLength;
+  })[0];
+  const status = anchorMarkStatusById[anchorId] ?? 'saved';
+
+  return (
+    <button
+      type="button"
+      data-passage-mark={anchorId}
+      aria-label={`Saved passage, ${getPassageMarkDescription(status)}: ${segment.text}`}
+      className={cn(
+        'cursor-pointer bg-transparent text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        getPassageMarkClassName(status),
+      )}
+      onClick={() => {
+        // A drag that ends inside a mark also fires a click. Selecting text is
+        // the reader starting a new passage, so it must not switch the open one.
+        if (!window.getSelection()?.isCollapsed) {
+          return;
+        }
+        onSelectAnchor(anchorId);
+      }}
+    >
+      {segment.text}
+    </button>
   );
 }
 
@@ -149,6 +231,10 @@ export function ReadingSurface({
   const [revealedAnchorId, setRevealedAnchorId] = useState<string | null>(null);
   const paragraphs = splitDocumentParagraphsWithOffsets(activeDocument.text);
   const fontClassName = getReaderFontClassName(preferences.fontFamily);
+  const anchorsById = useMemo(
+    () => Object.fromEntries(anchors.map((anchor) => [anchor.id, anchor])),
+    [anchors],
+  );
 
   useEffect(() => {
     if (!selectionToolbarPlacement) {
@@ -254,16 +340,18 @@ export function ReadingSurface({
         {paragraphs.map((paragraph, index) => {
           const isActiveSource = isAnchorStartInParagraph(activeAnchor, paragraph);
           const isRevealedSource = isActiveSource && revealedAnchorId === activeAnchor?.id;
-          const paragraphAnchors = anchors.filter((anchor) => (
-            anchor.startOffset >= paragraph.startOffset && anchor.startOffset < paragraph.endOffset
-          ));
+          const closeReadSources = getParagraphScopedAnchors(paragraph, anchors);
+          const segments = buildParagraphSegments(paragraph, anchors);
 
           return (
             <div
               key={`${activeDocument.id}-${index}`}
               data-active-source={isActiveSource ? 'true' : undefined}
               className={cn(
-                'group grid scroll-mt-36 grid-cols-1 border-l-4 border-l-transparent px-3 transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
+                'group grid scroll-mt-36 grid-cols-1 border-l-4 px-3 transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
+                // A Close Read source keeps a standing marker; the reveal wash is
+                // a temporary "it is here" cue layered on top of it.
+                closeReadSources.length > 0 ? 'border-l-muted-foreground' : 'border-l-transparent',
                 isRevealedSource ? 'border-l-secondary bg-secondary/10' : '',
               )}
             >
@@ -279,7 +367,7 @@ export function ReadingSurface({
                 >
                   <Brain className="h-3 w-3" />
                 </button>
-                {paragraphAnchors.map((anchor) => (
+                {closeReadSources.map((anchor) => (
                   <AnchorMark
                     key={anchor.id}
                     anchor={anchor}
@@ -292,7 +380,19 @@ export function ReadingSurface({
                 data-paragraph-start={paragraph.startOffset}
                 className="mb-7 whitespace-pre-wrap"
               >
-                {paragraph.text}
+                {segments.map((segment) => (
+                  segment.anchorIds.length > 0 ? (
+                    <PassageMark
+                      key={segment.startOffset}
+                      segment={segment}
+                      anchorsById={anchorsById}
+                      anchorMarkStatusById={anchorMarkStatusById}
+                      onSelectAnchor={onSelectAnchor}
+                    />
+                  ) : (
+                    <Fragment key={segment.startOffset}>{segment.text}</Fragment>
+                  )
+                ))}
               </p>
             </div>
           );
