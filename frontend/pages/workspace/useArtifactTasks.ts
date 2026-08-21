@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   appendArtifactContent,
   createStreamingArtifact,
@@ -24,6 +24,7 @@ interface ArtifactTaskContext {
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
   onMetadata: (metadata: ArtifactTaskMetadata) => void;
+  onStage: (stage: string) => void;
 }
 
 interface RunArtifactTaskInput {
@@ -53,6 +54,12 @@ interface UseArtifactTasksInput {
 }
 
 interface ArtifactTasks {
+  /**
+   * Live pipeline stage per running artifact. Deliberately transient: a stage
+   * describes a request in flight, so it is never written to storage and is
+   * dropped as soon as the task reaches a terminal state.
+   */
+  artifactStageById: Record<string, string>;
   runArtifactTask: (input: RunArtifactTaskInput) => Promise<void>;
   createFailedArtifact: (input: CreateFailedArtifactInput) => void;
   stopArtifact: (artifact: Artifact) => void;
@@ -81,6 +88,19 @@ export function useArtifactTasks({
   updateArtifacts,
 }: UseArtifactTasksInput): ArtifactTasks {
   const runningTasksRef = useRef<Record<string, AbortController>>({});
+  const [artifactStageById, setArtifactStageById] = useState<Record<string, string>>({});
+
+  const clearArtifactStage = useCallback((artifactId: string) => {
+    setArtifactStageById((current) => {
+      if (!(artifactId in current)) {
+        return current;
+      }
+
+      return Object.fromEntries(
+        Object.entries(current).filter(([id]) => id !== artifactId),
+      );
+    });
+  }, []);
 
   const createFailedArtifact = useCallback(({
     documentId,
@@ -146,6 +166,9 @@ export function useArtifactTasks({
             }),
           ));
         },
+        onStage: (stage) => {
+          setArtifactStageById((current) => ({ ...current, [artifact.id]: stage }));
+        },
       });
       updateArtifacts((current) => updateArtifact(
         current,
@@ -174,8 +197,9 @@ export function useArtifactTasks({
       ));
     } finally {
       clearRunningController(runningTasksRef.current, abortController);
+      clearArtifactStage(artifact.id);
     }
-  }, [updateArtifacts]);
+  }, [clearArtifactStage, updateArtifacts]);
 
   const stopArtifact = useCallback((artifact: Artifact) => {
     if (artifact.requestId) {
@@ -194,6 +218,7 @@ export function useArtifactTasks({
   }, [artifactStorage.tasksByRequestId]);
 
   return {
+    artifactStageById,
     runArtifactTask,
     createFailedArtifact,
     stopArtifact,
