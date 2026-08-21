@@ -3,7 +3,7 @@ import { GripVertical } from 'lucide-react';
 import {
   MAX_CLOSE_READING_SOURCE_WIDTH,
   MIN_CLOSE_READING_SOURCE_WIDTH,
-} from '../workspace-storage';
+} from '@/features/reading/reading-storage';
 import { useCloseReadingResize } from '../useCloseReadingResize';
 
 interface CloseReadingSplitLayoutProps {

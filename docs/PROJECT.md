@@ -100,7 +100,7 @@ FastAPI AI request
   → Artifact state → local cache → debounced D1 session sync
 ```
 
-前端组件不直接调用后端；请求集中在 `frontend/client-api/`。页面 hook 编排用户流程，`features/anchors` 和 `features/artifacts` 保存领域逻辑，presentational components 只接收 typed props。
+前端组件不直接调用后端；请求集中在 `frontend/client-api/`。页面 hook 编排用户流程，`features/reading`、`features/anchors` 和 `features/artifacts` 保存领域逻辑，presentational components 只接收 typed props。
 
 FastAPI 只提供受 Cloudflare gateway 保护的 AI `/api/*` 路由。生产浏览器入口与静态 React assets 都由 Cloudflare Worker 提供；开发时 Vite 将 `/api/*` 代理到本地 Worker，再由 Worker 只把 allowlisted AI routes 转发到 FastAPI。详细决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。
 

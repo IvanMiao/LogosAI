@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   DEFAULT_ANALYSIS_LANGUAGE,
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
@@ -17,8 +18,7 @@ import {
   writeStoredDocument,
   writeStoredDocumentLibrary,
   writeStoredReaderPreferences,
-} from '@/pages/workspace/workspace-storage';
-import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
+} from '@/features/reading/reading-storage';
 
 const document: WorkspaceDocument = {
   id: 'document-test',
@@ -29,7 +29,7 @@ const document: WorkspaceDocument = {
   updatedAt: '2026-06-30T00:00:00.000Z',
 };
 
-describe('workspace storage', () => {
+describe('reading storage', () => {
   beforeEach(() => {
     localStorage.clear();
   });

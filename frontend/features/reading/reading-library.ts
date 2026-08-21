@@ -1,7 +1,7 @@
 import type {
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
-} from './workspace.types';
+} from './reading.types';
 
 function getDocumentRecency(document: WorkspaceDocument): string {
   return document.lastOpenedAt ?? document.updatedAt;

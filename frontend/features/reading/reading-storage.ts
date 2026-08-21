@@ -4,7 +4,7 @@ import type {
   ReaderPreferences,
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
-} from './workspace.types';
+} from './reading.types';
 import {
   readScopedStorage,
   removeScopedStorage,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   addDocumentToLibrary,
   closeLibraryDocument,
@@ -6,10 +7,9 @@ import {
   openLibraryDocument,
   removeDocumentFromLibrary,
   renameLibraryDocument,
-} from '@/pages/workspace/workspace-library';
-import { createEmptyDocumentLibrary } from '@/pages/workspace/workspace-storage';
-import { createWorkspaceDocument } from '@/pages/workspace/workspace.helpers';
-import type { WorkspaceDocument } from '@/pages/workspace/workspace.types';
+} from '@/features/reading/reading-library';
+import { createEmptyDocumentLibrary } from '@/features/reading/reading-storage';
+import { createWorkspaceDocument } from '@/features/reading/reading-core';
 
 const firstDocument: WorkspaceDocument = {
   id: 'document-first',
@@ -29,7 +29,7 @@ const secondDocument: WorkspaceDocument = {
   updatedAt: '2026-08-01T09:00:00.000Z',
 };
 
-describe('workspace document library', () => {
+describe('reading document library', () => {
   it('uses the file name instead of source text for an uploaded document title', () => {
     const document = createWorkspaceDocument('Opening words in the file.', 'file', 'my-book.md');
 

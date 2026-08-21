@@ -21,7 +21,9 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function normalizeJournal(value: unknown): WorkspaceSyncJournal {
-  if (!value || typeof value !== 'object') return EMPTY_SYNC_JOURNAL;
+  if (!value || typeof value !== 'object') {
+    return EMPTY_SYNC_JOURNAL;
+  }
   const journal = value as Partial<WorkspaceSyncJournal>;
   if (
     !isStringArray(journal.knownSessionIds)

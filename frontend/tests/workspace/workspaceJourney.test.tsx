@@ -14,7 +14,7 @@ import { WorkspacePage } from '@/pages/workspace';
 import {
   readStoredDocumentLibrary,
   writeStoredDocument,
-} from '@/pages/workspace/workspace-storage';
+} from '@/features/reading/reading-storage';
 
 const journeyDocument = {
   id: 'journey-document',

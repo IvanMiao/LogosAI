@@ -1,7 +1,9 @@
 export {
   createAnchorFromRange,
   createAnchorFromSelection,
+  getActiveAnchor,
   getActiveAnchorIdForDocument,
+  getAnchorsForDocument,
   hashAnchorQuote,
   normalizeAnchorQuote,
   removeAnchorsForDocument,
@@ -12,6 +14,8 @@ export {
   readStoredAnchors,
   writeStoredAnchors,
 } from './anchor-storage';
+export { getSelectionOffsets } from './selection-offsets';
+export type { SelectionOffsets } from './selection-offsets';
 export type {
   AnchorScope,
   AnchorStorageState,

@@ -2,12 +2,14 @@ import type { AnalysisModel } from '@/types';
 import type { HistoryItem } from '@/types';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
+import type {
+  AnalysisLanguage,
+  ReaderPreferences,
+  ReadingSessionStats,
+  WorkspaceDocument,
+} from '@/features/reading';
 import type { AnchorSkill } from '@/client-api/anchorApi';
-import type { DocumentParagraph } from './workspace.helpers';
-
-export type DocumentSourceType = 'paste' | 'file' | 'history';
-export type ReaderFontFamily = 'serif' | 'sans' | 'mono';
-export type AnalysisLanguage = 'zh' | 'en' | 'fr' | 'de' | 'es' | 'it' | 'ja';
+import type { DocumentParagraph } from '@/features/reading/reading-core';
 
 export interface WorkspacePageProps {
   userId: string;
@@ -24,33 +26,6 @@ export interface WorkspaceViewModel {
   apiKeyStatusTone: ApiKeyStatusTone;
   cloudSyncLabel: string;
   cloudSyncTone: WorkspaceSyncStatus;
-}
-
-export interface WorkspaceDocument {
-  id: string;
-  title: string;
-  text: string;
-  sourceType: DocumentSourceType;
-  createdAt: string;
-  updatedAt: string;
-  lastOpenedAt?: string;
-}
-
-export interface WorkspaceDocumentLibrary {
-  activeDocumentId: string | null;
-  documentsById: Record<string, WorkspaceDocument>;
-}
-
-export interface ReadingSessionStats {
-  selectionCount: number;
-  entryCount: number;
-}
-
-export interface ReaderPreferences {
-  fontFamily: ReaderFontFamily;
-  closeReadingFontFamily: ReaderFontFamily;
-  fontSize: number;
-  lineSpacing: number;
 }
 
 export interface ImportState {
@@ -106,7 +81,6 @@ export interface WorkspaceController {
   deleteAnchor: (anchorId: string) => void;
   clearActiveAnchor: () => void;
   updateNoteDraft: (content: string) => void;
-  runExplainForActiveAnchor: () => Promise<void>;
   runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
   runCloseReadDocument: () => Promise<void>;
   runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;

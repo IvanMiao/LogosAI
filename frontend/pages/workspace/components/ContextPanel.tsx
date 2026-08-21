@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
-import { formatDocumentMeta } from '../workspace.helpers';
-import type { WorkspaceDocument } from '../workspace.types';
+import type { WorkspaceDocument } from '@/features/reading';
+import { formatDocumentMeta } from '@/features/reading/reading-core';
 import {
   ArtifactBody,
   ArtifactStatusIcon,
