@@ -105,10 +105,12 @@ export function useArtifactCollection({
   }, [userId]);
 
   const selectArtifact = useCallback((artifactId: string) => {
-    if (activeArtifacts.some((artifact) => artifact.id === artifactId)) {
+    const artifactExists = Object.values(artifactStorage.artifactsByAnchorId)
+      .some((artifacts) => artifacts.some((artifact) => artifact.id === artifactId));
+    if (artifactExists) {
       setSelectedArtifactId(artifactId);
     }
-  }, [activeArtifacts]);
+  }, [artifactStorage.artifactsByAnchorId]);
 
   const resetSelectedArtifact = useCallback(() => {
     setSelectedArtifactId(null);

@@ -100,6 +100,7 @@ export function WorkspacePage({
     anchors: workspace.anchors,
     activeArtifacts: workspace.activeArtifacts,
     activeArtifact: workspace.activeArtifact,
+    sessionArtifacts: workspace.sessionArtifacts,
     artifactCountByAnchorId: workspace.artifactCountByAnchorId,
     noteDraftContent: workspace.noteDraftContent,
     anchorMarkStatusById: workspace.anchorMarkStatusById,
@@ -110,6 +111,7 @@ export function WorkspacePage({
   const readerWorkspaceActions = {
     setActiveAnchorId: workspace.setActiveAnchorId,
     selectArtifact: workspace.selectArtifact,
+    openSessionArtifact: workspace.openSessionArtifact,
     deleteArtifact: workspace.deleteArtifact,
     deleteAnchor: workspace.deleteAnchor,
     updateNoteDraft: workspace.updateNoteDraft,
@@ -162,6 +164,7 @@ export function WorkspacePage({
           <ImportPanel
             importState={workspace.importState}
             onPasteTextChange={workspace.setPasteText}
+            onSessionTitleChange={workspace.setSessionTitle}
             onImportPastedText={workspace.importPastedText}
             onImportTextFile={workspace.importTextFile}
           />

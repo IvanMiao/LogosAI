@@ -12,6 +12,7 @@ import type {
   AnchorMarkStatus,
   PendingSelection,
   SelectionToolbarPlacement,
+  WorkspaceSessionArtifact,
 } from '../workspace.types';
 import { useWorkspacePanels } from '../useWorkspacePanels';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
@@ -36,6 +37,7 @@ interface ReaderWorkspaceState {
   anchors: TextAnchor[];
   activeArtifacts: Artifact[];
   activeArtifact: Artifact | null;
+  sessionArtifacts: WorkspaceSessionArtifact[];
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
@@ -47,6 +49,7 @@ interface ReaderWorkspaceState {
 interface ReaderWorkspaceActions {
   setActiveAnchorId: (anchorId: string) => void;
   selectArtifact: (artifactId: string) => void;
+  openSessionArtifact: (artifactId: string) => void;
   deleteArtifact: (artifactId: string) => void;
   deleteAnchor: (anchorId: string) => void;
   updateNoteDraft: (content: string) => void;
@@ -136,6 +139,12 @@ export function ReaderWorkspace({
     panels.openPanel();
   };
 
+  const handleOpenSessionArtifact = (artifactId: string) => {
+    panels.selectCloseReading(null);
+    actions.openSessionArtifact(artifactId);
+    panels.openPanel();
+  };
+
   const handleCloseReadParagraph = async (paragraph: DocumentParagraph) => {
     panels.selectCloseReading(null);
     panels.openPanel();
@@ -177,12 +186,14 @@ export function ReaderWorkspace({
       anchors={reading.anchors}
       activeArtifacts={reading.activeArtifacts}
       activeArtifact={reading.activeArtifact}
+      sessionArtifacts={reading.sessionArtifacts}
       artifactCountByAnchorId={reading.artifactCountByAnchorId}
       noteDraftContent={reading.noteDraftContent}
       isNoteEditorOpen={isNoteEditorOpen}
       onClearActiveAnchor={onClearActiveAnchor}
       onSelectAnchor={handleSelectAnchor}
       onSelectArtifact={actions.selectArtifact}
+      onOpenSessionArtifact={handleOpenSessionArtifact}
       onRequestDeleteAnchor={requestDeleteAnchor}
       onRequestDeleteArtifact={requestDeleteArtifact}
       onNoteDraftChange={actions.updateNoteDraft}

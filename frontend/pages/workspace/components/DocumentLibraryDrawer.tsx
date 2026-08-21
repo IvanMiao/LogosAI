@@ -8,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDate } from '@/utils/formatters';
+import { formatDateTime } from '@/utils/formatters';
 import type { HistoryItem } from '@/types';
 import type { ReadingSessionStats, WorkspaceDocument } from '@/features/reading';
+import { formatDocumentMeta } from '@/features/reading/reading-core';
 import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
 
 interface DocumentLibraryDrawerProps {
@@ -32,6 +33,7 @@ interface DocumentListItemProps {
   document: WorkspaceDocument;
   stats: ReadingSessionStats;
   isActive: boolean;
+  searchContext: string;
   onOpen: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
@@ -41,6 +43,7 @@ function DocumentListItem({
   document,
   stats,
   isActive,
+  searchContext,
   onOpen,
   onRename,
   onDelete,
@@ -72,11 +75,13 @@ function DocumentListItem({
             {isActive ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
             <span className="truncate text-sm font-black">{document.title}</span>
           </span>
-          <span className="mt-1 block line-clamp-2 font-sans text-xs leading-5 text-muted-foreground">
-            {document.text}
-          </span>
+          {searchContext ? (
+            <span className="mt-2 block line-clamp-2 font-sans text-xs leading-5 text-muted-foreground">
+              {searchContext}
+            </span>
+          ) : null}
           <span className="mt-2 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {document.sourceType} · {formatDate(document.lastOpenedAt ?? document.updatedAt)}
+            {formatDocumentMeta(document)} · Last opened {formatDateTime(document.lastOpenedAt ?? document.updatedAt)}
           </span>
           <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {stats.selectionCount} {stats.selectionCount === 1 ? 'selection' : 'selections'}
@@ -160,6 +165,41 @@ function LegacyHistory({
   );
 }
 
+function getSessionCountLabel(visibleCount: number, totalCount: number): string {
+  if (visibleCount === totalCount) {
+    return `${totalCount} ${totalCount === 1 ? 'session' : 'sessions'}`;
+  }
+
+  return `${visibleCount} of ${totalCount} sessions`;
+}
+
+function getTextMatchExcerpt(text: string, query: string): string {
+  const matchIndex = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+  if (matchIndex < 0) {
+    return '';
+  }
+
+  const excerptStart = Math.max(0, matchIndex - 32);
+  const excerptEnd = Math.min(text.length, matchIndex + query.length + 56);
+  const excerpt = text.slice(excerptStart, excerptEnd).replace(/\s+/g, ' ').trim();
+  const prefix = excerptStart > 0 ? '…' : '';
+  const suffix = excerptEnd < text.length ? '…' : '';
+  return `${prefix}${excerpt}${suffix}`;
+}
+
+function getSearchContext(document: WorkspaceDocument, query: string): string {
+  if (!query) {
+    return '';
+  }
+
+  if (document.title.toLocaleLowerCase().includes(query)) {
+    return 'Title match';
+  }
+
+  const excerpt = getTextMatchExcerpt(document.text, query);
+  return excerpt ? `Text match: “${excerpt}”` : '';
+}
+
 export function DocumentLibraryDrawer({
   open,
   documents,
@@ -223,7 +263,7 @@ export function DocumentLibraryDrawer({
               Reading sessions
             </DialogTitle>
             <DialogDescription>
-              Find, rename, or switch sessions. Each session keeps its selections and reading entries.
+              Find, rename, or switch sessions. Full text opens in the reading workspace.
             </DialogDescription>
           </DialogHeader>
           <Button type="button" className="mt-2 min-h-11 w-full" onClick={startNewDocument}>
@@ -236,11 +276,14 @@ export function DocumentLibraryDrawer({
             <input
               type="search"
               value={query}
-              placeholder="Search session title or text…"
+              placeholder="Search title or full text…"
               onChange={(event) => setQuery(event.target.value)}
               className="h-11 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
             />
           </label>
+          <p className="mt-3 text-xs font-bold uppercase tracking-wide text-muted-foreground" aria-live="polite">
+            {getSessionCountLabel(visibleDocuments.length, documents.length)}
+          </p>
           <div className="mt-4 space-y-3">
             {visibleDocuments.length > 0 ? visibleDocuments.map((document) => (
               <DocumentListItem
@@ -251,6 +294,7 @@ export function DocumentLibraryDrawer({
                   entryCount: 0,
                 }}
                 isActive={document.id === activeDocumentId}
+                searchContext={getSearchContext(document, normalizedQuery)}
                 onOpen={() => openDocument(document.id)}
                 onRename={(title) => onRenameDocument(document.id, title)}
                 onDelete={() => requestDelete(document)}

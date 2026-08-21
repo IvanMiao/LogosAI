@@ -1,7 +1,7 @@
 # Workspace Journey UX Contract
 
 - 状态：Active
-- 最近同步：2026-08-09
+- 最近同步：2026-08-19
 - 可执行规范：[workspaceJourney.test.tsx](../../frontend/tests/workspace/workspaceJourney.test.tsx)
 
 本文档固定 Workspace 当前已经被测试保护的用户旅程。它让产品与工程评审者不必先阅读测试实现，也能判断一次改动是在修复回归，还是有意改变 UX。
@@ -35,6 +35,9 @@
 9. 文本标题可以由用户修改，重载后必须保留自定义标题。
 10. 删除文本只级联删除该文本的 selection 与 artifact，其他文本及其工作不受影响。
 11. Reading-session 列表显示每个 session 的 selection 与 reading-entry 数量，帮助用户在切换前判断其中保存了什么。
+12. Reading-session 搜索命中原文时，列表提供短摘录和最后打开时间；用户不必展开全文也能确认目标 session。
+13. Context Panel 提供当前 session 全部 output 的可筛选索引；从中打开任一 output 会同步切换到其 source。
+14. 导入时可先命名 session；自定义标题优先于文件名或自动生成的标题，并在重载后保留。
 
 ## 固定用户旅程
 
@@ -219,15 +222,36 @@
 **用户动作**
 
 1. 从 `Reading sessions` 新建并粘贴第二篇文本。
-2. 再次打开 `Reading sessions`，确认第一篇 session 的 reading-entry 数量并切换回来。
-3. 打开 Context Panel。
+2. 在新建 session 时可选择输入自定义标题。
+3. 再次打开 `Reading sessions`，搜索第二篇原文中的词语，确认短摘录与最后打开时间，并确认第一篇 session 的 reading-entry 数量后切换回来。
+4. 打开 Context Panel。
 
 **必须保持**
 
 - 新建第二篇文本不会替换或删除第一篇文本。
 - Session 列表显示第一篇文本有一个 reading entry。
+- 原文搜索结果仅显示命中上下文，不显示整篇原文；自定义标题替代自动标题。
 - 切回第一篇文本后恢复其 active source 和已保存的 Close Reading。
 - 切换过程不会重新请求分析。
+
+### WJ-13 从 session-wide output index 打开其他 selection 的结果
+
+**前置状态**
+
+- 同一篇 session 有两个 saved selection，各自都有 complete output。
+- 当前 active selection 是第一个。
+
+**用户动作**
+
+1. 打开 Context Panel，并展开 `Session outputs`。
+2. 搜索第二个 selection 的 output 文本。
+3. 打开唯一命中的 output。
+
+**必须保持**
+
+- 索引覆盖当前 session 的所有 output，不受当前 active selection 限制。
+- 搜索命中 output 正文时有明确提示。
+- 打开 output 后，Context Panel 切换到对应 source 并显示该 output。
 
 ### WJ-11 重命名文本并在重载后恢复
 
@@ -279,6 +303,7 @@
 
 | 日期 | 说明 |
 | --- | --- |
+| 2026-08-19 | WJ-10 增加导入前命名、原文搜索短摘录和最后打开时间；新增 WJ-13，固定 session-wide output 索引与跨 selection 打开行为。 |
 | 2026-08-09 | 将 library UI 统一为 Reading sessions；WJ-10 增加 selection/entry 数量，WJ-12 更新 session 删除文案。 |
 | 2026-08-02 | 新增 WJ-10 至 WJ-12，固定多文本切换、标题重命名与文档级联删除契约。 |
 | 2026-08-01 | 根据现有九条 `workspaceJourney` 测试建立初始 UX contract；未改变测试行为。 |

@@ -7,3 +7,13 @@ export const formatTime = (timestamp: string | undefined): string => {
   if (!timestamp) return '';
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
+
+export const formatDateTime = (timestamp: string | undefined): string => {
+  if (!timestamp) return '';
+  return new Date(timestamp).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};

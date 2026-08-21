@@ -32,6 +32,7 @@ interface ReadingLibrary {
   importState: ImportState;
   workspaceError: string;
   setPasteText: (text: string) => void;
+  setSessionTitle: (title: string) => void;
   importPastedText: () => boolean;
   importTextFile: (file: File | null) => Promise<boolean>;
   openDocument: (documentId: string) => boolean;
@@ -49,6 +50,7 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
   );
   const [importState, setImportState] = useState<ImportState>({
     pasteText: '',
+    sessionTitle: '',
     importError: '',
   });
   const [history, setHistory] = useState<HistoryItem[]>(() => readHistory(userId));
@@ -83,6 +85,10 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
     setImportState((current) => ({ ...current, pasteText: text, importError: '' }));
   }, []);
 
+  const setSessionTitle = useCallback((title: string) => {
+    setImportState((current) => ({ ...current, sessionTitle: title, importError: '' }));
+  }, []);
+
   const importPastedText = useCallback((): boolean => {
     const text = importState.pasteText.trim();
     if (!text) {
@@ -93,13 +99,18 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
       return false;
     }
 
-    if (!addDocument(createWorkspaceDocument(text, 'paste'))) {
+    if (!addDocument(createWorkspaceDocument(
+      text,
+      'paste',
+      'Untitled document',
+      importState.sessionTitle,
+    ))) {
       return false;
     }
 
-    setImportState({ pasteText: '', importError: '' });
+    setImportState({ pasteText: '', sessionTitle: '', importError: '' });
     return true;
-  }, [addDocument, importState.pasteText]);
+  }, [addDocument, importState.pasteText, importState.sessionTitle]);
 
   const importTextFile = useCallback(async (file: File | null): Promise<boolean> => {
     if (!file) {
@@ -123,13 +134,18 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
       return false;
     }
 
-    if (!addDocument(createWorkspaceDocument(text, 'file', file.name))) {
+    if (!addDocument(createWorkspaceDocument(
+      text,
+      'file',
+      file.name,
+      importState.sessionTitle,
+    ))) {
       return false;
     }
 
-    setImportState({ pasteText: '', importError: '' });
+    setImportState({ pasteText: '', sessionTitle: '', importError: '' });
     return true;
-  }, [addDocument]);
+  }, [addDocument, importState.sessionTitle]);
 
   const openDocument = useCallback((documentId: string): boolean => {
     return commitDocumentLibrary(openLibraryDocument(documentLibrary, documentId));
@@ -171,6 +187,7 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
     importState,
     workspaceError,
     setPasteText,
+    setSessionTitle,
     importPastedText,
     importTextFile,
     openDocument,

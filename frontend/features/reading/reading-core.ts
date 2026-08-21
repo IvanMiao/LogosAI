@@ -40,12 +40,14 @@ export function createWorkspaceDocument(
   text: string,
   sourceType: DocumentSourceType,
   fallbackTitle = 'Untitled document',
+  customTitle = '',
 ): WorkspaceDocument {
   const now = new Date().toISOString();
+  const title = customTitle.trim().slice(0, 160) || createDocumentTitle(text, sourceType, fallbackTitle);
 
   return {
     id: createClientId('document'),
-    title: createDocumentTitle(text, sourceType, fallbackTitle),
+    title,
     text,
     sourceType,
     createdAt: now,

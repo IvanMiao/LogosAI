@@ -30,7 +30,13 @@ export interface WorkspaceViewModel {
 
 export interface ImportState {
   pasteText: string;
+  sessionTitle: string;
   importError: string;
+}
+
+export interface WorkspaceSessionArtifact {
+  artifact: Artifact;
+  anchor: TextAnchor;
 }
 
 export interface SelectionToolbarPlacement {
@@ -56,6 +62,7 @@ export interface WorkspaceController {
   activeAnchorId: string | null;
   activeArtifacts: Artifact[];
   activeArtifact: Artifact | null;
+  sessionArtifacts: WorkspaceSessionArtifact[];
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
@@ -66,6 +73,7 @@ export interface WorkspaceController {
   analysisLanguage: AnalysisLanguage;
   selectionToolbarPlacement: SelectionToolbarPlacement | null;
   setPasteText: (text: string) => void;
+  setSessionTitle: (title: string) => void;
   importPastedText: () => void;
   importTextFile: (file: File | null) => Promise<void>;
   showSelectionActions: (
@@ -77,6 +85,7 @@ export interface WorkspaceController {
   startNoteForPendingSelection: () => TextAnchor | null;
   setActiveAnchorId: (anchorId: string) => void;
   selectArtifact: (artifactId: string) => void;
+  openSessionArtifact: (artifactId: string) => void;
   deleteArtifact: (artifactId: string) => void;
   deleteAnchor: (anchorId: string) => void;
   clearActiveAnchor: () => void;

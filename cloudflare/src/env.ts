@@ -6,6 +6,10 @@ export interface CloudflareBindings {
   BETTER_AUTH_SECRET: string;
   CREDENTIALS_ENCRYPTION_KEY: string;
   TRUSTED_ORIGINS: string;
+  SENTRY_DSN?: string;
+  SENTRY_ENVIRONMENT?: string;
+  SENTRY_RELEASE?: string;
+  SENTRY_TRACES_SAMPLE_RATE?: string;
   GATEWAY_SHARED_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;

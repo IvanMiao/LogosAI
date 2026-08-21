@@ -45,6 +45,17 @@ describe('reading document library', () => {
     expect(document.title).toBe('Deliberate title');
   });
 
+  it('uses the supplied session title before generating one from the source text', () => {
+    const document = createWorkspaceDocument(
+      '# Generated title\n\nBody',
+      'paste',
+      'Untitled document',
+      '  Reading group notes  ',
+    );
+
+    expect(document.title).toBe('Reading group notes');
+  });
+
   it('adds documents without replacing earlier documents', () => {
     const withFirst = addDocumentToLibrary(createEmptyDocumentLibrary(), firstDocument);
     const withSecond = addDocumentToLibrary(withFirst, secondDocument);
