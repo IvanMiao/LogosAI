@@ -15,6 +15,7 @@ import {
   ArtifactStatusIcon,
   ArtifactTaskControls,
 } from './ArtifactDisplay';
+import { getAnchorScopeLabel } from './artifact-display.helpers';
 import { CloseReadingActions } from './CloseReadingActions';
 
 export type CloseReadingPaneMode = 'split' | 'focus' | 'mobile';
@@ -24,6 +25,7 @@ interface CloseReadingPaneProps {
   closeReadings: Artifact[];
   activeAnchor: TextAnchor;
   readingPreferences: ReaderPreferences;
+  stageLabel?: string;
   mode: CloseReadingPaneMode;
   focusButtonRef?: Ref<HTMLButtonElement>;
   onFocus: () => void;
@@ -36,7 +38,7 @@ interface CloseReadingPaneProps {
 }
 
 function getSourceScopeLabel(activeAnchor: TextAnchor): string {
-  return activeAnchor.scope.charAt(0).toUpperCase() + activeAnchor.scope.slice(1);
+  return getAnchorScopeLabel(activeAnchor.scope);
 }
 
 function getPaneSizeClassName(mode: CloseReadingPaneMode): string {
@@ -106,6 +108,7 @@ export function CloseReadingPane({
   closeReadings,
   activeAnchor,
   readingPreferences,
+  stageLabel,
   mode,
   focusButtonRef,
   onFocus,
@@ -179,6 +182,7 @@ export function CloseReadingPane({
           artifact={artifact}
           variant="reading"
           readingPreferences={readingPreferences}
+          stageLabel={stageLabel}
         />
       </div>
     </aside>

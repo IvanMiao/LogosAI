@@ -270,10 +270,10 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Open context panel' }));
     const closeReadingPane = screen.getByRole('complementary', { name: 'Close reading' });
 
-    expect(within(closeReadingPane).getByText('stopped')).toBeInTheDocument();
-    expect(within(closeReadingPane).getByRole('button', { name: 'Retry artifact' }))
+    expect(within(closeReadingPane).getByText('Stopped — retry')).toBeInTheDocument();
+    expect(within(closeReadingPane).getByRole('button', { name: 'Try again' }))
       .toBeEnabled();
-    expect(within(closeReadingPane).queryByRole('button', { name: 'Stop artifact' }))
+    expect(within(closeReadingPane).queryByRole('button', { name: 'Stop generating' }))
       .not.toBeInTheDocument();
   });
 

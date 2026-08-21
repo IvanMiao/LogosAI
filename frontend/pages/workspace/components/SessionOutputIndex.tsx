@@ -6,6 +6,7 @@ import type { WorkspaceSessionArtifact } from '../workspace.types';
 import {
   formatArtifactTimestamp,
   getArtifactLabel,
+  getArtifactStatusLabel,
 } from './artifact-display.helpers';
 
 type ArtifactFilter = 'all' | Artifact['type'];
@@ -104,7 +105,9 @@ export function SessionOutputIndex({
                         {anchor.quote}
                       </span>
                       <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
-                        {formatArtifactTimestamp(artifact)} · {artifact.status}
+                        {formatArtifactTimestamp(artifact)}
+                        {' · '}
+                        {getArtifactStatusLabel(artifact.status)}
                       </span>
                       {matchesOutputContent(artifact, query) ? (
                         <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
