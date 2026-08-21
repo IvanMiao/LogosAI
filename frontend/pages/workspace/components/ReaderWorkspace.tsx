@@ -15,6 +15,7 @@ import type {
   WorkspaceSessionArtifact,
 } from '../workspace.types';
 import { useWorkspacePanels } from '../useWorkspacePanels';
+import { getStageLabel } from '../workspace-copy';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
 import {
   getCloseReadingArtifacts,
@@ -40,6 +41,7 @@ interface ReaderWorkspaceState {
   sessionArtifacts: WorkspaceSessionArtifact[];
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
+  artifactStageById: Record<string, string>;
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
   readerPreferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
@@ -53,6 +55,7 @@ interface ReaderWorkspaceActions {
   deleteArtifact: (artifactId: string) => void;
   deleteAnchor: (anchorId: string) => void;
   updateNoteDraft: (content: string) => void;
+  saveNoteDraft: () => void;
   runCloseReadDocument: () => Promise<void>;
   runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
   stopArtifact: (artifact: Artifact) => void;
@@ -84,6 +87,7 @@ interface ReaderWorkspaceProps {
   onRunPendingSelectionSkill: (skill: AnchorSkill) => void;
   onStartPendingSelectionNote: () => void;
   onClearActiveAnchor: () => void;
+  onCloseNoteEditor: () => void;
   onRetryArtifact: (artifact: Artifact) => void;
   onOpenLibrary: () => void;
 }
@@ -102,6 +106,7 @@ export function ReaderWorkspace({
   onRunPendingSelectionSkill,
   onStartPendingSelectionNote,
   onClearActiveAnchor,
+  onCloseNoteEditor,
   onRetryArtifact,
   onOpenLibrary,
 }: ReaderWorkspaceProps): ReactElement {
@@ -118,6 +123,15 @@ export function ReaderWorkspace({
 
   const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
     || reading.noteDraftContent.length > 0;
+  const activeArtifactStage = getStageLabel(
+    reading.activeArtifact ? reading.artifactStageById[reading.activeArtifact.id] : undefined,
+  );
+
+  const handleSaveNote = () => {
+    actions.saveNoteDraft();
+    onCloseNoteEditor();
+  };
+
   const closeReadings = getCloseReadingArtifacts(reading.activeArtifacts);
   const activeCloseReading = getDisplayedCloseReading({
     activeArtifact: reading.activeArtifact,
@@ -190,6 +204,8 @@ export function ReaderWorkspace({
       artifactCountByAnchorId={reading.artifactCountByAnchorId}
       noteDraftContent={reading.noteDraftContent}
       isNoteEditorOpen={isNoteEditorOpen}
+      readingPreferences={reading.readerPreferences}
+      activeArtifactStage={activeArtifactStage}
       onClearActiveAnchor={onClearActiveAnchor}
       onSelectAnchor={handleSelectAnchor}
       onSelectArtifact={actions.selectArtifact}
@@ -198,6 +214,7 @@ export function ReaderWorkspace({
       onRequestDeleteArtifact={requestDeleteArtifact}
       onNoteDraftChange={actions.updateNoteDraft}
       onOpenNoteEditor={onStartNote}
+      onSaveNote={handleSaveNote}
       onRunSkill={onRunSkill}
       onRunCloseReadDocument={() => {
         panels.selectCloseReading(null);
@@ -221,6 +238,7 @@ export function ReaderWorkspace({
         closeReadings={closeReadings}
         activeAnchor={reading.activeAnchor}
         readingPreferences={reading.readerPreferences}
+        stageLabel={getStageLabel(reading.artifactStageById[activeCloseReading.id])}
         mode={mode}
         focusButtonRef={focusButtonRef}
         onFocus={() => panels.focusCloseReading(activeCloseReading.id)}

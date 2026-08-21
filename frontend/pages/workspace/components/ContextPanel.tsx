@@ -19,18 +19,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
-import type { WorkspaceDocument } from '@/features/reading';
+import type { ReaderPreferences, WorkspaceDocument } from '@/features/reading';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
 import { cn } from '@/utils/className';
 import type { WorkspaceSessionArtifact } from '../workspace.types';
 import {
   ArtifactBody,
+  ArtifactCopyButton,
   ArtifactStatusIcon,
   ArtifactTaskControls,
 } from './ArtifactDisplay';
 import {
   formatArtifactTimestamp,
   getArtifactLabel,
+  getArtifactPreview,
+  getArtifactStatusLabel,
+  getAnchorScopeLabel,
 } from './artifact-display.helpers';
 import { SessionOutputIndex } from './SessionOutputIndex';
 
@@ -44,6 +48,8 @@ interface ContextPanelProps {
   artifactCountByAnchorId: Record<string, number>;
   noteDraftContent: string;
   isNoteEditorOpen: boolean;
+  readingPreferences: ReaderPreferences;
+  activeArtifactStage?: string;
   onClearActiveAnchor: () => void;
   onSelectAnchor: (anchorId: string) => void;
   onSelectArtifact: (artifactId: string) => void;
@@ -52,6 +58,7 @@ interface ContextPanelProps {
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onNoteDraftChange: (content: string) => void;
   onOpenNoteEditor: () => void;
+  onSaveNote: () => void;
   onRunSkill: (skill: AnchorSkill) => void;
   onRunCloseReadDocument: () => void;
   onStopArtifact: (artifact: Artifact) => void;
@@ -90,10 +97,50 @@ interface ActiveAnchorHeaderProps {
 interface ActiveArtifactProps {
   artifacts: Artifact[];
   artifact: Artifact | null;
+  readingPreferences: ReaderPreferences;
+  stageLabel?: string;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onStopArtifact: (artifact: Artifact) => void;
   onRetryArtifact: (artifact: Artifact) => void;
+}
+
+interface NoteEditorProps {
+  content: string;
+  onChange: (content: string) => void;
+  onSave: () => void;
+}
+
+function NoteEditor({ content, onChange, onSave }: NoteEditorProps): ReactElement {
+  return (
+    <section className="mt-5 border-2 border-l-[8px] border-border border-l-accent bg-card p-3 shadow-[2px_2px_0px_0px_var(--border)]">
+      <label className="block text-xs font-black" htmlFor="workspace-note-draft">
+        Note
+      </label>
+      <textarea
+        id="workspace-note-draft"
+        autoFocus
+        value={content}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Write a note attached to this selection..."
+        rows={4}
+        className="mt-2 w-full resize-y border-2 border-border bg-background p-2 font-sans text-base font-normal leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+      />
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          Saved as you type
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!content.trim()}
+          onClick={onSave}
+        >
+          Done editing
+        </Button>
+      </div>
+    </section>
+  );
 }
 
 function SessionDashboard({
@@ -301,7 +348,7 @@ function ActiveAnchorHeader({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">
-            {activeAnchor.scope}
+            {getAnchorScopeLabel(activeAnchor.scope)}
           </p>
           <p className="mt-2 line-clamp-3 font-sans text-sm leading-6">{activeAnchor.quote}</p>
         </div>
@@ -348,6 +395,8 @@ function ActiveAnchorHeader({
 function ActiveArtifactView({
   artifacts,
   artifact,
+  readingPreferences,
+  stageLabel,
   onSelectArtifact,
   onRequestDeleteArtifact,
   onStopArtifact,
@@ -379,6 +428,7 @@ function ActiveArtifactView({
             onStopArtifact={onStopArtifact}
             onRetryArtifact={onRetryArtifact}
           />
+          <ArtifactCopyButton artifact={artifact} contentLabel={getArtifactLabel(artifact)} />
           <Button
             type="button"
             size="icon"
@@ -392,7 +442,12 @@ function ActiveArtifactView({
         </div>
       </div>
       <div className="mt-4">
-        <ArtifactBody artifact={artifact} />
+        <ArtifactBody
+          artifact={artifact}
+          variant="reading"
+          readingPreferences={readingPreferences}
+          stageLabel={stageLabel}
+        />
       </div>
     </section>
   );
@@ -419,7 +474,7 @@ function ArtifactHistoryMenu({
           {artifacts.length}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className="w-80">
         {artifacts.map((historyArtifact) => (
           <DropdownMenuItem
             key={historyArtifact.id}
@@ -430,10 +485,12 @@ function ArtifactHistoryMenu({
             <span className="min-w-0">
               <span className="block truncate">{getArtifactLabel(historyArtifact)}</span>
               <span className="block text-xs font-normal text-muted-foreground">
-                {formatArtifactTimestamp(historyArtifact)} · {historyArtifact.status}
+                {formatArtifactTimestamp(historyArtifact)}
+                {' · '}
+                {getArtifactStatusLabel(historyArtifact.status)}
               </span>
-              <span className="block truncate text-xs font-normal text-muted-foreground">
-                {historyArtifact.content || historyArtifact.status}
+              <span className="mt-1 block line-clamp-2 font-sans text-xs font-normal leading-5 text-muted-foreground">
+                {getArtifactPreview(historyArtifact)}
               </span>
             </span>
           </DropdownMenuItem>
@@ -453,6 +510,8 @@ export function ContextPanel({
   artifactCountByAnchorId,
   noteDraftContent,
   isNoteEditorOpen,
+  readingPreferences,
+  activeArtifactStage,
   onClearActiveAnchor,
   onSelectAnchor,
   onSelectArtifact,
@@ -461,6 +520,7 @@ export function ContextPanel({
   onRequestDeleteArtifact,
   onNoteDraftChange,
   onOpenNoteEditor,
+  onSaveNote,
   onRunSkill,
   onRunCloseReadDocument,
   onStopArtifact,
@@ -521,29 +581,25 @@ export function ContextPanel({
         onOpenNoteEditor={onOpenNoteEditor}
         onRunSkill={onRunSkill}
       />
-      {selectionIndex}
-      {sessionOutputIndex}
       {isNoteEditorOpen ? (
-        <label className="mt-5 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
-          Note
-          <textarea
-            autoFocus
-            value={noteDraftContent}
-            onChange={(event) => onNoteDraftChange(event.target.value)}
-            placeholder="Write a note attached to this selection..."
-            rows={4}
-            className="mt-2 w-full resize-y border-2 border-border bg-background p-2 font-sans text-base font-normal leading-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
-          />
-        </label>
+        <NoteEditor
+          content={noteDraftContent}
+          onChange={onNoteDraftChange}
+          onSave={onSaveNote}
+        />
       ) : null}
       <ActiveArtifactView
         artifacts={activeArtifacts}
         artifact={activeArtifact}
+        readingPreferences={readingPreferences}
+        stageLabel={activeArtifactStage}
         onSelectArtifact={onSelectArtifact}
         onRequestDeleteArtifact={onRequestDeleteArtifact}
         onStopArtifact={onStopArtifact}
         onRetryArtifact={onRetryArtifact}
       />
+      {selectionIndex}
+      {sessionOutputIndex}
     </aside>
   );
 }
