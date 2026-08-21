@@ -183,15 +183,45 @@ function PreferenceItem({
   return (
     <DropdownMenuItem
       aria-label={accessibleLabel}
-      className="justify-between"
+      className={cn(
+        'justify-center border-2 px-1 text-center',
+        isSelected
+          ? 'border-border bg-secondary'
+          : 'border-transparent',
+      )}
       onSelect={(event) => {
         event.preventDefault();
         onSelect();
       }}
     >
-      <span>{label}</span>
-      {isSelected ? <Check className="h-4 w-4" /> : null}
+      <span className="flex items-center gap-1">
+        {isSelected ? <Check className="h-3 w-3 shrink-0" aria-hidden="true" /> : null}
+        {label}
+      </span>
     </DropdownMenuItem>
+  );
+}
+
+/**
+ * One row per setting. Stacking four three-way choices vertically made the menu
+ * roughly three times taller than wide and pushed the last group past the
+ * bottom of a short viewport; a row also lets the reader see all four current
+ * values at once instead of scanning for check marks.
+ */
+function PreferenceGroup({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: ReactElement[];
+}): ReactElement {
+  return (
+    <div className="px-1 py-1">
+      <p className="px-1 pb-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+        {heading}
+      </p>
+      <div className="grid grid-cols-3 gap-1">{children}</div>
+    </div>
   );
 }
 
@@ -209,10 +239,7 @@ function FontPreferenceItems({
   onSelectFont,
 }: FontPreferenceItemsProps): ReactElement {
   return (
-    <>
-      <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">
-        {heading}
-      </p>
+    <PreferenceGroup heading={heading}>
       {FONT_OPTIONS.map((option) => (
         <PreferenceItem
           key={option.value}
@@ -222,7 +249,7 @@ function FontPreferenceItems({
           onSelect={() => onSelectFont(option.value)}
         />
       ))}
-    </>
+    </PreferenceGroup>
   );
 }
 
@@ -243,14 +270,37 @@ function ReadingSettingsMenu({
           <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-80">
+        <PreferenceGroup heading="Size">
+          {SIZE_OPTIONS.map((option) => (
+            <PreferenceItem
+              key={option.value}
+              accessibleLabel={`Text size: ${option.label}`}
+              label={option.label}
+              isSelected={preferences.fontSize === option.value}
+              onSelect={() => onPreferenceChange('fontSize', option.value)}
+            />
+          ))}
+        </PreferenceGroup>
+        <DropdownMenuSeparator />
+        <PreferenceGroup heading="Spacing">
+          {SPACING_OPTIONS.map((option) => (
+            <PreferenceItem
+              key={option.value}
+              accessibleLabel={`Line spacing: ${option.label}`}
+              label={option.label}
+              isSelected={preferences.lineSpacing === option.value}
+              onSelect={() => onPreferenceChange('lineSpacing', option.value)}
+            />
+          ))}
+        </PreferenceGroup>
+        <DropdownMenuSeparator />
         <FontPreferenceItems
           accessiblePrefix="Source font"
           heading="Source font"
           selectedFont={preferences.fontFamily}
           onSelectFont={(fontFamily) => onPreferenceChange('fontFamily', fontFamily)}
         />
-        <DropdownMenuSeparator />
         <FontPreferenceItems
           accessiblePrefix="Close Reading font"
           heading="Close Reading font"
@@ -259,28 +309,9 @@ function ReadingSettingsMenu({
             onPreferenceChange('closeReadingFontFamily', fontFamily)
           )}
         />
-        <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">Size</p>
-        {SIZE_OPTIONS.map((option) => (
-          <PreferenceItem
-            key={option.value}
-            accessibleLabel={`Text size: ${option.label}`}
-            label={option.label}
-            isSelected={preferences.fontSize === option.value}
-            onSelect={() => onPreferenceChange('fontSize', option.value)}
-          />
-        ))}
-        <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">Spacing</p>
-        {SPACING_OPTIONS.map((option) => (
-          <PreferenceItem
-            key={option.value}
-            accessibleLabel={`Line spacing: ${option.label}`}
-            label={option.label}
-            isSelected={preferences.lineSpacing === option.value}
-            onSelect={() => onPreferenceChange('lineSpacing', option.value)}
-          />
-        ))}
+        <p className="px-2 pb-1 text-[10px] leading-4 text-muted-foreground">
+          Size and spacing apply to both; fonts are chosen separately.
+        </p>
       </DropdownMenuContent>
     </DropdownMenu>
   );
