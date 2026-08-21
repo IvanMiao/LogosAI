@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { TextAnchor } from '@/features/anchors';
 import {
+  completeNoteDraft,
   getActiveArtifact,
   getArtifactsForAnchor,
   getNoteDraft,
@@ -37,6 +38,7 @@ interface ArtifactCollection {
   removeArtifactsForAnchor: (anchorId: string) => void;
   removeArtifactsForDocument: (documentId: string) => void;
   updateNoteDraft: (content: string) => void;
+  saveNoteDraft: () => void;
   updateArtifacts: (
     updater: (current: ArtifactStorageState) => ArtifactStorageState,
   ) => void;
@@ -142,6 +144,14 @@ export function useArtifactCollection({
     }));
   }, [activeAnchor, activeDocument, updateArtifacts]);
 
+  const saveNoteDraft = useCallback(() => {
+    if (!activeAnchor) {
+      return;
+    }
+
+    updateArtifacts((current) => completeNoteDraft(current, activeAnchor.id));
+  }, [activeAnchor, updateArtifacts]);
+
   return {
     artifactStorage,
     activeArtifacts,
@@ -155,6 +165,7 @@ export function useArtifactCollection({
     removeArtifactsForAnchor: clearArtifactsForAnchor,
     removeArtifactsForDocument: clearArtifactsForDocument,
     updateNoteDraft,
+    saveNoteDraft,
     updateArtifacts,
     hydrateArtifactStorage,
   };

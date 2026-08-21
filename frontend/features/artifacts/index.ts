@@ -1,5 +1,6 @@
 export {
   appendArtifactContent,
+  completeNoteDraft,
   createEmptyArtifactStorage,
   createStreamingArtifact,
   getActiveArtifact,

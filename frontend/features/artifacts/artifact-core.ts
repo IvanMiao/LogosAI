@@ -83,6 +83,32 @@ export function upsertNoteDraft({
   };
 }
 
+/**
+ * Marks the note on an anchor as finished. Notes are persisted on every
+ * keystroke, so this only records that the reader is done writing; it never
+ * discards content. An empty note is removed instead of being kept as a blank.
+ */
+export function completeNoteDraft(
+  storage: ArtifactStorageState,
+  anchorId: string,
+): ArtifactStorageState {
+  const artifacts = storage.artifactsByAnchorId[anchorId] ?? [];
+  const existingDraft = getNoteDraft(artifacts);
+  if (!existingDraft) {
+    return storage;
+  }
+
+  if (!existingDraft.content.trim()) {
+    return removeArtifact(storage, existingDraft.id);
+  }
+
+  return updateArtifact(storage, existingDraft.id, (artifact) => ({
+    ...artifact,
+    status: 'complete',
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
 export function prependArtifact(
   storage: ArtifactStorageState,
   artifact: Artifact,
