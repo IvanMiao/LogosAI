@@ -21,6 +21,10 @@ import {
 
 const SYNC_DEBOUNCE_MS = 1_500;
 
+const LOCAL_COPY_REASSURANCE = 'Your changes remain saved on this device.';
+const CLOUD_SYNC_OFFLINE_MESSAGE = `Cloud sync is offline. ${LOCAL_COPY_REASSURANCE}`;
+const CLOUD_SYNC_FAILED_MESSAGE = `Unable to sync. ${LOCAL_COPY_REASSURANCE}`;
+
 export interface WorkspaceCloudSync {
   status: WorkspaceSyncStatus;
   error: string;
@@ -96,6 +100,7 @@ export function useWorkspaceCloudSync({
   const [error, setError] = useState('');
   const [isHydrated, setIsHydrated] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
+  const hasLoadedFromCloudRef = useRef(false);
   const latestStateRef = useRef(state);
   const remoteSessionsRef = useRef(new Map<string, string>());
   const remotePreferencesRef = useRef('');
@@ -106,6 +111,13 @@ export function useWorkspaceCloudSync({
     if (!enabled) {
       setStatus('saved');
       setIsHydrated(false);
+      return;
+    }
+
+    // A retry after a failed load must fetch again, otherwise the workspace can
+    // never leave the offline state. A retry after a successful load only needs
+    // to flush pending writes, so it must not re-enter loading and interrupt them.
+    if (hasLoadedFromCloudRef.current) {
       return;
     }
 
@@ -131,6 +143,7 @@ export function useWorkspaceCloudSync({
           cloudState,
           journal,
         ));
+        hasLoadedFromCloudRef.current = true;
         setError('');
         setStatus('saved');
         setIsHydrated(true);
@@ -143,14 +156,15 @@ export function useWorkspaceCloudSync({
         remotePreferencesRef.current = journal.preferencesDirty
           ? 'unknown'
           : fingerprint(buildWorkspacePreferences(latestStateRef.current));
-        setError('Cloud sync is offline. Your changes remain saved on this device.');
+        hasLoadedFromCloudRef.current = false;
+        setError(CLOUD_SYNC_OFFLINE_MESSAGE);
         setStatus('offline');
         setIsHydrated(true);
       });
     return () => {
       active = false;
     };
-  }, [enabled, onHydrate, userId]);
+  }, [enabled, onHydrate, retryVersion, userId]);
 
   const syncCurrentState = useCallback(async () => {
     const pending = getPendingSync(
@@ -200,7 +214,9 @@ export function useWorkspaceCloudSync({
       createSyncJournal(pending, [...remoteSessionsRef.current.keys()]),
     );
     if (!hasPendingChanges(pending)) {
-      setStatus('saved');
+      // Nothing to push is only good news when the cloud was actually reached.
+      // Reporting "saved" after a failed load would be a false saved state.
+      setStatus(hasLoadedFromCloudRef.current ? 'saved' : 'offline');
       return;
     }
 
@@ -216,8 +232,8 @@ export function useWorkspaceCloudSync({
         .catch((syncError) => {
           if (!active) return;
           setError(syncError instanceof Error
-            ? syncError.message
-            : 'Unable to sync. Your changes remain saved on this device.');
+            ? `${syncError.message} ${LOCAL_COPY_REASSURANCE}`
+            : CLOUD_SYNC_FAILED_MESSAGE);
           setStatus('error');
         });
     }, SYNC_DEBOUNCE_MS);
