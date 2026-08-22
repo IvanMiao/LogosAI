@@ -34,6 +34,7 @@ interface DocumentListItemProps {
   stats: ReadingSessionStats;
   isActive: boolean;
   searchContext: string;
+  matchCount: number;
   onOpen: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
@@ -44,6 +45,7 @@ function DocumentListItem({
   stats,
   isActive,
   searchContext,
+  matchCount,
   onOpen,
   onRename,
   onDelete,
@@ -78,6 +80,11 @@ function DocumentListItem({
           {searchContext ? (
             <span className="mt-2 block line-clamp-2 font-sans text-xs leading-5 text-muted-foreground">
               {searchContext}
+            </span>
+          ) : null}
+          {matchCount > 1 ? (
+            <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              {matchCount} matches in this text
             </span>
           ) : null}
           <span className="mt-2 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -187,9 +194,24 @@ function getTextMatchExcerpt(text: string, query: string): string {
   return `${prefix}${excerpt}${suffix}`;
 }
 
+const OPENING_EXCERPT_MAX_LENGTH = 140;
+
+/**
+ * An auto-generated title is the text's own first line, so it identifies a
+ * session poorly and is then truncated to roughly a third of its length. Show
+ * the opening of the text as well, otherwise the only way to tell two untitled
+ * sessions apart is to open each one and read it.
+ */
+function getOpeningExcerpt(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  return normalized.length > OPENING_EXCERPT_MAX_LENGTH
+    ? `${normalized.slice(0, OPENING_EXCERPT_MAX_LENGTH).trimEnd()}…`
+    : normalized;
+}
+
 function getSearchContext(document: WorkspaceDocument, query: string): string {
   if (!query) {
-    return '';
+    return getOpeningExcerpt(document.text);
   }
 
   if (document.title.toLocaleLowerCase().includes(query)) {
@@ -198,6 +220,14 @@ function getSearchContext(document: WorkspaceDocument, query: string): string {
 
   const excerpt = getTextMatchExcerpt(document.text, query);
   return excerpt ? `Text match: “${excerpt}”` : '';
+}
+
+function countMatches(text: string, query: string): number {
+  if (!query) {
+    return 0;
+  }
+
+  return text.toLocaleLowerCase().split(query.toLocaleLowerCase()).length - 1;
 }
 
 export function DocumentLibraryDrawer({
@@ -295,6 +325,7 @@ export function DocumentLibraryDrawer({
                 }}
                 isActive={document.id === activeDocumentId}
                 searchContext={getSearchContext(document, normalizedQuery)}
+                matchCount={countMatches(document.text, normalizedQuery)}
                 onOpen={() => openDocument(document.id)}
                 onRename={(title) => onRenameDocument(document.id, title)}
                 onDelete={() => requestDelete(document)}

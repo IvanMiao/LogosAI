@@ -9,7 +9,10 @@ import {
   renameLibraryDocument,
 } from '@/features/reading/reading-library';
 import { createEmptyDocumentLibrary } from '@/features/reading/reading-storage';
-import { createWorkspaceDocument } from '@/features/reading/reading-core';
+import {
+  createWorkspaceDocument,
+  formatDocumentLength,
+} from '@/features/reading/reading-core';
 
 const firstDocument: WorkspaceDocument = {
   id: 'document-first',
@@ -141,5 +144,25 @@ describe('reading document library', () => {
       .toEqual([secondDocument.id, firstDocument.id]);
     expect(listLibraryDocuments(library, 'alpha').map((document) => document.id))
       .toEqual([firstDocument.id]);
+  });
+});
+
+describe('formatDocumentLength', () => {
+  it('counts words for space-separated scripts', () => {
+    expect(formatDocumentLength('Alpha beta gamma')).toBe('3 words');
+    expect(formatDocumentLength('  Alpha  ')).toBe('1 word');
+    expect(formatDocumentLength('')).toBe('0 words');
+  });
+
+  it('counts characters for scripts written without spaces', () => {
+    // Splitting on whitespace reported "1 word" for any Chinese text, which is
+    // the language the analysis options lead with.
+    expect(formatDocumentLength('康德在纯粹理性批判中提出先验综合判断。')).toBe('19 characters');
+    expect(formatDocumentLength('日本語のテキスト')).toBe('8 characters');
+    expect(formatDocumentLength('中文')).toBe('2 characters');
+  });
+
+  it('ignores whitespace when counting characters', () => {
+    expect(formatDocumentLength('中文\n\n段落')).toBe('4 characters');
   });
 });

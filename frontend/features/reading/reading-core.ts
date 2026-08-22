@@ -97,15 +97,32 @@ export function isSupportedTextFile(fileName: string): boolean {
   return SUPPORTED_TEXT_FILE_EXTENSIONS.some((extension) => lowerFileName.endsWith(extension));
 }
 
+const CJK_PATTERN = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/u;
+
+/**
+ * Splitting on whitespace reports "1 word" for any Chinese or Japanese text,
+ * which is exactly the case this product is built for. Scripts written without
+ * spaces are measured in characters instead.
+ */
+export function formatDocumentLength(text: string): string {
+  const trimmed = text.trim();
+  if (CJK_PATTERN.test(trimmed)) {
+    const characterCount = [...trimmed.replace(/\s+/g, '')].length;
+    return `${characterCount} ${characterCount === 1 ? 'character' : 'characters'}`;
+  }
+
+  const wordCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  return `${wordCount} ${wordCount === 1 ? 'word' : 'words'}`;
+}
+
 export function formatDocumentMeta(document: WorkspaceDocument): string {
-  const wordCount = document.text.trim().split(/\s+/).filter(Boolean).length;
   const sourceLabelByType: Record<WorkspaceDocument['sourceType'], string> = {
     file: 'Local file',
     history: 'History',
     paste: 'Pasted text',
   };
   const sourceLabel = sourceLabelByType[document.sourceType];
-  return `${sourceLabel} · ${wordCount} words`;
+  return `${sourceLabel} · ${formatDocumentLength(document.text)}`;
 }
 
 export function buildReadingSessionStats(
