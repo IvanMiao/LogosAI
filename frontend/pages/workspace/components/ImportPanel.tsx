@@ -80,11 +80,6 @@ export function ImportPanel({
               rows={10}
               className="mt-3 w-full resize-y border-2 border-border bg-input p-3 font-sans text-base leading-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-            {importState.importError ? (
-              <p role="alert" className="mt-2 text-sm font-bold text-error-foreground">
-                {importState.importError}
-              </p>
-            ) : null}
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setIsPasteEditorOpen(false)}>
                 Cancel
@@ -106,6 +101,18 @@ export function ImportPanel({
             </Button>
           </div>
         )}
+
+        {/*
+          Import errors live outside the paste editor. File errors set the same
+          state, and the paste editor is closed on that path, so rendering the
+          message inside it meant choosing an unsupported file did nothing
+          visible at all.
+        */}
+        {importState.importError ? (
+          <p role="alert" className="mt-4 border-2 border-border bg-destructive/10 p-3 text-sm font-bold text-error-foreground">
+            {importState.importError}
+          </p>
+        ) : null}
 
         <input
           ref={fileInputRef}
