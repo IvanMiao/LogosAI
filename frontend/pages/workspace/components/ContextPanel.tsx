@@ -306,7 +306,7 @@ function SelectionIndex({
                   size="icon"
                   variant="ghost"
                   className="h-11 w-11 shrink-0 text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
-                  aria-label={`Delete saved ${anchor.scope}: ${anchor.quote}`}
+                  aria-label={`Delete saved ${getAnchorGroupLabel(anchor)}: ${anchor.quote}`}
                   onClick={() => onRequestDeleteAnchor(anchor)}
                 >
                   <Trash2 className="h-4 w-4" />

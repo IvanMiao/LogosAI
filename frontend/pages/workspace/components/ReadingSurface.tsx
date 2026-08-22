@@ -117,8 +117,8 @@ function AnchorMark({
   return (
     <button
       type="button"
-      aria-label={`Open ${status} selection`}
-      title={`${status} selection`}
+      aria-label={`Open Close Read source, ${getPassageMarkDescription(status)}: ${anchor.quote}`}
+      title={`Close Read source, ${getPassageMarkDescription(status)}`}
       onClick={() => onSelectAnchor(anchor.id)}
       className={cn(
         'h-4 w-4 border-2 border-border shadow-[2px_2px_0px_0px_var(--border)] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

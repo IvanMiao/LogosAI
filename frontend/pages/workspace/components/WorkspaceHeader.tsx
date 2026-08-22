@@ -146,7 +146,7 @@ function CloudSyncIndicator({
         type="button"
         variant="outline"
         size="icon"
-        className="h-11 w-11 bg-accent"
+        className="h-11 w-11 bg-destructive text-destructive-foreground"
         aria-label={label}
         title={label}
         onClick={onRetry}

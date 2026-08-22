@@ -151,7 +151,7 @@ function AnalysisLanguageSelect({
         <SelectTrigger
           aria-label="Analysis language"
           title="Analysis language"
-          className="h-11 w-24 bg-card sm:w-28"
+          className="h-11 min-w-32 bg-card"
         >
           <SelectValue />
         </SelectTrigger>
@@ -397,7 +397,7 @@ export function ReaderToolbar({
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={onClearDocument} className="gap-2">
                 <Eraser className="h-4 w-4" />
-                <span>New document</span>
+                <span>New session</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
