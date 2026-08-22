@@ -1,7 +1,7 @@
 # Workspace Journey UX Contract
 
 - 状态：Active
-- 最近同步：2026-08-19
+- 最近同步：2026-08-22
 - 可执行规范：[workspaceJourney.test.tsx](../../frontend/tests/workspace/workspaceJourney.test.tsx)
 
 本文档固定 Workspace 当前已经被测试保护的用户旅程。它让产品与工程评审者不必先阅读测试实现，也能判断一次改动是在修复回归，还是有意改变 UX。
@@ -27,17 +27,19 @@
 1. Artifact 始终属于创建它的 source；切换 source 或并发完成请求不能串结果。
 2. 当前查看的历史 artifact 是明确的用户选择，打开或关闭 focus mode 不得偷偷切回最新结果。
 3. Context Panel 每次只突出一个 active artifact；历史结果可以切换，但不把所有全文堆叠在面板中。
-4. 页面重载后遗留的运行中任务必须变成稳定、可重试的停止状态。
+4. 页面重载后遗留的运行中任务必须变成稳定、可重试的停止状态，并用读者语言表达（`Stopped — retry` / `Try again`），不得继续显示内部枚举。
 5. 移动端离开结果回到原文后，可以再次打开同一个结果。
-6. Source 与 Close Reading 可以独立选字体，但字号和行距保持协调的阅读尺度。
+6. Source 与 Close Reading 可以独立选字体，但字号和行距保持协调的阅读尺度。阅读设置以分组行呈现，当前值同时可见。
 7. 删除 artifact 或 selection 只影响明确确认的对象及其从属数据，并给出可预测的 fallback。
 8. 导入新文本不能删除较早文本；用户可以从 `Reading sessions` 切换回来，并恢复各自的 selection 与 artifact。
 9. 文本标题可以由用户修改，重载后必须保留自定义标题。
 10. 删除文本只级联删除该文本的 selection 与 artifact，其他文本及其工作不受影响。
 11. Reading-session 列表显示每个 session 的 selection 与 reading-entry 数量，帮助用户在切换前判断其中保存了什么。
-12. Reading-session 搜索命中原文时，列表提供短摘录和最后打开时间；用户不必展开全文也能确认目标 session。
+12. Reading-session 列表在未搜索时也显示正文短摘录；搜索命中原文时提供短摘录和最后打开时间，用户不必展开全文也能确认目标 session。
 13. Context Panel 提供当前 session 全部 output 的可筛选索引；从中打开任一 output 会同步切换到其 source。
 14. 导入时可先命名 session；自定义标题优先于文件名或自动生成的标题，并在重载后保留。
+15. 已保存的 selection 在原文中保持可见的 inline 标记；点击标记会打开对应 source。paragraph 与 document scope 不使用 inline 下划线。
+16. Context Panel 在有 active source 时，先展示该 source 的 active output，检索索引在其后。
 
 ## 固定用户旅程
 
@@ -53,7 +55,7 @@
 1. 对第一段执行 Close Read。
 2. 打开 focus mode，确认第一段结果后按 `Escape` 返回。
 3. 对第二段执行 Close Read。
-4. 通过 saved selection 返回第一段。
+4. 通过原文中较早段落的 Close Read source 标记返回第一段。
 
 **必须保持**
 
@@ -111,9 +113,9 @@
 
 **必须保持**
 
-- 遗留任务显示为 `stopped`，不能永远保持运行中。
-- `Retry artifact` 可用。
-- 不再显示 `Stop artifact`，因为旧请求已经不存在。
+- 遗留任务显示为 `Stopped — retry`，不能永远保持运行中。
+- `Try again` 可用。
+- 不再显示 `Stop generating`，因为旧请求已经不存在。
 
 ### WJ-05 移动端返回原文后重新打开结果
 
@@ -146,7 +148,7 @@
 1. 启动第一段 Close Read。
 2. 在第一段尚未完成时启动第二段 Close Read。
 3. 先让第一段流完成，再让第二段流完成。
-4. 返回第一段的 saved selection。
+4. 通过原文中第一段的 Close Read source 标记返回第一段。
 
 **必须保持**
 
@@ -223,13 +225,14 @@
 
 1. 从 `Reading sessions` 新建并粘贴第二篇文本。
 2. 在新建 session 时可选择输入自定义标题。
-3. 再次打开 `Reading sessions`，搜索第二篇原文中的词语，确认短摘录与最后打开时间，并确认第一篇 session 的 reading-entry 数量后切换回来。
+3. 再次打开 `Reading sessions`，确认未搜索时也显示第一篇正文短摘录；搜索第二篇原文中的词语，确认短摘录与最后打开时间，并确认第一篇 session 的 reading-entry 数量后切换回来。
 4. 打开 Context Panel。
 
 **必须保持**
 
 - 新建第二篇文本不会替换或删除第一篇文本。
 - Session 列表显示第一篇文本有一个 reading entry。
+- 未搜索时列表显示正文短摘录，不必打开 session 即可辨认。
 - 原文搜索结果仅显示命中上下文，不显示整篇原文；自定义标题替代自动标题。
 - 切回第一篇文本后恢复其 active source 和已保存的 Close Reading。
 - 切换过程不会重新请求分析。
@@ -252,6 +255,24 @@
 - 索引覆盖当前 session 的所有 output，不受当前 active selection 限制。
 - 搜索命中 output 正文时有明确提示。
 - 打开 output 后，Context Panel 切换到对应 source 并显示该 output。
+
+### WJ-14 从原文中的 saved passage 标记重新打开结果
+
+**前置状态**
+
+- 同一篇 session 有两个 saved selection，其中一个带 complete output；另有一个 paragraph Close Read source。
+- 当前没有 active selection。
+
+**用户动作**
+
+1. 在 Reading Surface 确认两个 selection 都有 inline 标记，而 paragraph Close Read source 没有整段下划线。
+2. 点击第一个 selection 的 inline 标记。
+
+**必须保持**
+
+- 两个 saved selection 在原文中保持可见。
+- paragraph 范围的 Close Read source 不被 inline 下划线。
+- 点击标记后打开对应 source，该标记变为 currently open。
 
 ### WJ-11 重命名文本并在重载后恢复
 
@@ -303,6 +324,7 @@
 
 | 日期 | 说明 |
 | --- | --- |
+| 2026-08-22 | 新增 WJ-14，固定原文 inline passage 标记；WJ-01/WJ-06 改为从 Close Read source 标记返回；WJ-04 使用读者语言状态；WJ-10 增加未搜索时的正文摘录；不变量 15-16 固定原文标记与 Context Panel 输出优先顺序。 |
 | 2026-08-19 | WJ-10 增加导入前命名、原文搜索短摘录和最后打开时间；新增 WJ-13，固定 session-wide output 索引与跨 selection 打开行为。 |
 | 2026-08-09 | 将 library UI 统一为 Reading sessions；WJ-10 增加 selection/entry 数量，WJ-12 更新 session 删除文案。 |
 | 2026-08-02 | 新增 WJ-10 至 WJ-12，固定多文本切换、标题重命名与文档级联删除契约。 |

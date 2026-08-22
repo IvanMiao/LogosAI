@@ -182,7 +182,9 @@ describe('close reading user journeys', () => {
     await user.click(screen.getAllByRole('button', { name: 'Close read paragraph' })[1]);
     expect(await screen.findByText('Analysis of the second paragraph.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open saved selection' }));
+    await user.click(screen.getByRole('button', {
+      name: 'Open Close Read source, has saved work: First paragraph for close reading.',
+    }));
     expect(await screen.findByText('Analysis of the first paragraph.')).toBeInTheDocument();
     expect(screen.queryByText('Analysis of the second paragraph.')).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -343,7 +345,9 @@ describe('close reading user journeys', () => {
     });
     expect(await screen.findByText('Second stream result.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Open saved selection' }));
+    await user.click(screen.getByRole('button', {
+      name: 'Open Close Read source, has saved work: First paragraph for close reading.',
+    }));
     expect(await screen.findByText('First stream result.')).toBeInTheDocument();
     expect(screen.queryByText('Second stream result.')).not.toBeInTheDocument();
   });
@@ -457,7 +461,7 @@ describe('close reading user journeys', () => {
       .toBeInTheDocument();
 
     await user.click(within(contextPanel).getByRole('button', {
-      name: `Delete saved selection: ${savedSelectionAnchor.quote}`,
+      name: `Delete saved Selection: ${savedSelectionAnchor.quote}`,
     }));
     expect(screen.getByText('This permanently removes this selection and 1 attached output.'))
       .toBeInTheDocument();
@@ -638,6 +642,8 @@ describe('close reading user journeys', () => {
     await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
     const library = screen.getByRole('dialog', { name: 'Reading sessions' });
     expect(within(library).getByText(/1 reading entry/)).toBeInTheDocument();
+    expect(within(library).getByText('First paragraph for close reading. Second paragraph for comparison.'))
+      .toBeInTheDocument();
     const searchInput = within(library).getByRole('searchbox', { name: 'Search reading sessions' });
     await user.type(searchInput, 'searchable passage');
     expect(within(library).queryByText('Two paragraph journey')).not.toBeInTheDocument();

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  completeNoteDraft,
   createEmptyArtifactStorage,
   getArtifactsForAnchor,
   getNoteDraft,
@@ -48,6 +49,38 @@ describe('note artifact flow', () => {
 
     expect(getNoteDraft(getArtifactsForAnchor(secondStorage, 'anchor-1'))?.content).toBe('First anchor note');
     expect(getNoteDraft(getArtifactsForAnchor(secondStorage, 'anchor-2'))?.content).toBe('Second anchor note');
+  });
+
+  it('marks a note as finished without discarding its content', () => {
+    const draftStorage = upsertNoteDraft({
+      storage: createEmptyArtifactStorage(),
+      documentId: 'document-1',
+      anchorId: 'anchor-1',
+      content: 'A finished thought.',
+    });
+
+    const nextStorage = completeNoteDraft(draftStorage, 'anchor-1');
+    const note = getArtifactsForAnchor(nextStorage, 'anchor-1')[0];
+
+    expect(getNoteDraft(getArtifactsForAnchor(nextStorage, 'anchor-1'))).toBeNull();
+    expect(note).toMatchObject({
+      type: 'note',
+      content: 'A finished thought.',
+      status: 'complete',
+    });
+  });
+
+  it('removes a blank note instead of keeping an empty finished one', () => {
+    const draftStorage = upsertNoteDraft({
+      storage: createEmptyArtifactStorage(),
+      documentId: 'document-1',
+      anchorId: 'anchor-1',
+      content: '   ',
+    });
+
+    const nextStorage = completeNoteDraft(draftStorage, 'anchor-1');
+
+    expect(getArtifactsForAnchor(nextStorage, 'anchor-1')).toEqual([]);
   });
 
   it('removes one output and its task without disturbing sibling outputs', () => {
