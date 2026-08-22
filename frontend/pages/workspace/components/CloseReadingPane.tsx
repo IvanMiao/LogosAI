@@ -82,7 +82,7 @@ function SourceViewControl({
         type="button"
         size="sm"
         variant="outline"
-        className="hidden xl:inline-flex"
+        className="hidden lg:inline-flex"
         ref={focusButtonRef}
         onClick={onFocus}
       >
@@ -93,7 +93,7 @@ function SourceViewControl({
         type="button"
         size="sm"
         variant="outline"
-        className="xl:hidden"
+        className="lg:hidden"
         onClick={onShowSource}
       >
         <ArrowLeft className="h-4 w-4" />
