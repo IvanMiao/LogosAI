@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
-import { BookOpen, Check, FilePlus2, Pencil, Search, Trash2 } from 'lucide-react';
+import { BookOpen, Check, FilePlus2, Pin, Pencil, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +12,10 @@ import { formatDateTime } from '@/utils/formatters';
 import type { HistoryItem } from '@/types';
 import type { ReadingSessionStats, WorkspaceDocument } from '@/features/reading';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
+import {
+  getSearchContext,
+  getSessionCountLabel,
+} from './sessions-navigation.helpers';
 import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
 
 interface DocumentLibraryDrawerProps {
@@ -20,7 +24,9 @@ interface DocumentLibraryDrawerProps {
   sessionStatsByDocumentId: Record<string, ReadingSessionStats>;
   activeDocumentId: string | null;
   history: HistoryItem[];
+  canPin?: boolean;
   onOpenChange: (open: boolean) => void;
+  onPin?: () => void;
   onOpenDocument: (documentId: string) => void;
   onRenameDocument: (documentId: string, title: string) => void;
   onDeleteDocument: (documentId: string) => void;
@@ -39,7 +45,7 @@ interface DocumentListItemProps {
   onDelete: () => void;
 }
 
-function DocumentListItem({
+export function DocumentListItem({
   document,
   stats,
   isActive,
@@ -165,48 +171,15 @@ function LegacyHistory({
   );
 }
 
-function getSessionCountLabel(visibleCount: number, totalCount: number): string {
-  if (visibleCount === totalCount) {
-    return `${totalCount} ${totalCount === 1 ? 'session' : 'sessions'}`;
-  }
-
-  return `${visibleCount} of ${totalCount} sessions`;
-}
-
-function getTextMatchExcerpt(text: string, query: string): string {
-  const matchIndex = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
-  if (matchIndex < 0) {
-    return '';
-  }
-
-  const excerptStart = Math.max(0, matchIndex - 32);
-  const excerptEnd = Math.min(text.length, matchIndex + query.length + 56);
-  const excerpt = text.slice(excerptStart, excerptEnd).replace(/\s+/g, ' ').trim();
-  const prefix = excerptStart > 0 ? '…' : '';
-  const suffix = excerptEnd < text.length ? '…' : '';
-  return `${prefix}${excerpt}${suffix}`;
-}
-
-function getSearchContext(document: WorkspaceDocument, query: string): string {
-  if (!query) {
-    return '';
-  }
-
-  if (document.title.toLocaleLowerCase().includes(query)) {
-    return 'Title match';
-  }
-
-  const excerpt = getTextMatchExcerpt(document.text, query);
-  return excerpt ? `Text match: “${excerpt}”` : '';
-}
-
 export function DocumentLibraryDrawer({
   open,
   documents,
   sessionStatsByDocumentId,
   activeDocumentId,
   history,
+  canPin = false,
   onOpenChange,
+  onPin,
   onOpenDocument,
   onRenameDocument,
   onDeleteDocument,
@@ -258,10 +231,18 @@ export function DocumentLibraryDrawer({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="left-auto right-0 top-0 h-dvh max-h-dvh max-w-md translate-x-0 translate-y-0 overflow-y-auto p-5">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" aria-hidden="true" />
-              Reading sessions
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" aria-hidden="true" />
+                Reading sessions
+              </DialogTitle>
+              {canPin && onPin ? (
+                <Button type="button" size="sm" variant="outline" onClick={onPin}>
+                  <Pin className="h-4 w-4" aria-hidden="true" />
+                  Pin
+                </Button>
+              ) : null}
+            </div>
             <DialogDescription>
               Find, rename, or switch sessions. Full text opens in the reading workspace.
             </DialogDescription>

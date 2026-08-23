@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { runAnchorSkill, type AnchorSkill } from '@/client-api/anchorApi';
 import { streamAnalysis } from '@/client-api/analysisApi';
 import type { HistoryItem } from '@/types';
@@ -89,6 +89,7 @@ function getArtifactTitleForSkill(skill: AnchorSkill): string {
 
 export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const { userId, hasApiKey, model } = props;
+  const [workspaceActionError, setWorkspaceActionError] = useState('');
   const {
     documentLibrary,
     activeDocument,
@@ -156,7 +157,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   });
   const {
     runArtifactTask,
-    createFailedArtifact,
     stopArtifact,
     abortTasksFor,
   } = useArtifactTasks({ artifactStorage, updateArtifacts });
@@ -270,38 +270,20 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     resetSelectedArtifact();
   };
 
-  const failCloseReadBeforeRequest = (
-    anchor: TextAnchor,
-    title: string,
-    message: string,
-    type: Artifact['type'] = 'close_read',
-  ) => {
-    createFailedArtifact({
-      documentId: anchor.documentId,
-      anchorId: anchor.id,
-      title,
-      message,
-      type,
-    });
-  };
-
   const runCloseRead = async (anchor: TextAnchor, text: string, title: string) => {
     activateAnchor(anchor);
 
     if (!hasApiKey) {
-      failCloseReadBeforeRequest(
-        anchor,
-        title,
-        'Missing Gemini API key. Configure it in Settings.',
-      );
+      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
       return;
     }
+    setWorkspaceActionError('');
 
     await runArtifactTask({
       documentId: anchor.documentId,
       anchorId: anchor.id,
       title,
-      execute: async ({ signal, onChunk }) => {
+      execute: async ({ signal, onChunk, onStage }) => {
         const finalResult = await streamAnalysis(
           {
             model,
@@ -311,7 +293,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           },
           {
             onChunk,
-            onStage: () => undefined,
+            onStage,
           },
         );
         return { content: finalResult };
@@ -328,14 +310,10 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     const title = getArtifactTitleForSkill(skill);
     const artifactType = getArtifactTypeForSkill(skill);
     if (!hasApiKey) {
-      failCloseReadBeforeRequest(
-        anchor,
-        title,
-        'Missing Gemini API key. Configure it in Settings.',
-        artifactType,
-      );
+      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
       return;
     }
+    setWorkspaceActionError('');
 
     await runArtifactTask({
       documentId: activeDocument.id,
@@ -343,7 +321,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       title,
       type: artifactType,
       requestIdPrefix: 'pending',
-      execute: async ({ signal, onChunk, onMetadata }) => {
+      execute: async ({ signal, onChunk, onMetadata, onStage }) => {
         const finalResult = await runAnchorSkill(
           {
             model,
@@ -355,7 +333,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
           },
           {
             onChunk,
-            onStage: () => undefined,
+            onStage: (stage) => onStage(stage),
             onMetadata,
           },
         );
@@ -407,7 +385,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     }
   };
 
-  const runCloseReadParagraph = async (paragraph: DocumentParagraph) => {
+  const runExplainParagraph = async (paragraph: DocumentParagraph) => {
     if (!activeDocument) {
       return;
     }
@@ -421,7 +399,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     });
 
     if (anchor) {
-      await runCloseRead(anchor, paragraph.text, 'Close Read Paragraph');
+      await runAnchorSkillForAnchor(anchor, 'explain');
     }
   };
 
@@ -435,7 +413,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
       ? { quote: activeDocument.text }
       : resolveAnchor(anchor, activeDocument.text);
     if (!resolvedAnchor) {
-      failCloseReadBeforeRequest(anchor, artifact.title, 'Source text changed and this anchor can no longer be resolved.');
+      setWorkspaceActionError('Source text changed and this saved source can no longer be resolved.');
       return;
     }
 
@@ -512,7 +490,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     noteDraftContent,
     anchorMarkStatusById,
     history,
-    workspaceError,
+    workspaceError: workspaceActionError || workspaceError,
     importState,
     readerPreferences,
     analysisLanguage,
@@ -534,7 +512,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     updateNoteDraft,
     runAnchorSkillForActiveAnchor,
     runCloseReadDocument,
-    runCloseReadParagraph,
+    runExplainParagraph,
     stopArtifact,
     retryArtifact,
     openDocument,

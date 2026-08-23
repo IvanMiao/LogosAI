@@ -25,6 +25,8 @@ export interface ReadingSessionStats {
 export interface ReaderPreferences {
   fontFamily: ReaderFontFamily;
   closeReadingFontFamily: ReaderFontFamily;
+  fontLinked: boolean;
   fontSize: number;
   lineSpacing: number;
+  lineWidth: number;
 }

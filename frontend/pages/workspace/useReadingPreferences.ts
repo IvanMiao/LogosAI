@@ -34,7 +34,19 @@ export function useReadingPreferences(userId: string): ReadingPreferences {
     value: ReaderPreferences[Key],
   ) => {
     setReaderPreferences((current) => {
-      const nextPreferences = { ...current, [key]: value };
+      let nextPreferences = { ...current, [key]: value } as ReaderPreferences;
+      if (key === 'fontFamily' && current.fontLinked) {
+        nextPreferences = {
+          ...nextPreferences,
+          closeReadingFontFamily: value as ReaderPreferences['fontFamily'],
+        };
+      }
+      if (key === 'fontLinked' && value === true) {
+        nextPreferences = {
+          ...nextPreferences,
+          closeReadingFontFamily: current.fontFamily,
+        };
+      }
       writeStoredReaderPreferences(nextPreferences, userId);
       return nextPreferences;
     });

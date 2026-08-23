@@ -33,7 +33,7 @@ interface ReadingSurfaceProps {
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
   onSelectAnchor: (anchorId: string) => void;
-  onCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
+  onExplainParagraph: (paragraph: DocumentParagraph) => Promise<void>;
 }
 
 interface AnchorMarkProps {
@@ -70,6 +70,36 @@ function isAnchorStartInParagraph(
 
   return activeAnchor.startOffset >= paragraph.startOffset
     && activeAnchor.startOffset < paragraph.endOffset;
+}
+
+function renderParagraphText(
+  paragraph: DocumentParagraph,
+  activeAnchor: TextAnchor | null,
+): ReactElement | string {
+  if (!activeAnchor || activeAnchor.scope === 'document') {
+    return paragraph.text;
+  }
+
+  const rangeStart = Math.max(activeAnchor.startOffset, paragraph.startOffset);
+  const rangeEnd = Math.min(activeAnchor.endOffset, paragraph.endOffset);
+  if (rangeStart >= rangeEnd) {
+    return paragraph.text;
+  }
+
+  const localStart = rangeStart - paragraph.startOffset;
+  const localEnd = rangeEnd - paragraph.startOffset;
+  return (
+    <>
+      {paragraph.text.slice(0, localStart)}
+      <mark
+        data-active-range="true"
+        className="scroll-mt-40 bg-primary/35 text-inherit outline outline-2 outline-offset-2 outline-border"
+      >
+        {paragraph.text.slice(localStart, localEnd)}
+      </mark>
+      {paragraph.text.slice(localEnd)}
+    </>
+  );
 }
 
 function AnchorMark({
@@ -143,7 +173,7 @@ export function ReadingSurface({
   onRunSkill,
   onStartNote,
   onSelectAnchor,
-  onCloseReadParagraph,
+  onExplainParagraph,
 }: ReadingSurfaceProps): ReactElement {
   const articleRef = useRef<HTMLElement | null>(null);
   const [revealedAnchorId, setRevealedAnchorId] = useState<string | null>(null);
@@ -185,7 +215,7 @@ export function ReadingSurface({
     setRevealedAnchorId(anchorId);
     const scrollTimer = window.setTimeout(() => {
       const source = articleRef.current?.querySelector<HTMLElement>(
-        '[data-active-source="true"]',
+        '[data-active-range="true"], [data-active-source="true"]',
       );
       const prefersReducedMotion = window.matchMedia?.(
         '(prefers-reduced-motion: reduce)',
@@ -246,8 +276,12 @@ export function ReadingSurface({
     >
       <article
         ref={articleRef}
-        className={cn('mx-auto max-w-[780px] text-[#171717]', fontClassName)}
-        style={{ fontSize: `${preferences.fontSize}px`, lineHeight: preferences.lineSpacing }}
+        className={cn('mx-auto text-[#171717]', fontClassName)}
+        style={{
+          fontSize: `${preferences.fontSize}px`,
+          lineHeight: preferences.lineSpacing,
+          maxWidth: `${preferences.lineWidth}px`,
+        }}
         onMouseUp={handleSelection}
         onKeyUp={handleSelection}
       >
@@ -270,10 +304,10 @@ export function ReadingSurface({
               <div className="hidden flex-col items-center gap-2 pt-1 lg:flex">
                 <button
                   type="button"
-                  aria-label="Close read paragraph"
-                  title="Close read paragraph"
+                  aria-label="Explain paragraph"
+                  title="Explain paragraph"
                   onClick={() => {
-                    void onCloseReadParagraph(paragraph);
+                    void onExplainParagraph(paragraph);
                   }}
                   className="flex h-6 w-6 items-center justify-center border-2 border-border bg-background opacity-0 shadow-[2px_2px_0px_0px_var(--border)] transition-opacity hover:bg-primary focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100"
                 >
@@ -292,7 +326,7 @@ export function ReadingSurface({
                 data-paragraph-start={paragraph.startOffset}
                 className="mb-7 whitespace-pre-wrap"
               >
-                {paragraph.text}
+                {renderParagraphText(paragraph, activeAnchor)}
               </p>
             </div>
           );

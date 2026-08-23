@@ -24,9 +24,11 @@ export const MAX_CLOSE_READING_SOURCE_WIDTH = 54;
 
 export const DEFAULT_READER_PREFERENCES: ReaderPreferences = {
   fontFamily: 'serif',
-  closeReadingFontFamily: 'sans',
+  closeReadingFontFamily: 'serif',
+  fontLinked: true,
   fontSize: 18,
   lineSpacing: 1.75,
+  lineWidth: 760,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -105,9 +107,15 @@ function normalizeReaderPreferences(value: unknown): ReaderPreferences | null {
     fontFamily: value.fontFamily,
     closeReadingFontFamily: isReaderFontFamily(value.closeReadingFontFamily)
       ? value.closeReadingFontFamily
-      : DEFAULT_READER_PREFERENCES.closeReadingFontFamily,
+      : value.fontFamily,
+    fontLinked: typeof value.fontLinked === 'boolean'
+      ? value.fontLinked
+      : value.closeReadingFontFamily === value.fontFamily,
     fontSize: value.fontSize,
     lineSpacing: value.lineSpacing,
+    lineWidth: typeof value.lineWidth === 'number'
+      ? value.lineWidth
+      : DEFAULT_READER_PREFERENCES.lineWidth,
   };
 }
 
