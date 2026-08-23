@@ -3,10 +3,13 @@
 .github
 .pytest_cache
 **/__pycache__
+**/.DS_Store
+**/.dev.vars
+**/.wrangler
+**/dist
+**/node_modules
 backend/.venv
 backend/.pytest_cache
 cli
-cloudflare
 docs
-frontend
 L_docs
