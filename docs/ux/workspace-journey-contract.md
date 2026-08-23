@@ -74,6 +74,7 @@
 - 请求范围是整个 document。
 - 创建 document anchor 和 `close_read` artifact。
 - 结果在 Close Reading 分析侧显示并保存。
+- 用户选择旧版本后切换模式再返回，恢复仍有效的已选版本，而非强制跳回最新版本。
 
 ### WJ-04 Close Reading 内直接 Explain
 

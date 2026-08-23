@@ -31,10 +31,15 @@ function getSessionAnchors(
 function getSessionArtifacts(
   artifactStorage: ArtifactStorageState,
   documentId: string,
-): Artifact[] {
+): Array<Omit<Artifact, 'stage'>> {
   return Object.values(artifactStorage.artifactsByAnchorId)
     .flat()
-    .filter((artifact) => artifact.documentId === documentId);
+    .filter((artifact) => artifact.documentId === documentId)
+    .map((artifact) => {
+      const snapshotArtifact = { ...artifact };
+      delete snapshotArtifact.stage;
+      return snapshotArtifact;
+    });
 }
 
 export function buildReadingSessions(

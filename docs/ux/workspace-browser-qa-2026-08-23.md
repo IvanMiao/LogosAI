@@ -49,11 +49,11 @@
 10. 缺少 API key 时不污染 History；
 11. 中断任务恢复为可重试状态。
 
-前端完整结果：17 个测试文件、98 个测试全部通过；ESLint 与生产构建通过。
+前端完整结果：17 个测试文件、100 个测试全部通过；ESLint、TypeScript 与生产构建通过。
 
 ### 认证与云端边界
 
-本地 D1 migrations 已确认无待执行迁移。Cloudflare Worker 的 TypeScript 检查和测试通过：6 个测试文件、15 个测试全部通过，其中包含认证相关契约。
+本地 D1 migrations 已成功应用到 `0002_reader_appearance.sql`。Cloudflare Worker 的 TypeScript 检查和测试通过：7 个测试文件、17 个测试全部通过，其中包含认证和阅读设置契约。
 
 ## 未验证与限制
 

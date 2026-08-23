@@ -167,7 +167,7 @@ export function ReaderWorkspace({
   const openCloseReading = (artifactId?: string) => {
     const entry = artifactId
       ? closeReadingEntries.find(({ artifact }) => artifact.id === artifactId)
-      : defaultCloseReadingEntry;
+      : activeCloseReadingEntry;
     if (entry) {
       view.selectCloseReading(entry.artifact.id);
       actions.openSessionArtifact(entry.artifact.id);

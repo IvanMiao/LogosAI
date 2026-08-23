@@ -180,6 +180,7 @@ export function useArtifactTasks({
         (item) => ({
           ...item,
           status: isAbortError(error) ? 'stopped' : 'failed',
+          stage: undefined,
           errorMessage: isAbortError(error)
             ? undefined
             : error instanceof Error ? error.message : String(error),

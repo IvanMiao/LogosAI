@@ -92,6 +92,16 @@ describe('reading cloud state', () => {
     );
   });
 
+  it('keeps streaming stages out of cloud session snapshots', () => {
+    const local = createLocalState();
+    local.artifactStorage.artifactsByAnchorId['anchor-1'][0].stage = 'interpret';
+
+    const [session] = buildReadingSessions(local);
+
+    expect(session.artifacts[0]).not.toHaveProperty('stage');
+    expect(local.artifactStorage.artifactsByAnchorId['anchor-1'][0].stage).toBe('interpret');
+  });
+
   it('keeps an unsynced local session instead of restoring older cloud data', () => {
     const local = createLocalState();
     const remoteSession = {

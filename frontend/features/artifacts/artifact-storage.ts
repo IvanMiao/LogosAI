@@ -49,7 +49,7 @@ function recoverInterruptedState(state: ArtifactStorageState): ArtifactStorageSt
       anchorId,
       artifacts.map((artifact) => (
         artifact.status === 'running'
-          ? { ...artifact, status: 'stopped' as const }
+          ? { ...artifact, status: 'stopped' as const, stage: undefined }
           : artifact
       )),
     ]),

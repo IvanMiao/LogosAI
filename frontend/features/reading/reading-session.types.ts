@@ -10,7 +10,7 @@ export interface ReadingSessionSnapshot {
   document: WorkspaceDocument;
   activeAnchorId: string | null;
   anchors: TextAnchor[];
-  artifacts: Artifact[];
+  artifacts: Array<Omit<Artifact, 'stage'>>;
 }
 
 export interface WorkspacePreferencesPayload {

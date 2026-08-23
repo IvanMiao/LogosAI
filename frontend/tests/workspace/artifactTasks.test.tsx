@@ -66,7 +66,8 @@ describe('artifact task lifecycle', () => {
     await act(async () => {
       await result.current.runArtifactTask({
         ...TASK_SOURCE,
-        execute: async () => {
+        execute: async ({ onStage }) => {
+          onStage('interpret');
           throw new Error('Network unavailable');
         },
       });
@@ -75,6 +76,7 @@ describe('artifact task lifecycle', () => {
     expect(getOnlyArtifact(result.current.artifactStorage)).toMatchObject({
       status: 'failed',
       errorMessage: 'Network unavailable',
+      stage: undefined,
     });
   });
 
@@ -113,7 +115,8 @@ describe('artifact task lifecycle', () => {
     act(() => {
       taskPromise = result.current.runArtifactTask({
         ...TASK_SOURCE,
-        execute: ({ signal, onChunk }) => new Promise((_, reject) => {
+        execute: ({ signal, onChunk, onStage }) => new Promise((_, reject) => {
+          onStage('interpret');
           onChunk('Partial output');
           signal.addEventListener('abort', () => {
             reject(new DOMException('Cancelled', 'AbortError'));
@@ -138,6 +141,7 @@ describe('artifact task lifecycle', () => {
     expect(getOnlyArtifact(result.current.artifactStorage)).toMatchObject({
       content: 'Partial output',
       status: 'stopped',
+      stage: undefined,
     });
   });
 

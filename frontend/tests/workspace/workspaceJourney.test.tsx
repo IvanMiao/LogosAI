@@ -219,6 +219,40 @@ describe('workspace journey contract', () => {
     expect(screen.queryByText(explanation.content)).not.toBeInTheDocument();
   });
 
+  it('restores the selected Close Reading revision after a mode switch', async () => {
+    const user = userEvent.setup();
+    const latestReading = createArtifact(
+      'latest-close-reading',
+      documentAnchor.id,
+      'close_read',
+      'Latest whole-text interpretation.',
+      '2026-07-21T12:00:00.000Z',
+    );
+    const earlierReading = createArtifact(
+      'earlier-close-reading',
+      documentAnchor.id,
+      'close_read',
+      'Earlier whole-text interpretation.',
+      '2026-07-21T10:00:00.000Z',
+    );
+    seedReadingWork(
+      [documentAnchor],
+      { [documentAnchor.id]: [latestReading, earlierReading] },
+    );
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
+    await user.click(screen.getByRole('button', { name: 'Open Close Reading outputs' }));
+    await user.click(screen.getAllByRole('menuitem')[1]);
+    expect(screen.getByText(earlierReading.content)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Text' }));
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
+
+    expect(screen.getByText(earlierReading.content)).toBeInTheDocument();
+    expect(screen.queryByText(latestReading.content)).not.toBeInTheDocument();
+  });
+
   it('queries History only when opened and supports recent and source order', async () => {
     const user = userEvent.setup();
     const earlierSourceNewer = createArtifact(
