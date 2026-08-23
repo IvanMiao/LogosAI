@@ -1,378 +1,419 @@
-# Workspace 信息架构重构提案
+# Workspace 阅读体验与信息架构基线
 
-- 状态：Exploration；核心产品语义已确认，具体信息架构与 UI 仍待验证
+- 状态：Approved for staged implementation
 - 日期：2026-08-23
 - 分支：`codex/uiux-information-architecture`
-- 目标用户：在桌面端阅读长文本、反复回看选区与解释的深度阅读者
-- 交付物：信息架构诊断、低保真布局、状态模型、分阶段实施与可用性验证计划
-- 设计阶段：低保真探索；本文不修改现有 UX contract
+- 目标用户：阅读长文、对特定文本反复解释，并回看整篇精读的深度阅读者
+- 交付物：已确认产品决策、目标信息架构、低保真布局、状态模型、实施切片和验证计划
+- 实施约束：本文是代码改造基线；具体尺寸、文案和视觉细节仍需在实现中验证
 
-> 阅读方法：本文的“已确认产品决策”是后续设计的约束；其余信息架构、低保真布局和实施分片
-> 仍是待验证假设。两者冲突时，以已确认产品决策为准。
+## 结论
+
+Workspace 不再以一个“什么都能打开”的 `ContextPanel` 组织体验。目标结构是：
+
+1. **Sessions navigation** 只负责跨 session 的创建、搜索、切换和管理；
+2. 打开 session 后，进入明确的 **Text / Close Reading / History** 三种模式；
+3. **Explain** 是 Text 模式中锚定特定原文的当前工作面板，不是第四个顶层模式；
+4. **Close Reading** 是整篇文本的独立深度解读模式；
+5. Close Reading 的原文对照区允许直接 Explain，进入可返回的二级详情；
+6. **History** 只在用户明确打开时查询已保存工作，默认按时间排序，可切换为原文顺序；
+7. **Reading appearance** 默认统一作用于原文和分析，同时允许用户自由调节。
 
 ## 已确认产品决策
-
-- **决策日期：** 2026-08-23
-- **决策状态：** Confirmed
-- **本轮范围：** 只确认产品语义，不批准具体布局或代码实现。
 
 ### 1. Explain 是帮助，也是可积累的理解记录
 
 - Explain 用于加深对特定文本的理解，可作用于选词、选句、选区或段落。
-- Explain 结果不是一次性内容；每次生成后都应自动保存在当前 session。
-- 保存对象必须保留精确原文锚点、生成结果、创建时间与后续版本，并支持一步返回原文。
-- “快速呈现”与“持久保存”是两个独立维度；快速 Explain 不代表临时或可丢弃。
+- 每次生成都自动保存到当前 session，不因关闭面板而丢失。
+- 保存对象必须保留精确原文锚点、生成结果、创建时间和后续版本。
+- 快速呈现与持久保存是两个独立维度；快速 Explain 不代表临时内容。
 
-### 2. Close Read 是整篇文本的独立深度解读技能
+### 2. Close Reading 是整篇文本的独立深度解读技能
 
-- Close Read 不是 Explain 的视觉变体，而是针对整篇文本的深入、细致解读。
-- Close Read 结果自动保存为 session 级分析，与锚定特定文本的 Explain 保持明确区分。
-- 现有 `Close Read paragraph` 与该语义冲突；后续设计需决定将其移除，或重新定义为
-  `Explain paragraph` / `Analyze paragraph`，但本文暂不确定具体控件和文案。
+- Close Reading 不是 Explain 的视觉变体，而是针对整篇文本的深入、细致解读。
+- Close Reading 结果自动保存为 session 级分析。
+- `Close Read paragraph` 与该语义冲突，不再作为 Close Reading 入口。
+- 段落级操作统一归入 `Explain paragraph` / `Analyze paragraph`，最终文案在实现时验证。
 
-### 3. 阅读设置默认统一，但允许用户自由调节
+### 3. 自动保存与查询历史是两种不同行为
 
-- 字体、字号、行距等阅读偏好默认同时作用于原文和 AI 生成的阅读内容。
-- UI 应提供即时预览与更细粒度的可调范围，而不是把大量离散选项堆在长菜单中。
-- 默认保持“原文与分析一致”；如提供分区调整，应在用户主动解除联动后再渐进展开。
-- 后续 UI 探索至少需覆盖真实字体预览、文字大小、行距、行宽、恢复默认和响应式重排。
+- Explain、Close Reading、Translate、Vocabulary 和 note 都属于 session 内阅读工作。
+- 生成或编辑后按各自规则自动保存，不需要“保存到历史”操作。
+- 只有当用户进入当前 session 的 History，并浏览、搜索、筛选或重新打开时，才算查询历史。
+- 当前刚生成或正在查看的 Explain 属于当前工作上下文，不等于 History 模式。
 
-### 4. 自动保存与查询历史是两种不同行为
+### 4. 阅读设置默认统一，但允许用户自由调节
 
-- Explain、Close Read 等已生成的阅读工作自动保存，无需用户执行额外的“保存到历史”操作。
-- 只有当用户打开某个 session 的 History 入口，并对该 session 的已保存内容进行浏览、搜索、
-  筛选或重新打开时，才算“查询历史”。
-- 当前刚生成或正在查看的 Explain 属于当前工作上下文，不等于进入 History 模式。
-- Sessions 导航不应在 session 行下展开 marks、notes 或 outputs；History 是打开 session 后的明确查询界面。
+- 字体、字号、行距和行宽默认同时作用于原文与 AI 生成的阅读内容。
+- UI 提供即时预览和更细粒度的可调范围，不再将大量离散选项堆在长菜单中。
+- 默认保持“原文与分析一致”；用户主动解除联动后，才展开分区调整。
+- 阅读偏好是用户偏好，不属于 History 条目。其持久化作用域在首个实施版本中保持现有用户级行为。
 
-### 由以上决策得出的当前产品骨架
+### 5. 工作区模式与导航层级
 
-```text
-Sessions                  跨 session 创建、搜索、切换和管理
-└── Active session
-    ├── Reader            原文、精确锚点与当前 Explain
-    ├── Close Read        整篇文本的独立深度解读
-    └── History           显式查询该 session 已保存的阅读工作
-
-Reading appearance        默认统一作用于 Reader 与分析内容，可渐进解锁分区调整
-```
-
-`Reader`、`Close Read`、`History` 在此表示已确认的产品职责，不预先规定它们必须实现为 tab、
-sidebar、pane 或独立 route。具体 UI 需通过后续原型与可用性验证决定。
-
-## 结论
-
-当前问题不是侧栏“样式太满”，而是四种不同尺度的对象被放进同一个 `ContextPanel`：
-
-1. 跨文档导航：reading sessions；
-2. 当前文档集合：saved marks、notes、session outputs；
-3. 当前选区操作：Explain、Translate、Vocab、Write note、Delete；
-4. 长内容阅读：Explanation、Translation、Vocabulary、Close Reading。
-
-这些对象拥有不同的作用域、生命周期和空间需求。继续通过排序、accordion 或更多菜单压缩它们，
-只会隐藏复杂度，不会消除复杂度。
-
-建议建立四个明确表面，并禁止职责交叉：
-
-| 表面 | 唯一职责 | 不应包含 |
-| --- | --- | --- |
-| **Sessions** | 在文档之间新建、查找、切换、重命名和删除 | 当前文档的 mark/output 子树、AI 操作、长内容 |
-| **Reader** | 阅读原文并保留 source-linked 标记 | session 搜索、output 全文、批量筛选器 |
-| **Notebook** | 浏览当前文档的 marks、notes 与 outputs 集合 | 跨文档管理、即时 AI 操作 |
-| **Selection inspector** | 操作当前选区，编辑该选区的 note | session-wide 列表、历史全文、无选区时的 dashboard |
-
-所有 AI 长内容都进入独立、可阅读的 **Insight pane**，不再按 artifact 类型决定空间待遇。
-Close Reading、Explanation、Translation 与 Vocabulary 都应获得足够宽度、统一的返回原文路径和
-一致的历史切换行为。
-
-## 为什么现有结构失败
-
-### 1. 作用域混杂
-
-`ContextPanel.tsx` 当前同时渲染文档摘要、整篇 Close Read、Saved marks 搜索与筛选、Session outputs
-搜索与筛选、选区 destructive actions、note editor、artifact history、task controls 和 artifact 正文。
-“Context” 因而无法回答一个最基本的问题：这里显示的是文档、session、选区，还是结果？
-
-### 2. 优先级倒置
-
-用户刚触发 Explain 时，最重要的是答案和回到原文的位置；现有顺序却可能先展示：
-
-```text
-选区引文
-→ Saved marks 搜索 / 筛选 / 列表
-→ Session outputs
-→ Note editor
-→ 当前 artifact
-```
-
-当 saved marks 增长时，用户主动请求的内容会落到首屏之外。把 artifact 移到列表上方只能修复顺序，
-不能修复“集合导航、对象操作、长内容阅读共用 380px”的根因。
-
-### 3. 尺度不匹配
-
-在 1280×720 的当前主线实测中，空 session 已经让 Saved marks 搜索框位于面板中下部，筛选器和空态
-接近视口底部；Session outputs 需要继续滚动。面板宽度固定为 380px，而长篇 Markdown、词汇列表和
-多条历史记录需要的是稳定阅读宽度或 list-detail 布局。
-
-### 4. 状态与入口不一致
-
-本地测试创建三条 paragraph Close Reading 后，工具栏的 “Open context panel” 会重新打开 Close
-Reading pane，而不是 session index。一个入口根据残留的 active artifact 改变目的，用户无法预测
-它会打开“Context”还是“Close Reading”。这不是文案问题，而是 panel state 将导航状态、选区状态和
-阅读状态绑在了一起。
-
-### 5. 原生折叠并没有建立信息架构
-
-`SessionOutputIndex` 使用 `<details>` 默认折叠，但它仍然属于 Context Panel 的滚动与 tab order，
-Saved marks 仍默认展开。折叠只减少初始高度，没有解释两个 collection 为什么属于当前选区的 context。
-
-## 外部模式与适用结论
-
-本提案参考的是结构原则，不复制任何产品的视觉风格。
-
-### Apple HIG：Sidebar 是同级区域导航，不是万能容器
-
-[Apple Sidebars](https://developer.apple.com/design/human-interface-guidelines/sidebars) 将 sidebar 定义为
-应用同级区域或模式的宽而平的信息层级，并建议一般不超过两层；更深层级应使用包含中间内容列表的
-split view。2025-06-09 的更新还强调 sidebar 与内容层的分离。
-
-**用于 LogosAI：** Sessions 可保持平坦；session 的 marks/outputs 不继续嵌套在其下。Notebook 使用
-list-detail，而不是在 380px sidebar 内形成第三层。关键操作不放在可能被窗口底部裁掉的位置。
-
-### VS Code 2026：Container、View、Item 和 Action 必须分层
-
-[VS Code Views](https://code.visualstudio.com/api/ux-guidelines/views) 与
-[Sidebars](https://code.visualstudio.com/api/ux-guidelines/sidebars) 建议最小化 View 数量、不要把 tree item
-当作单一 command、每个 item 不超过三个 actions，并指出 3–5 个 Views 已是多数屏幕的舒适上限。
-[Panel](https://code.visualstudio.com/api/ux-guidelines/panel) 则用于需要更多横向空间的支持性内容。
-
-**用于 LogosAI：** mark 是导航对象，不应同时暴露 delete、AI actions 和全文；二级操作进入对象菜单。
-长 output 进入 Insight pane；Notebook 是 collection view，不与 Selection inspector 叠加。
-
-### Atlassian：Navigation、Main content 与 Contextual panel 是不同布局区域
-
-[Atlassian Layout](https://atlassian.design/components/navigation-system/layout) 将 navigation 与 content
-定义为独立区域；[Panel](https://atlassian.design/components/panel/usage) 明确用于主内容旁的 contextual
-information。旧 Side navigation 已被新 Navigation system 取代，旧 Drawer 也进入弃用路径。
-
-**用于 LogosAI：** 不再继续投资“所有东西都放 drawer/sidebar”的路径。Notebook 应进入 main
-content 或明确的 list-detail workspace；Selection inspector 只呈现当前对象。
-
-### Progressive disclosure：延后次要功能，但保持主路径完整
-
-[Microsoft progressive disclosure guidance](https://learn.microsoft.com/en-us/windows/win32/uxguide/ctrl-progressive-disclosure-controls)
-建议只在相关上下文中显示 detail 与 commands，并降低 secondary affordance 的视觉重量。
-
-**用于 LogosAI：** 删除、历史版本和重试属于对象级次要操作；默认界面只保留当前任务所需操作。
-Notebook 的搜索和筛选仅在用户进入 Notebook 后出现，不能挡在刚生成的答案之前。
-
-### Material 3 Expressive 2026：采用适配思想，不采用装饰趋势
-
-[Material 3](https://m3.material.io/) 在 2026 更新中强调 adaptive components 与 flexible toolbars。
-本项目可借用“根据容器变化而适配”的原则，但不应借机改色彩、字体或引入装饰性 motion；本轮目标是
-结构清晰和阅读连续性，不是视觉换肤。
+- Sessions sidebar 可收起，宽屏可由用户 pin；移动端使用 drawer。
+- Session row 不展开 marks、notes 或 outputs，只呈现识别和切换 session 所需信息。
+- 打开 session 后提供 `Text` / `Close Reading` / `History` 三种稳定模式。
+- Explain 是 Text 模式中的上下文面板，不与 Close Reading 共用同一个无语义的右栏状态。
+- Close Reading 的原文对照区允许直接 Explain。触发后，分析侧暂时进入
+  `Close Reading → Explain selection` 二级详情，返回时恢复原 Close Reading 和阅读位置。
+- History 默认按时间倒序，允许切换为原文顺序。
 
 ## 目标信息架构
 
 ```text
 Workspace
-├── Sessions                         跨文档
-│   ├── Search
-│   ├── New session
-│   └── Session rows                 title / source / last opened / counts
-├── Reader                           当前文档
-│   ├── Source text
-│   ├── Persistent source marks
-│   └── Selection actions            transient, anchored to selection
-├── Notebook                         当前文档集合
-│   ├── Marks
-│   ├── Notes
-│   └── Outputs
-├── Selection inspector              当前选区
-│   ├── Quote + show source
-│   ├── Explain / Translate / Vocab
-│   ├── Note
-│   └── More: delete
-└── Insight pane                     当前长内容
-    ├── Active artifact
-    ├── Revisions
-    ├── Copy / retry / delete
-    └── Back to source / focus
+├── Sessions navigation                 跨 session
+│   ├── Search / New
+│   ├── Session rows                title / last opened / summary
+│   └── Collapse / Pin
+└── Active session
+    ├── Text                             默认模式
+    │   ├── Source text
+    │   ├── Persistent source anchors
+    │   ├── Selection / paragraph actions
+    │   └── Current Explain panel
+    ├── Close Reading                    整篇深度解读
+    │   ├── Source comparison
+    │   ├── Close Reading analysis
+    │   └── Explain selection detail
+    └── History                          session 内查询
+        ├── Search / type filter
+        ├── Sort: recent / source order
+        └── List-detail result view
+
+Reading appearance                           跨模式阅读偏好
 ```
 
-### 对象归属规则
+### 职责边界
 
-| 对象 | 主归属 | 打开后的目标 |
+| 表面 | 唯一职责 | 不应包含 |
 | --- | --- | --- |
-| Document/session | Sessions | Reader |
-| Anchor/mark | Notebook | Reader + Selection inspector |
-| Note | Notebook | Selection inspector 的 note read/edit state |
-| AI artifact | Notebook | Reader + Insight pane |
-| AI command | Selection inspector 或 selection toolbar | Insight pane |
+| Sessions navigation | 创建、搜索、切换和管理 session | session 内 mark/output 子树、AI 正文 |
+| Text | 阅读原文，发起并回看锚定特定文本的工作 | session-wide 搜索和筛选 |
+| Current Explain | 呈现当前锚点的 Explain/Translate/Vocabulary/note | 其他锚点的历史索引、整篇 Close Reading |
+| Close Reading | 整篇文本的深度解读和原文对照 | session 列表、默认历史索引 |
+| Close Reading Explain detail | 解释 Close Reading 原文区的当前选区 | 同时堆叠完整 Close Reading 正文 |
+| History | 查询当前 session 已保存阅读工作 | 新建 AI 任务的主入口 |
+| Reading appearance | 调整阅读排版并即时预览 | artifact 管理和 session 导航 |
 
-## 低保真布局
+## 为什么现有结构失败
 
-### Reader：没有 active selection
+### 1. Context Panel 混合了不同作用域
+
+`ContextPanel.tsx` 同时容纳当前选区、Saved marks、Session outputs、note editor、AI 操作、
+artifact history 和 artifact 正文。当前任务、session 内查询和长内容阅读因而抢占同一个 380px 容器。
+
+### 2. Explain 与 Close Reading 空间不一致，语义却不够清晰
+
+Explanation 被当作小号 history content 塞进 Context Panel，Close Reading 则拥有独立 split/focus 窗格；
+同时系统又提供 `Close Read paragraph`。范围、深度和布局彼此绑定，用户难以预测结果会在哪里打开。
+
+### 3. 当前工作与 History 查询同屏竞争
+
+用户刚请求的 Explain 可能被 Saved marks 搜索、筛选器和 Session outputs 挤出首屏。
+将当前 artifact 移到列表上方只会改变顺序，不会分离“当前工作”与“查询历史”。
+
+### 4. 阅读设置的名称与作用域不一致
+
+当前 Source 与 Close Reading 默认使用不同字体和字号，普通 Explain/Translate/Vocabulary 又不完整遵循
+阅读偏好。用户选择“Reading settings”时，无法通过当前 UI 预测哪些内容会变化。
+
+### 5. 状态由残留 artifact 和多个 boolean 间接推导
+
+工具栏的 `Open context panel` 可以因 active artifact 而打开不同目标。导航模式、当前选区、
+当前 artifact 和 focus state 缺少显式的层级。
+
+## 外部原则与本项目的适用方式
+
+本设计只借用结构和交互原则，不复制任何产品的视觉风格。
+
+- [Apple Sidebars](https://developer.apple.com/design/human-interface-guidelines/sidebars)：Sidebar 适合宽而平的同级导航。
+  **适用：** Sessions 保持平坦，可收起与 pin，不展开 session 内对象树。
+- [Atlassian Layout](https://atlassian.design/components/navigation-system/layout) 与
+  [Panel](https://atlassian.design/components/panel/usage)：Navigation、main content 和 contextual content 是不同区域。
+  **适用：** Explain 可作为 Text 的 contextual panel；History 不进入该 panel。
+- [VS Code Views](https://code.visualstudio.com/api/ux-guidelines/views) 与
+  [Panel](https://code.visualstudio.com/api/ux-guidelines/panel)：Container、view、item 和 action 需要分层。
+  **适用：** Text / Close Reading / History 是 mode；Explain 是当前 source-linked item 的详情。
+- [Microsoft progressive disclosure](https://learn.microsoft.com/en-us/windows/win32/uxguide/ctrl-progressive-disclosure-controls)：
+  只在相关上下文显示 detail 和 secondary commands。
+  **适用：** 字体解除联动、历史版本、删除和重试按需展开。
+- [Apple Typography](https://developer.apple.com/design/human-interface-guidelines/typography) 与
+  [W3C Text Spacing](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing)：文本需响应用户字号和间距偏好。
+  **适用：** Reading appearance 即时反映在原文和分析，布局不依赖固定高度。
+- [Microsoft HAX Guidelines](https://www.microsoft.com/en-us/haxtoolkit/ai-guidelines/)：AI 界面需要清晰的能力范围、
+  调用、取消、纠错和恢复路径。
+  **适用：** Explain 和 Close Reading 使用真实任务状态，失败时保留 source 和原地重试。
+
+## 低保真布局基线
+
+### 1. Text：无当前 Explain
 
 ```text
-┌ Sessions ───────────── Document title ───────── Notebook ─ Settings ┐
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│                         Source text                                 │
-│                   persistent, quiet marks                           │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+┌ Sessions ────────── Session title ── [Text] [Close Reading] [History] [Aa] ┐
+│ session A │                                                               │
+│ session B │                        Source text                            │
+│ session C │                  persistent, quiet anchors                   │
+│           │                                                               │
+└─ collapse └──────────────────────────────────────────────────────────────────┘
 ```
 
-默认不显示空 Context dashboard。整篇 Close Read 属于 Reader toolbar 的文档级 command。
+- Text 是默认模式。
+- 无当前 Explain 时不显示空面板，原文保持合理行长并居中。
+- Sessions 收起后原文重新居中，不留一块无意义空白。
 
-### Reader：active selection
+### 2. Text：当前 Explain
 
 ```text
-┌───────────────────────────────────────────────┬─────────────────────┐
-│ Source text                                   │ Selection           │
-│ selected range remains visibly marked         │ quote               │
-│                                               │ Explain  Translate  │
-│                                               │ Vocab    Note       │
-│                                               │ More…               │
-└───────────────────────────────────────────────┴─────────────────────┘
+┌── Source text 65–70% ───────────────┬─ Current Explain 30–35% ──────┐
+│ exact selection remains highlighted         │ source quote                         │
+│                                               │ explanation / translation / vocab    │
+│                                               │ retry / copy / close                  │
+└───────────────────────────────────────────────┴───────────────────────────────┘
 ```
 
-Selection inspector 不出现 session-wide search、filters 或历史全文。
+- 原文是视觉主体，Explain 不得将原文压缩到不可读行宽。
+- 面板关闭只改变 UI 状态，不删除 artifact。
+- 新选区生成 Explain 时更换当前面板，较早结果保留在 History。
+- 实际 breakpoint 由“原文可读行宽 + Explain 最小宽度”决定，不硬编码为设备名称。
 
-### Reader：active artifact
+### 3. Close Reading：整篇对照
 
 ```text
-┌──────────────────────────────┬──────────────────────────────────────┐
-│ Source text                  │ Insight                              │
-│ active source highlighted    │ readable 55–70ch body                │
-│                              │ history / copy / retry in toolbar    │
-│                              │ Show source / Focus / Close          │
-└──────────────────────────────┴──────────────────────────────────────┘
+┌─ Source comparison 35–45% ───┬─ Close Reading 55–65% ──────────┐
+│ full source document              │ document title / analysis structure       │
+│ linked reading position           │ full close reading                        │
+│ selectable text                   │ focus / versions / copy                   │
+└────────────────────────────────────┴────────────────────────────────────────┘
 ```
 
-所有 artifact 类型使用同一空间规则；Vocabulary 可以在 Insight 内使用适合列表的 variant。
+- 分析是当前模式的视觉主体，与 Text 模式的空间主次相反。
+- 尚无整篇 Close Reading 时，该模式显示能力说明和明确的开始操作。
+- 再次进入恢复上次 Close Reading 版本和阅读位置，不重新生成。
 
-### Notebook：list-detail
+### 4. Close Reading 内直接 Explain
 
 ```text
-┌ Notebook ─ Search ─ Type filter ────────────────────────────────────┐
-├───────────────────────┬─────────────────────────────────────────────┤
-│ Marks / Notes / Output│ Selected source                            │
-│                       │ attached note and outputs                   │
-│ stable list rows      │ Open beside source                         │
-└───────────────────────┴─────────────────────────────────────────────┘
+┌─ Source comparison ─────────┬─ Close Reading > Explain selection ──┐
+│ selected range stays highlighted  │ [Back to Close Reading]                 │
+│                                     │ source quote                            │
+│                                     │ saved explanation                       │
+└───────────────────────────────────┴──────────────────────────────────────┘
 ```
 
-Notebook 是当前 session 的 peer mode，不嵌套在 Sessions 之下。
+- Explain 暂时替换分析侧正文，不将两篇长内容同时堆叠。
+- `Back to Close Reading` 恢复原 Close Reading artifact、版本选择和滚动位置。
+- 该 Explain 按普通 Explain 规则自动保存，也可在 History 中打开。
 
-### Mobile
+### 5. History：显式 list-detail
 
-- Reader 保持单列；选区动作使用轻量 bottom sheet，并保留明确关闭入口。
-- Notebook 使用全屏 list → detail drill-down，不在 390px 内并排两列。
-- Insight 使用全屏阅读，顶栏固定 `Back to text`。
-- 不把 desktop sidebar 简单压缩成 mobile drawer。
+```text
+┌ History ─ [Search] ─ [All types] ─ [Newest first | Source order] ──┐
+├── Saved work list ──────────┬─ Selected result ─────────────┤
+│ source quote / type / time     │ complete output                       │
+│ one stable row per result     │ Open in Text / Show source            │
+└─────────────────────────────────┴────────────────────────────────────┘
+```
 
-## 状态模型
+- 默认为 `Newest first`。
+- `Source order` 使锚定内容按原文 offset 排序；session 级 Close Reading 作为独立类型稳定放置。
+- 打开条目不重新请求 AI。`Open in Text` 切换到 Text，恢复精确 source 和对应 Explain。
 
-面板状态应由明确的互斥 union 表达，而不是由多个 boolean 与残留 artifact ID 推导：
+### 6. Reading appearance
+
+```text
+Reading appearance
+
+Font          [Literary] [Sans] [Mono]       real preview
+Text size     A− ────●──── A+
+Line spacing  Tight ───●─── Loose
+Line width    Narrow ─────●─ Wide
+
+[x] Keep source and analysis matched
+Reset
+```
+
+- 更改后立即反映在当前内容，不需要 Apply。
+- 解除联动后再展开 Source / Analysis 分区控件。
+- 菜单内的字体选项使用实际字体样式预览，不只呈现 Serif/Sans/Mono 字样。
+
+### 7. Mobile
+
+- Sessions 使用 drawer，不占用常驻阅读宽度。
+- Text 保持单列；selection actions 使用底部操作区。
+- Explain 使用全屏详情或可扩展 bottom sheet，顶部固定 `Back to text`。
+- Close Reading 使用全屏分析，在 Source / Analysis 间显式切换。
+- Close Reading 内 Explain 使用 `Back to Close Reading`，不跳回 Text 模式。
+- History 使用 list → detail drill-down，不在窄屏并排两列。
+
+## 显式状态模型
+
+不再由多个 panel boolean 和残留 artifact ID 推导用户所在界面。实施时的类型应表达以下语义：
 
 ```ts
-type WorkspaceSurface =
-  | { kind: 'reader' }
-  | { kind: 'selection'; anchorId: string }
-  | { kind: 'insight'; anchorId: string; artifactId: string; focused: boolean }
-  | { kind: 'notebook'; itemId?: string };
+type WorkspaceMode = 'text' | 'close-reading' | 'history';
+
+type ExplainPaneState =
+  | { kind: 'closed' }
+  | {
+      kind: 'artifact';
+      origin: 'text' | 'close-reading';
+      anchorId: string;
+      artifactId: string;
+    };
+
+type CloseReadingDetailState =
+  | { kind: 'analysis'; artifactId?: string }
+  | {
+      kind: 'explain';
+      closeReadingArtifactId: string;
+      anchorId: string;
+      artifactId: string;
+    };
+
+type HistorySort = 'recent' | 'source';
+
+interface WorkspaceViewState {
+  mode: WorkspaceMode;
+  sessionsNavigation: {
+    open: boolean;
+    pinned: boolean;
+  };
+  explainPane: ExplainPaneState;
+  closeReadingDetail: CloseReadingDetailState;
+  historySort: HistorySort;
+}
 ```
 
-关键不变量：
+### 状态不变量
 
-1. 工具栏 `Notebook` 永远打开 Notebook；不受 active artifact 影响。
-2. `Show source` 永远回到 Reader，并高亮对应 range。
-3. 执行 AI command 永远进入 Insight；不先显示 session collection。
-4. 关闭 Insight 回到其来源：Reader 或 Notebook；不得隐式切换 artifact。
-5. Sessions 切换文档后进入 Reader；不继承上一文档的 inspector/pane 状态。
+1. Sessions 入口始终打开 session 导航，不因 active artifact 改变目标。
+2. 切换 session 后进入 Text，不继承上一 session 的 Explain 或 Close Reading 二级状态。
+3. Text 内执行 Explain 只打开当前 Explain pane，不进入 History。
+4. Close Reading 只表示整篇深度解读；段落级操作不生成 `close_read` artifact。
+5. Close Reading 内 Explain 保留 origin；返回时恢复原 Close Reading artifact、revision 和阅读位置。
+6. History 首次进入默认按时间倒序；用户可显式切换为原文顺序。
+7. `Show source` / `Open in Text` 始终定位并高亮精确 range，不只高亮所在段落。
+8. 关闭面板、切换模式或移动端返回不删除已保存 artifact。
+9. Reading appearance 默认同时影响 source 与 analysis，不再为 Close Reading 暗中减小字号。
 
 ## 实施切片
 
-### Slice 1：建立职责边界
+每个切片使用独立原子提交。不在同一提交中同时进行大范围组件重命名、数据模型改造和视觉换肤。
 
-- 从 `ContextPanel` 移除 `SelectionIndex` 和 `SessionOutputIndex`。
-- 将无 active selection 的 Context dashboard 删除；整篇 Close Read 放回 document-level command。
-- 将 `ContextPanel` 重命名为面向对象的 `SelectionInspector`。
-- 用 discriminated union 替代 panel booleans 与 artifact ID 的组合推导。
+### Slice 1：建立模式导航与显式状态
 
-### Slice 2：统一长内容表面
+- 在 session header 建立 Text / Close Reading / History 稳定入口。
+- 以 discriminated union 替代 `useWorkspacePanels` 中由 boolean 和 artifact ID 组合推导的主模式。
+- 将 Sessions 导航与 session 内对象解耦，保留现有搜索、重命名、删除和恢复能力。
+- 实现 desktop collapse/pin 与 mobile drawer 状态，不在 session row 下展开 artifacts。
+- 在同一切片中同步 `workspace-journey-contract.md` 和对应 journey tests。
 
-- 将当前 `CloseReadingPane` 泛化为 `InsightPane`。
-- Explanation、Translation、Vocabulary 和 Close Reading 共享 resizable split、focus、copy、history 与
-  source reveal。
-- artifact-specific renderer 只负责内容形态，不改变容器层级。
+### Slice 2：Text 模式与 Current Explain
 
-### Slice 3：建立 Notebook
+- 从 `ContextPanel` 抽出只负责当前锚点的 Explain pane。
+- Explain、Translate、Vocabulary 和 note 使用同一 source-linked 容器，但保留各自 renderer。
+- 保留精确 source range；从 artifact 返回时定位到精确选区。
+- 将 `Close Read paragraph` 改为段落 Explain 语义，移动端提供等价入口。
+- 删除无 active source 时的 Context dashboard。
 
-- 复用现有 Saved marks 与 Session outputs 的过滤逻辑，改为 main-area list-detail。
-- 增加明确的 `Notebook` toolbar 入口与 active state。
-- 保留当前 WJ-13 的“跨 selection 查找 output”能力，但把入口从 Context 移到 Notebook。
+### Slice 3：整篇 Close Reading 模式
 
-### Slice 4：强化 source linkage
+- Close Reading 仅通过整篇 document command 创建。
+- 保留现有 streaming、retry、stop、revision、copy、split 和 focus 能力。
+- 调整布局为 source 35–45% / analysis 55–65% 的主次关系，具体临界由内容压力测决定。
+- 允许在 source comparison 直接 Explain，分析侧进入可返回的二级详情。
+- 保留并恢复 Close Reading artifact、revision 与滚动位置。
 
-- 在原文保留安静、持久的 inline anchor 标记。
-- Notebook/Insight 的 `Show source` 统一滚动并高亮精确 range。
-- 移动端提供等价返回路径。
+### Slice 4：History 查询界面
 
-每个 slice 单独 PR，不同时做视觉换肤、数据模型重写或依赖升级。
+- 复用现有 Saved marks 和 Session outputs 的搜索/筛选逻辑，移入 main-area list-detail。
+- 默认按 `updatedAt/createdAt` 时间倒序，增加 source offset 排序。
+- 每条结果显示 source quote、artifact type、time 和稳定摘要。
+- `Open in Text` 恢复对应 source 与 artifact，不重新请求。
+- 删除 Context Panel 中的 SessionOutputIndex 与 SelectionIndex。
 
-## 需要修改的 UX contract
+### Slice 5：Reading appearance
 
-进入实现时应显式更新 `workspace-journey-contract.md`：
+- 将现有长 dropdown 改为带即时预览的设置面板。
+- 默认将字体、字号、行距和行宽统一应用于 source 和 analysis。
+- 移除 Close Reading 字号暗中减 2px 的行为。
+- 为字体提供真实预览，确保中文、拉丁文和日文 fallback 可预测。
+- 解除联动属于渐进展开；如现有数据结构不支持，先交付统一设置，再独立增加分区偏好。
 
-- 不变量 3 改为 Selection inspector 只显示一个 active source；artifact 全文由 Insight pane 承担。
-- 不变量 13 / WJ-13 的 session-wide output index 从 Context Panel 移到 Notebook。
-- WJ-02、WJ-03、WJ-05 的入口从 “Open Context Panel” 拆成 Selection / Insight 的明确入口。
-- 新增：Notebook 按钮目的不随 active artifact 改变。
-- 新增：AI action 后 artifact 标题与正文在无需纵向滚动的情况下可见。
+### Slice 6：删除旧面板与强化失败路径
 
-## 可用性验证计划
+- 所有转移完成后删除 `ContextPanel` 和旧 panel toggle 语义。
+- 消费已存在的 streaming stage，不再为所有 artifact 显示 `Reading closely…`。
+- 缺少 API key 时在发起前给出可操作的修复入口，不创建污染 History 的失败 artifact。
+- 保留 selection/source，允许原地 retry、stop 和 copy trace。
+- 完成键盘、200% zoom、字符串增长和 390px 移动端验证。
 
-先用 5–8 名目标读者测试低保真 prototype，再合并完整实现。
+## UX contract 迁移规则
+
+`docs/ux/workspace-journey-contract.md` 与 `frontend/tests/workspace/workspaceJourney.test.tsx` 是一对可执行规范。
+本文不提前修改当前 Active contract；每个实施切片在改变行为时，必须在同一提交中更新测试与文档。
+
+预计迁移：
+
+- 将所有 `Open Context Panel` 旅程改为明确的 Text Explain、Close Reading 或 History 入口。
+- 将 paragraph Close Reading 旅程迁移为 paragraph Explain。
+- 将 session-wide output index 从 Context Panel 迁移到 History。
+- 将 Source / Close Reading 独立字体 contract 改为默认统一的 Reading appearance contract。
+- 新增 Close Reading 内 Explain，并返回原 Close Reading artifact/revision/scroll position 的旅程。
+- 新增 History 默认时间倒序与 source order 切换旅程。
+- 新增 sidebar collapse/pin 和 mobile drawer 等价导航旅程。
+
+## 可用性与 QA 验证计划
+
+### 核心任务
 
 | 任务 | 成功标准 | 时间目标 |
 | --- | --- | --- |
-| 切换到一篇较早文档 | 不进入 mark/output 子层级 | 15 秒内 |
-| 找到当前文档另一选区的旧解释 | 首次选择正确表面 ≥ 90% | 20 秒内 |
-| 选中文本并请求 Explain | artifact 标题与正文无需面板内长滚动即可看到 | 20 秒内看到明确状态 |
-| 从解释回到精确原文 | 一次明确操作完成 | 5 秒内 |
-| 找到并编辑自己的 note | 不把 note 误判为未保存 draft | 20 秒内 |
+| 收起 Sessions 并继续阅读 | 原文重新居中，session 入口仍可预测 | 5 秒内 |
+| 选中文本并 Explain | 精确选区保持高亮，当前 Explain 可见并自动保存 | 20 秒内看到明确状态 |
+| 开始并重新打开整篇 Close Reading | 进入独立模式，重开不重新请求 | 入口选择无误 |
+| 在 Close Reading 原文中 Explain | 解释保存，一次操作返回原 Close Reading 位置 | 10 秒内完成返回 |
+| 在 History 查找旧 Explain | 默认按时间，可切 source order，打开后恢复原文 | 20 秒内 |
+| 调整阅读字体、字号和行宽 | 原文与分析即时统一变化，无裁切或水平滚动 | 10 秒内 |
 
-记录 task completion、time on task、错误打开的表面数、backtrack 次数和 SUS；SUS 目标至少 68。
-任何任务中若超过 20% 用户把 Sessions 当成 session 内对象浏览器，说明 IA 仍未成立。
+### 测量与阈值
+
+- 5–8 名目标读者的任务完成率目标 `≥ 85%`。
+- 记录 time on task、错误模式切换、backtrack 次数和首次入口选择。
+- SUS 目标至少 68；核心阅读流目标超过 80。
+- 任一核心任务若有超过 20% 用户进入错误模式，不应继续扩大实施范围。
+
+### 工程验证
+
+每个 frontend 切片从 `frontend/` 运行：
+
+- `npm run lint`
+- `npm test`
+- `npm run build`
+
+浏览器 QA 至少覆盖：
+
+- 390px 移动端、1280px 桌面端和宽屏 pin/collapse；
+- 键盘 selection actions、mode navigation、History sort 和返回路径；
+- 200% zoom、长标题、法语/德语 UI 字符串增长与中文原文；
+- streaming、stop、retry、缺少 API key 和 source 无法解析的失败路径。
 
 ## QA 环境记录
 
-### 线上注册流程
+- 2026-08-23 已在生产 Cloudflare Worker 完成新测试账号注册，注册后自动进入 `/app`。
+- 已在本地 Wrangler + D1 环境使用等价账号完成注册与 session 创建。
+- 当前主线在 1280×720 下复现 Context 职责混杂、首屏裁切和 active artifact 影响面板入口的问题。
+- 仓库不记录测试账号密码；精确凭据与部署细节保留在 Git 之外。
 
-- 日期：2026-08-23
-- 地址：`https://logosai-cloud.ymiao.workers.dev`
-- 测试账号：`codex-uiux-20260823@logosai.test`
-- 结果：email/password 注册成功，自动建立 session 并跳转 `/app`
-- 测试数据：创建一篇无个人信息的英文阅读 session
-- 密码：**有意不写入仓库或 Git 历史**
+## 明确不做
 
-### 当前主线本地验证
-
-- 地址：`http://127.0.0.1:8787`
-- 数据库：Wrangler local D1，gitignored
-- 测试账号：与线上测试邮箱相同，仅存在于本地 D1
-- 测试 session：`UI architecture pressure test`
-- viewport：1280×720
-- 结果：注册成功；空 Context 已出现职责混杂和首屏裁切；三条 paragraph Close Reading 后，
-  Context toolbar 入口受 active artifact 影响而重新打开 Close Reading pane
-- 密码：**有意不写入仓库或 Git 历史**
-
-## 本轮明确不做
-
-- 不复用已关闭 PR 29 的大范围修补实现。
-- 不用更多 accordion、tabs 或图标继续压缩现有 ContextPanel。
-- 不改变颜色、字体、brutalist 视觉语言或引入新依赖。
-- 不在没有 prototype 测试前一次性实现四个 slice。
+- 不恢复已关闭 PR 28/29 的实现。
+- 不在 Sessions row 下嵌套 marks、notes 和 outputs。
+- 不使用更多 accordion、tabs 或图标压缩旧 ContextPanel。
+- 不让 Explain 与 Close Reading 共用一个无作用域的通用右栏。
+- 不保留 paragraph Close Reading 的产品语义。
+- 不在 History 查询界面中承担当前 Explain 的主呈现。
+- 不改变现有 brutalist 视觉语言，不引入新依赖，不在同一切片中顺便视觉换肤。
+- 不在一个 PR 中一次性实现所有切片。
