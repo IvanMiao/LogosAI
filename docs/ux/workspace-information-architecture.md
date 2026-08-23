@@ -1,11 +1,64 @@
 # Workspace 信息架构重构提案
 
-- 状态：Exploration，等待产品确认后再进入实现
+- 状态：Exploration；核心产品语义已确认，具体信息架构与 UI 仍待验证
 - 日期：2026-08-23
 - 分支：`codex/uiux-information-architecture`
 - 目标用户：在桌面端阅读长文本、反复回看选区与解释的深度阅读者
 - 交付物：信息架构诊断、低保真布局、状态模型、分阶段实施与可用性验证计划
 - 设计阶段：低保真探索；本文不修改现有 UX contract
+
+> 阅读方法：本文的“已确认产品决策”是后续设计的约束；其余信息架构、低保真布局和实施分片
+> 仍是待验证假设。两者冲突时，以已确认产品决策为准。
+
+## 已确认产品决策
+
+- **决策日期：** 2026-08-23
+- **决策状态：** Confirmed
+- **本轮范围：** 只确认产品语义，不批准具体布局或代码实现。
+
+### 1. Explain 是帮助，也是可积累的理解记录
+
+- Explain 用于加深对特定文本的理解，可作用于选词、选句、选区或段落。
+- Explain 结果不是一次性内容；每次生成后都应自动保存在当前 session。
+- 保存对象必须保留精确原文锚点、生成结果、创建时间与后续版本，并支持一步返回原文。
+- “快速呈现”与“持久保存”是两个独立维度；快速 Explain 不代表临时或可丢弃。
+
+### 2. Close Read 是整篇文本的独立深度解读技能
+
+- Close Read 不是 Explain 的视觉变体，而是针对整篇文本的深入、细致解读。
+- Close Read 结果自动保存为 session 级分析，与锚定特定文本的 Explain 保持明确区分。
+- 现有 `Close Read paragraph` 与该语义冲突；后续设计需决定将其移除，或重新定义为
+  `Explain paragraph` / `Analyze paragraph`，但本文暂不确定具体控件和文案。
+
+### 3. 阅读设置默认统一，但允许用户自由调节
+
+- 字体、字号、行距等阅读偏好默认同时作用于原文和 AI 生成的阅读内容。
+- UI 应提供即时预览与更细粒度的可调范围，而不是把大量离散选项堆在长菜单中。
+- 默认保持“原文与分析一致”；如提供分区调整，应在用户主动解除联动后再渐进展开。
+- 后续 UI 探索至少需覆盖真实字体预览、文字大小、行距、行宽、恢复默认和响应式重排。
+
+### 4. 自动保存与查询历史是两种不同行为
+
+- Explain、Close Read 等已生成的阅读工作自动保存，无需用户执行额外的“保存到历史”操作。
+- 只有当用户打开某个 session 的 History 入口，并对该 session 的已保存内容进行浏览、搜索、
+  筛选或重新打开时，才算“查询历史”。
+- 当前刚生成或正在查看的 Explain 属于当前工作上下文，不等于进入 History 模式。
+- Sessions 导航不应在 session 行下展开 marks、notes 或 outputs；History 是打开 session 后的明确查询界面。
+
+### 由以上决策得出的当前产品骨架
+
+```text
+Sessions                  跨 session 创建、搜索、切换和管理
+└── Active session
+    ├── Reader            原文、精确锚点与当前 Explain
+    ├── Close Read        整篇文本的独立深度解读
+    └── History           显式查询该 session 已保存的阅读工作
+
+Reading appearance        默认统一作用于 Reader 与分析内容，可渐进解锁分区调整
+```
+
+`Reader`、`Close Read`、`History` 在此表示已确认的产品职责，不预先规定它们必须实现为 tab、
+sidebar、pane 或独立 route。具体 UI 需通过后续原型与可用性验证决定。
 
 ## 结论
 
@@ -323,4 +376,3 @@ type WorkspaceSurface =
 - 不用更多 accordion、tabs 或图标继续压缩现有 ContextPanel。
 - 不改变颜色、字体、brutalist 视觉语言或引入新依赖。
 - 不在没有 prototype 测试前一次性实现四个 slice。
-
