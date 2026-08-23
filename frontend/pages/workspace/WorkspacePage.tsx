@@ -6,6 +6,7 @@ import { useUserSettings } from '@/features/user-settings';
 import {
   DocumentLibraryDrawer,
   ImportPanel,
+  PinnedSessionsSidebar,
   ReaderWorkspace,
   WorkspaceHeader,
 } from './components';
@@ -47,32 +48,27 @@ export function WorkspacePage({
   const workspace = useWorkspace(workspaceProps);
   const isDesktopViewport = useWorkspaceViewport();
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-  const [isDesktopContextOpen, setIsDesktopContextOpen] = useState(false);
-  const [isMobileContextOpen, setIsMobileContextOpen] = useState(false);
+  const sessionsPinnedStorageKey = `logosai.workspace.sessionsPinned:v1:${workspaceProps.userId}`;
+  const [isSessionsPinned, setIsSessionsPinned] = useState(() => (
+    window.localStorage.getItem(sessionsPinnedStorageKey) === 'true'
+  ));
   const [noteEditorAnchorId, setNoteEditorAnchorId] = useState<string | null>(null);
 
-  const openContextPanel = () => {
-    if (isDesktopViewport) {
-      setIsDesktopContextOpen(true);
-      return;
-    }
-
-    setIsMobileContextOpen(true);
+  const updateSessionsPinned = (pinned: boolean) => {
+    setIsSessionsPinned(pinned);
+    window.localStorage.setItem(sessionsPinnedStorageKey, String(pinned));
   };
 
   const handleRunSkill = (skill: AnchorSkill) => {
-    openContextPanel();
     void workspace.runAnchorSkillForActiveAnchor(skill);
   };
 
   const handleRunPendingSelectionSkill = (skill: AnchorSkill) => {
-    openContextPanel();
     void workspace.runAnchorSkillForPendingSelection(skill);
   };
 
   const handleStartNote = () => {
     setNoteEditorAnchorId(workspace.activeAnchor?.id ?? null);
-    openContextPanel();
   };
 
   const handleStartPendingSelectionNote = () => {
@@ -82,7 +78,6 @@ export function WorkspacePage({
     }
 
     setNoteEditorAnchorId(anchor.id);
-    openContextPanel();
   };
 
   const handleClearActiveAnchor = () => {
@@ -116,7 +111,7 @@ export function WorkspacePage({
     deleteAnchor: workspace.deleteAnchor,
     updateNoteDraft: workspace.updateNoteDraft,
     runCloseReadDocument: workspace.runCloseReadDocument,
-    runCloseReadParagraph: workspace.runCloseReadParagraph,
+    runExplainParagraph: workspace.runExplainParagraph,
     stopArtifact: workspace.stopArtifact,
     showSelectionActions: workspace.showSelectionActions,
     dismissSelectionToolbar: workspace.dismissSelectionToolbar,
@@ -141,42 +136,62 @@ export function WorkspacePage({
           {workspace.workspaceError}
         </p>
       ) : null}
-      <main id="main-content" data-route-focus tabIndex={-1}>
-        {readerWorkspaceState ? (
-          <ReaderWorkspace
-            reading={readerWorkspaceState}
-            actions={readerWorkspaceActions}
-            isDesktopViewport={isDesktopViewport}
-            isDesktopContextOpen={isDesktopContextOpen}
-            isMobileContextOpen={isMobileContextOpen}
-            noteEditorAnchorId={noteEditorAnchorId}
-            onDesktopContextOpenChange={setIsDesktopContextOpen}
-            onMobileContextOpenChange={setIsMobileContextOpen}
-            onRunSkill={handleRunSkill}
-            onStartNote={handleStartNote}
-            onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
-            onStartPendingSelectionNote={handleStartPendingSelectionNote}
-            onClearActiveAnchor={handleClearActiveAnchor}
-            onRetryArtifact={handleRetryArtifact}
-            onOpenLibrary={() => setIsLibraryOpen(true)}
+      <div className="flex min-w-0 items-start">
+        {isDesktopViewport && isSessionsPinned ? (
+          <PinnedSessionsSidebar
+            documents={workspace.documents}
+            sessionStatsByDocumentId={workspace.sessionStatsByDocumentId}
+            activeDocumentId={workspace.activeDocument?.id ?? null}
+            onCollapse={() => updateSessionsPinned(false)}
+            onOpenDocument={workspace.openDocument}
+            onRenameDocument={workspace.renameDocument}
+            onDeleteDocument={workspace.deleteDocument}
+            onStartNewDocument={workspace.startNewDocument}
           />
-        ) : (
-          <ImportPanel
-            importState={workspace.importState}
-            onPasteTextChange={workspace.setPasteText}
-            onSessionTitleChange={workspace.setSessionTitle}
-            onImportPastedText={workspace.importPastedText}
-            onImportTextFile={workspace.importTextFile}
-          />
-        )}
-      </main>
+        ) : null}
+        <main id="main-content" data-route-focus tabIndex={-1} className="min-w-0 flex-1">
+          {readerWorkspaceState ? (
+            <ReaderWorkspace
+              key={readerWorkspaceState.activeDocument.id}
+              reading={readerWorkspaceState}
+              actions={readerWorkspaceActions}
+              isDesktopViewport={isDesktopViewport}
+              isSessionsNavigationPinned={isDesktopViewport && isSessionsPinned}
+              noteEditorAnchorId={noteEditorAnchorId}
+              onRunSkill={handleRunSkill}
+              onStartNote={handleStartNote}
+              onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
+              onStartPendingSelectionNote={handleStartPendingSelectionNote}
+              onClearActiveAnchor={handleClearActiveAnchor}
+              onRetryArtifact={handleRetryArtifact}
+              onOpenLibrary={() => {
+                if (isDesktopViewport && isSessionsPinned) updateSessionsPinned(false);
+                else setIsLibraryOpen(true);
+              }}
+            />
+          ) : (
+            <ImportPanel
+              importState={workspace.importState}
+              onPasteTextChange={workspace.setPasteText}
+              onSessionTitleChange={workspace.setSessionTitle}
+              onImportPastedText={workspace.importPastedText}
+              onImportTextFile={workspace.importTextFile}
+            />
+          )}
+        </main>
+      </div>
       <DocumentLibraryDrawer
         open={isLibraryOpen}
         documents={workspace.documents}
         sessionStatsByDocumentId={workspace.sessionStatsByDocumentId}
         activeDocumentId={workspace.activeDocument?.id ?? null}
         history={workspace.history}
+        canPin={isDesktopViewport && !isSessionsPinned}
         onOpenChange={setIsLibraryOpen}
+        onPin={() => {
+          updateSessionsPinned(true);
+          setIsLibraryOpen(false);
+        }}
         onOpenDocument={workspace.openDocument}
         onRenameDocument={workspace.renameDocument}
         onDeleteDocument={workspace.deleteDocument}

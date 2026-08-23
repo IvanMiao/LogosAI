@@ -1,11 +1,13 @@
 import { useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
 import {
   BookOpen,
-  Check,
   Eraser,
+  FileText,
+  History,
   Languages,
-  PanelRight,
+  PanelLeftClose,
   Pencil,
+  ScanText,
   SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +15,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -25,12 +26,13 @@ import {
 } from '@/components/ui/select';
 import type {
   AnalysisLanguage,
-  ReaderFontFamily,
   ReaderPreferences,
   WorkspaceDocument,
 } from '@/features/reading';
 import { cn } from '@/utils/className';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
+import type { WorkspaceMode } from '../useWorkspaceViewState';
+import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';
 
 const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [
   { label: '中文', value: 'zh' },
@@ -42,39 +44,64 @@ const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage 
   { label: '日本語', value: 'ja' },
 ];
 
-const FONT_OPTIONS: Array<{ label: string; value: ReaderFontFamily }> = [
-  { label: 'Serif', value: 'serif' },
-  { label: 'Sans', value: 'sans' },
-  { label: 'Mono', value: 'mono' },
-];
-
-const SIZE_OPTIONS = [
-  { label: 'Small', value: 16 },
-  { label: 'Medium', value: 18 },
-  { label: 'Large', value: 20 },
-];
-
-const SPACING_OPTIONS = [
-  { label: 'Compact', value: 1.5 },
-  { label: 'Comfortable', value: 1.75 },
-  { label: 'Loose', value: 2 },
-];
-
 interface ReaderToolbarProps {
   activeDocument: WorkspaceDocument;
   preferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
-  isContextPanelOpen: boolean;
-  isDeepReadingOpen: boolean;
+  mode: WorkspaceMode;
+  isSessionsNavigationPinned: boolean;
   onPreferenceChange: <Key extends keyof ReaderPreferences>(
     key: Key,
     value: ReaderPreferences[Key],
   ) => void;
   onAnalysisLanguageChange: (language: AnalysisLanguage) => void;
-  onContextPanelToggle: () => void;
+  onModeChange: (mode: WorkspaceMode) => void;
   onClearDocument: () => void;
   onOpenLibrary: () => void;
   onRenameDocument: (title: string) => void;
+}
+
+const MODE_OPTIONS = [
+  { icon: FileText, label: 'Text', value: 'text' },
+  { icon: ScanText, label: 'Close Reading', value: 'close-reading' },
+  { icon: History, label: 'History', value: 'history' },
+] satisfies Array<{
+  icon: typeof FileText;
+  label: string;
+  value: WorkspaceMode;
+}>;
+
+function WorkspaceModeNavigation({
+  mode,
+  onModeChange,
+}: Pick<ReaderToolbarProps, 'mode' | 'onModeChange'>): ReactElement {
+  return (
+    <div
+      className="order-3 grid w-full grid-cols-3 border-2 border-border bg-background sm:order-none sm:w-auto"
+      role="group"
+      aria-label="Workspace mode"
+    >
+      {MODE_OPTIONS.map((option) => {
+        const Icon = option.icon;
+        const isActive = mode === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={isActive}
+            className={cn(
+              'flex min-h-11 items-center justify-center gap-2 border-e-2 border-border px-3 text-xs font-black last:border-e-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              isActive ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary/40',
+            )}
+            onClick={() => onModeChange(option.value)}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            <span>{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function EditableDocumentTitle({
@@ -167,122 +194,26 @@ function AnalysisLanguageSelect({
   );
 }
 
-interface PreferenceItemProps {
-  accessibleLabel: string;
-  isSelected: boolean;
-  label: string;
-  onSelect: () => void;
-}
-
-function PreferenceItem({
-  accessibleLabel,
-  isSelected,
-  label,
-  onSelect,
-}: PreferenceItemProps): ReactElement {
-  return (
-    <DropdownMenuItem
-      aria-label={accessibleLabel}
-      className="justify-between"
-      onSelect={(event) => {
-        event.preventDefault();
-        onSelect();
-      }}
-    >
-      <span>{label}</span>
-      {isSelected ? <Check className="h-4 w-4" /> : null}
-    </DropdownMenuItem>
-  );
-}
-
-interface FontPreferenceItemsProps {
-  accessiblePrefix: string;
-  heading: string;
-  selectedFont: ReaderFontFamily;
-  onSelectFont: (fontFamily: ReaderFontFamily) => void;
-}
-
-function FontPreferenceItems({
-  accessiblePrefix,
-  heading,
-  selectedFont,
-  onSelectFont,
-}: FontPreferenceItemsProps): ReactElement {
-  return (
-    <>
-      <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">
-        {heading}
-      </p>
-      {FONT_OPTIONS.map((option) => (
-        <PreferenceItem
-          key={option.value}
-          accessibleLabel={`${accessiblePrefix}: ${option.label}`}
-          label={option.label}
-          isSelected={selectedFont === option.value}
-          onSelect={() => onSelectFont(option.value)}
-        />
-      ))}
-    </>
-  );
-}
-
 function ReadingSettingsMenu({
   preferences,
   onPreferenceChange,
 }: Pick<ReaderToolbarProps, 'preferences' | 'onPreferenceChange'>): ReactElement {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-11 w-11"
-          aria-label="Reading settings"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <FontPreferenceItems
-          accessiblePrefix="Source font"
-          heading="Source font"
-          selectedFont={preferences.fontFamily}
-          onSelectFont={(fontFamily) => onPreferenceChange('fontFamily', fontFamily)}
-        />
-        <DropdownMenuSeparator />
-        <FontPreferenceItems
-          accessiblePrefix="Close Reading font"
-          heading="Close Reading font"
-          selectedFont={preferences.closeReadingFontFamily}
-          onSelectFont={(fontFamily) => (
-            onPreferenceChange('closeReadingFontFamily', fontFamily)
-          )}
-        />
-        <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">Size</p>
-        {SIZE_OPTIONS.map((option) => (
-          <PreferenceItem
-            key={option.value}
-            accessibleLabel={`Text size: ${option.label}`}
-            label={option.label}
-            isSelected={preferences.fontSize === option.value}
-            onSelect={() => onPreferenceChange('fontSize', option.value)}
-          />
-        ))}
-        <DropdownMenuSeparator />
-        <p className="px-2 py-1 text-xs font-black uppercase tracking-wide text-muted-foreground">Spacing</p>
-        {SPACING_OPTIONS.map((option) => (
-          <PreferenceItem
-            key={option.value}
-            accessibleLabel={`Line spacing: ${option.label}`}
-            label={option.label}
-            isSelected={preferences.lineSpacing === option.value}
-            onSelect={() => onPreferenceChange('lineSpacing', option.value)}
-          />
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <ReadingAppearanceDialog
+      preferences={preferences}
+      onPreferenceChange={onPreferenceChange}
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-11 w-11"
+        aria-label="Reading appearance"
+        title="Reading appearance"
+      >
+        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+      </Button>
+    </ReadingAppearanceDialog>
   );
 }
 
@@ -290,23 +221,21 @@ export function ReaderToolbar({
   activeDocument,
   preferences,
   analysisLanguage,
-  isContextPanelOpen,
-  isDeepReadingOpen,
+  mode,
+  isSessionsNavigationPinned,
   onPreferenceChange,
   onAnalysisLanguageChange,
-  onContextPanelToggle,
+  onModeChange,
   onClearDocument,
   onOpenLibrary,
   onRenameDocument,
 }: ReaderToolbarProps): ReactElement {
-  const panelButtonLabel = isContextPanelOpen ? 'Close context panel' : 'Open context panel';
-
   return (
     <div className="sticky top-0 z-20 border-b-2 border-border bg-card px-3 py-1.5 shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
       <div
         className={cn(
           'mx-auto flex flex-wrap items-center gap-2 font-mono sm:flex-nowrap sm:justify-between sm:gap-3',
-          isDeepReadingOpen ? 'max-w-[1600px]' : 'max-w-7xl',
+          mode === 'close-reading' ? 'max-w-[1600px]' : 'max-w-[1500px]',
         )}
       >
         <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden sm:flex-1">
@@ -315,11 +244,17 @@ export function ReaderToolbar({
             variant="outline"
             size="icon"
             className="h-11 w-11 shrink-0"
-            aria-label="Open reading sessions"
-            title="Reading sessions"
+            aria-label={isSessionsNavigationPinned
+              ? 'Collapse sessions sidebar'
+              : 'Open reading sessions'}
+            title={isSessionsNavigationPinned ? 'Collapse sessions' : 'Reading sessions'}
             onClick={onOpenLibrary}
           >
-            <BookOpen className="h-4 w-4" />
+            {isSessionsNavigationPinned ? (
+              <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+            )}
           </Button>
           <EditableDocumentTitle
             key={activeDocument.id}
@@ -331,6 +266,7 @@ export function ReaderToolbar({
             {formatDocumentMeta(activeDocument)}
           </p>
         </div>
+        <WorkspaceModeNavigation mode={mode} onModeChange={onModeChange} />
         <div className="flex w-full shrink-0 items-center justify-between gap-1.5 sm:w-auto sm:justify-end sm:gap-2">
           <AnalysisLanguageSelect
             language={analysisLanguage}
@@ -340,17 +276,6 @@ export function ReaderToolbar({
             preferences={preferences}
             onPreferenceChange={onPreferenceChange}
           />
-          <Button
-            type="button"
-            variant="outline"
-            className={cn('h-11 w-11', isContextPanelOpen ? 'bg-secondary' : '')}
-            size="icon"
-            aria-label={panelButtonLabel}
-            title={panelButtonLabel}
-            onClick={onContextPanelToggle}
-          >
-            <PanelRight className={cn('h-4 w-4', isContextPanelOpen ? '' : 'opacity-70')} />
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

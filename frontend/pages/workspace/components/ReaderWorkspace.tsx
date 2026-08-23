@@ -1,5 +1,7 @@
 import { useRef, useState, type ReactElement } from 'react';
+import { ScanText } from 'lucide-react';
 import type { AnchorSkill } from '@/client-api/anchorApi';
+import { Button } from '@/components/ui/button';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type {
@@ -14,14 +16,12 @@ import type {
   SelectionToolbarPlacement,
   WorkspaceSessionArtifact,
 } from '../workspace.types';
-import { useWorkspacePanels } from '../useWorkspacePanels';
+import { useWorkspaceViewState, type ExplainOrigin } from '../useWorkspaceViewState';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
-import {
-  getCloseReadingArtifacts,
-  getDisplayedCloseReading,
-} from './close-reading.helpers';
-import { ContextPanel } from './ContextPanel';
+import { CloseReadingSplitLayout } from './CloseReadingSplitLayout';
+import { CurrentExplainPanel } from './CurrentExplainPanel';
 import { FocusedCloseReadingDialog } from './FocusedCloseReadingDialog';
+import { HistoryWorkspace } from './HistoryWorkspace';
 import { MobileWorkspaceDialog } from './MobileWorkspaceDialog';
 import { ReaderToolbar } from './ReaderToolbar';
 import { ReadingSurface } from './ReadingSurface';
@@ -54,7 +54,7 @@ interface ReaderWorkspaceActions {
   deleteAnchor: (anchorId: string) => void;
   updateNoteDraft: (content: string) => void;
   runCloseReadDocument: () => Promise<void>;
-  runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
+  runExplainParagraph: (paragraph: DocumentParagraph) => Promise<void>;
   stopArtifact: (artifact: Artifact) => void;
   showSelectionActions: (
     selection: PendingSelection,
@@ -74,11 +74,8 @@ interface ReaderWorkspaceProps {
   reading: ReaderWorkspaceState;
   actions: ReaderWorkspaceActions;
   isDesktopViewport: boolean;
-  isDesktopContextOpen: boolean;
-  isMobileContextOpen: boolean;
+  isSessionsNavigationPinned: boolean;
   noteEditorAnchorId: string | null;
-  onDesktopContextOpenChange: (open: boolean) => void;
-  onMobileContextOpenChange: (open: boolean) => void;
   onRunSkill: (skill: AnchorSkill) => void;
   onStartNote: () => void;
   onRunPendingSelectionSkill: (skill: AnchorSkill) => void;
@@ -88,15 +85,38 @@ interface ReaderWorkspaceProps {
   onOpenLibrary: () => void;
 }
 
+function CloseReadingEmptyState({ onStart }: { onStart: () => void }): ReactElement {
+  return (
+    <section className="flex min-h-[32rem] items-center justify-center border-e-2 border-border bg-[#fbfbf8] p-6">
+      <div className="max-w-md border-2 border-border bg-card p-6 text-center shadow-[6px_6px_0px_0px_var(--border)]">
+        <ScanText className="mx-auto h-7 w-7" aria-hidden="true" />
+        <h2 className="mt-3 text-xl font-black">Read the whole text closely</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Close Reading builds a structured, in-depth interpretation of the entire document.
+        </p>
+        <Button type="button" className="mt-5" onClick={onStart}>
+          Start Close Reading
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function getExplainArtifacts(reading: ReaderWorkspaceState): Artifact[] {
+  return reading.activeArtifacts.filter((artifact) => artifact.type !== 'close_read');
+}
+
+function getActiveExplainArtifact(reading: ReaderWorkspaceState): Artifact | null {
+  if (reading.activeArtifact?.type !== 'close_read') return reading.activeArtifact;
+  return getExplainArtifacts(reading)[0] ?? null;
+}
+
 export function ReaderWorkspace({
   reading,
   actions,
   isDesktopViewport,
-  isDesktopContextOpen,
-  isMobileContextOpen,
+  isSessionsNavigationPinned,
   noteEditorAnchorId,
-  onDesktopContextOpenChange,
-  onMobileContextOpenChange,
   onRunSkill,
   onStartNote,
   onRunPendingSelectionSkill,
@@ -105,51 +125,23 @@ export function ReaderWorkspace({
   onRetryArtifact,
   onOpenLibrary,
 }: ReaderWorkspaceProps): ReactElement {
-  const panels = useWorkspacePanels({
-    isDesktopViewport,
-    isDesktopContextOpen,
-    isMobileContextOpen,
-    onDesktopContextOpenChange,
-    onMobileContextOpenChange,
-  });
+  const view = useWorkspaceViewState();
   const focusButtonRef = useRef<HTMLButtonElement | null>(null);
   const [deletionTarget, setDeletionTarget] = useState<WorkspaceDeletionTarget | null>(null);
-  const { activeDocument } = reading;
-
+  const closeReadingEntries = reading.sessionArtifacts.filter(
+    ({ artifact }) => artifact.type === 'close_read',
+  );
+  const defaultCloseReadingEntry = closeReadingEntries.find(
+    ({ anchor }) => anchor.scope === 'document',
+  ) ?? null;
+  const activeCloseReadingEntry = closeReadingEntries.find(
+    ({ artifact }) => artifact.id === view.selectedCloseReadingId,
+  ) ?? defaultCloseReadingEntry;
+  const closeReadings = closeReadingEntries.map(({ artifact }) => artifact);
+  const isCloseReadingFocused = activeCloseReadingEntry?.artifact.id
+    === view.focusedCloseReadingId;
   const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
     || reading.noteDraftContent.length > 0;
-  const closeReadings = getCloseReadingArtifacts(reading.activeArtifacts);
-  const activeCloseReading = getDisplayedCloseReading({
-    activeArtifact: reading.activeArtifact,
-    closeReadings,
-    selectedArtifactId: panels.selectedCloseReadingId,
-  });
-  const isCloseReadingOpen = panels.isContextOpen && activeCloseReading !== null;
-  const isCloseReadingFocused = activeCloseReading?.id === panels.focusedCloseReadingId;
-
-  const handleFocusedDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      panels.exitFocus();
-    }
-  };
-
-  const handleSelectAnchor = (anchorId: string) => {
-    panels.selectCloseReading(null);
-    actions.setActiveAnchorId(anchorId);
-    panels.openPanel();
-  };
-
-  const handleOpenSessionArtifact = (artifactId: string) => {
-    panels.selectCloseReading(null);
-    actions.openSessionArtifact(artifactId);
-    panels.openPanel();
-  };
-
-  const handleCloseReadParagraph = async (paragraph: DocumentParagraph) => {
-    panels.selectCloseReading(null);
-    panels.openPanel();
-    await actions.runCloseReadParagraph(paragraph);
-  };
 
   const requestDeleteAnchor = (anchor: TextAnchor) => {
     setDeletionTarget({
@@ -162,141 +154,203 @@ export function ReaderWorkspace({
   };
 
   const requestDeleteArtifact = (artifact: Artifact) => {
-    setDeletionTarget({
-      kind: 'artifact',
-      id: artifact.id,
-      label: artifact.content || artifact.title,
-    });
+    setDeletionTarget({ kind: 'artifact', id: artifact.id, label: artifact.content || artifact.title });
   };
 
   const confirmDeletion = () => {
-    if (deletionTarget?.kind === 'anchor') {
-      actions.deleteAnchor(deletionTarget.id);
-    } else if (deletionTarget?.kind === 'artifact') {
-      actions.deleteArtifact(deletionTarget.id);
-    }
-    panels.selectCloseReading(null);
+    if (deletionTarget?.kind === 'anchor') actions.deleteAnchor(deletionTarget.id);
+    if (deletionTarget?.kind === 'artifact') actions.deleteArtifact(deletionTarget.id);
+    view.selectCloseReading(null);
     setDeletionTarget(null);
   };
 
-  const contextPanel = (
-    <ContextPanel
-      activeDocument={activeDocument}
-      activeAnchor={reading.activeAnchor}
-      anchors={reading.anchors}
-      activeArtifacts={reading.activeArtifacts}
-      activeArtifact={reading.activeArtifact}
-      sessionArtifacts={reading.sessionArtifacts}
-      artifactCountByAnchorId={reading.artifactCountByAnchorId}
-      noteDraftContent={reading.noteDraftContent}
-      isNoteEditorOpen={isNoteEditorOpen}
-      onClearActiveAnchor={onClearActiveAnchor}
-      onSelectAnchor={handleSelectAnchor}
-      onSelectArtifact={actions.selectArtifact}
-      onOpenSessionArtifact={handleOpenSessionArtifact}
-      onRequestDeleteAnchor={requestDeleteAnchor}
-      onRequestDeleteArtifact={requestDeleteArtifact}
-      onNoteDraftChange={actions.updateNoteDraft}
-      onOpenNoteEditor={onStartNote}
-      onRunSkill={onRunSkill}
-      onRunCloseReadDocument={() => {
-        panels.selectCloseReading(null);
-        void actions.runCloseReadDocument();
-      }}
-      onStopArtifact={actions.stopArtifact}
-      onRetryArtifact={onRetryArtifact}
-    />
-  );
-
-  const renderCloseReadingPane = (
-    mode: CloseReadingPaneMode,
-  ): ReactElement | null => {
-    if (!activeCloseReading || !reading.activeAnchor) {
-      return null;
+  const openCloseReading = (artifactId?: string) => {
+    const entry = artifactId
+      ? closeReadingEntries.find(({ artifact }) => artifact.id === artifactId)
+      : activeCloseReadingEntry;
+    if (entry) {
+      view.selectCloseReading(entry.artifact.id);
+      actions.openSessionArtifact(entry.artifact.id);
     }
-
-    return (
-      <CloseReadingPane
-        artifact={activeCloseReading}
-        closeReadings={closeReadings}
-        activeAnchor={reading.activeAnchor}
-        readingPreferences={reading.readerPreferences}
-        mode={mode}
-        focusButtonRef={focusButtonRef}
-        onFocus={() => panels.focusCloseReading(activeCloseReading.id)}
-        onShowSource={() => panels.showSource(isCloseReadingFocused)}
-        onClose={panels.closePanel}
-        onSelectArtifact={panels.selectCloseReading}
-        onRequestDeleteArtifact={requestDeleteArtifact}
-        onStopArtifact={actions.stopArtifact}
-        onRetryArtifact={(artifact) => {
-          panels.selectCloseReading(null);
-          onRetryArtifact(artifact);
-        }}
-      />
-    );
+    view.openMode('close-reading');
   };
 
-  const readingSurface = (
+  const openExplainForAnchor = (anchorId: string, origin: ExplainOrigin) => {
+    actions.setActiveAnchorId(anchorId);
+    view.openExplain(origin);
+  };
+
+  const runPendingSelectionSkill = (skill: AnchorSkill, origin: ExplainOrigin) => {
+    view.openExplain(origin);
+    onRunPendingSelectionSkill(skill);
+  };
+
+  const startPendingSelectionNote = (origin: ExplainOrigin) => {
+    view.openExplain(origin);
+    onStartPendingSelectionNote();
+  };
+
+  const runExplainParagraph = async (
+    paragraph: DocumentParagraph,
+    origin: ExplainOrigin,
+  ) => {
+    view.openExplain(origin);
+    await actions.runExplainParagraph(paragraph);
+  };
+
+  const renderReadingSurface = (origin: ExplainOrigin): ReactElement => (
     <ReadingSurface
-      activeDocument={activeDocument}
+      activeDocument={reading.activeDocument}
       preferences={reading.readerPreferences}
-      isIndependentScroll={isDesktopViewport && isCloseReadingOpen}
-      sourceRevealRequest={panels.sourceRevealRequest}
+      isIndependentScroll={isDesktopViewport && (
+        view.mode === 'close-reading' || view.isExplainOpen
+      )}
+      sourceRevealRequest={view.sourceRevealRequest}
       activeAnchor={reading.activeAnchor}
       anchors={reading.anchors}
       anchorMarkStatusById={reading.anchorMarkStatusById}
       selectionToolbarPlacement={reading.selectionToolbarPlacement}
       onShowSelectionActions={actions.showSelectionActions}
       onDismissSelectionToolbar={actions.dismissSelectionToolbar}
-      onRunSkill={onRunPendingSelectionSkill}
-      onStartNote={onStartPendingSelectionNote}
-      onSelectAnchor={handleSelectAnchor}
-      onCloseReadParagraph={handleCloseReadParagraph}
+      onRunSkill={(skill) => runPendingSelectionSkill(skill, origin)}
+      onStartNote={() => startPendingSelectionNote(origin)}
+      onSelectAnchor={(anchorId) => openExplainForAnchor(anchorId, origin)}
+      onExplainParagraph={(paragraph) => runExplainParagraph(paragraph, origin)}
     />
   );
 
+  const currentExplainPanel = reading.activeAnchor ? (
+    <CurrentExplainPanel
+      activeAnchor={reading.activeAnchor}
+      artifacts={getExplainArtifacts(reading)}
+      activeArtifact={getActiveExplainArtifact(reading)}
+      readingPreferences={reading.readerPreferences}
+      noteDraftContent={reading.noteDraftContent}
+      isNoteEditorOpen={isNoteEditorOpen}
+      backLabel={view.explainOrigin === 'close-reading' ? 'Back to Close Reading' : undefined}
+      onBack={view.explainOrigin === 'close-reading' ? view.closeExplain : undefined}
+      onClose={() => {
+        view.closeExplain();
+        onClearActiveAnchor();
+      }}
+      onSelectArtifact={actions.selectArtifact}
+      onRequestDeleteAnchor={requestDeleteAnchor}
+      onRequestDeleteArtifact={requestDeleteArtifact}
+      onNoteDraftChange={actions.updateNoteDraft}
+      onOpenNoteEditor={onStartNote}
+      onRunSkill={onRunSkill}
+      onStopArtifact={actions.stopArtifact}
+      onRetryArtifact={onRetryArtifact}
+    />
+  ) : null;
+
+  const renderCloseReadingPane = (mode: CloseReadingPaneMode): ReactElement | null => {
+    if (!activeCloseReadingEntry) return null;
+    const { artifact, anchor } = activeCloseReadingEntry;
+    return (
+      <CloseReadingPane
+        artifact={artifact}
+        closeReadings={closeReadings}
+        activeAnchor={anchor}
+        readingPreferences={reading.readerPreferences}
+        mode={mode}
+        focusButtonRef={focusButtonRef}
+        onFocus={() => view.focusCloseReading(artifact.id)}
+        onShowSource={() => {
+          if (mode === 'focus') {
+            view.exitFocus();
+            view.revealSource();
+            return;
+          }
+          view.openMode('text');
+        }}
+        onClose={() => view.openMode('text')}
+        onSelectArtifact={openCloseReading}
+        onRequestDeleteArtifact={requestDeleteArtifact}
+        onStopArtifact={actions.stopArtifact}
+        onRetryArtifact={onRetryArtifact}
+      />
+    );
+  };
+
+  const startCloseReading = () => {
+    void actions.runCloseReadDocument();
+  };
+  const closeReadingDetail = view.isExplainOpen && currentExplainPanel
+    ? currentExplainPanel
+    : renderCloseReadingPane(isDesktopViewport ? 'split' : 'mobile');
+
+  let workspaceContent: ReactElement;
+  if (view.mode === 'history') {
+    workspaceContent = (
+      <HistoryWorkspace
+        entries={reading.sessionArtifacts}
+        readingPreferences={reading.readerPreferences}
+        onOpenEntry={(entry) => {
+          actions.openSessionArtifact(entry.artifact.id);
+          if (entry.artifact.type === 'close_read') openCloseReading(entry.artifact.id);
+          else view.openExplain('text');
+        }}
+        onRequestDeleteArtifact={requestDeleteArtifact}
+      />
+    );
+  } else if (view.mode === 'close-reading') {
+    const detail = closeReadingDetail ?? <CloseReadingEmptyState onStart={startCloseReading} />;
+    workspaceContent = isDesktopViewport ? (
+      <CloseReadingSplitLayout
+        readingSurface={renderReadingSurface('close-reading')}
+        closeReadingPane={detail}
+      />
+    ) : detail;
+  } else {
+    workspaceContent = (
+      <ReaderWorkspaceLayout
+        readingSurface={renderReadingSurface('text')}
+        detailPanel={isDesktopViewport && view.isExplainOpen ? currentExplainPanel : null}
+      />
+    );
+  }
+
   return (
     <>
-      <h1 className="sr-only">{activeDocument.title}</h1>
+      <h1 className="sr-only">{reading.activeDocument.title}</h1>
       <ReaderToolbar
-        activeDocument={activeDocument}
+        activeDocument={reading.activeDocument}
         preferences={reading.readerPreferences}
         analysisLanguage={reading.analysisLanguage}
-        isContextPanelOpen={panels.isContextOpen}
-        isDeepReadingOpen={isCloseReadingOpen}
+        mode={view.mode}
+        isSessionsNavigationPinned={isSessionsNavigationPinned}
         onPreferenceChange={actions.updateReaderPreference}
         onAnalysisLanguageChange={actions.updateAnalysisLanguage}
-        onContextPanelToggle={panels.togglePanel}
+        onModeChange={(mode) => {
+          actions.dismissSelectionToolbar();
+          if (mode === 'close-reading') openCloseReading();
+          else view.openMode(mode);
+        }}
         onClearDocument={actions.clearDocument}
         onOpenLibrary={onOpenLibrary}
-        onRenameDocument={(title) => actions.renameDocument(activeDocument.id, title)}
+        onRenameDocument={(title) => actions.renameDocument(reading.activeDocument.id, title)}
       />
-      {isDesktopViewport ? (
-        <>
-          <ReaderWorkspaceLayout
-            readingSurface={readingSurface}
-            contextPanel={contextPanel}
-            closeReadingPane={renderCloseReadingPane('split')}
-            isContextOpen={isDesktopContextOpen}
-          />
-          <FocusedCloseReadingDialog
-            open={isCloseReadingFocused}
-            closeReadingPane={isCloseReadingFocused
-              ? renderCloseReadingPane('focus')
-              : null}
-            onOpenChange={handleFocusedDialogOpenChange}
-            onReturnFocus={() => focusButtonRef.current?.focus()}
-          />
-        </>
-      ) : readingSurface}
-      {!isDesktopViewport ? (
+      {workspaceContent}
+      {!isDesktopViewport && view.mode === 'text' && currentExplainPanel ? (
         <MobileWorkspaceDialog
-          open={isMobileContextOpen}
-          activeCloseReading={activeCloseReading}
-          contextPanel={contextPanel}
-          closeReadingPane={renderCloseReadingPane('mobile')}
-          onOpenChange={onMobileContextOpenChange}
+          open={view.isExplainOpen}
+          title="Current explanation"
+          description="Saved reading help for the current source."
+          content={currentExplainPanel}
+          onOpenChange={(open) => {
+            if (!open) view.closeExplain();
+          }}
+        />
+      ) : null}
+      {isDesktopViewport ? (
+        <FocusedCloseReadingDialog
+          open={isCloseReadingFocused}
+          closeReadingPane={isCloseReadingFocused ? renderCloseReadingPane('focus') : null}
+          onOpenChange={(open) => {
+            if (!open) view.exitFocus();
+          }}
+          onReturnFocus={() => focusButtonRef.current?.focus()}
         />
       ) : null}
       <WorkspaceDeleteDialog

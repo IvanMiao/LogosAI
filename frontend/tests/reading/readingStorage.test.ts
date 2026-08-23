@@ -88,8 +88,10 @@ describe('reading storage', () => {
     const preferences = {
       fontFamily: 'mono' as const,
       closeReadingFontFamily: 'serif' as const,
+      fontLinked: false,
       fontSize: 20,
       lineSpacing: 1.9,
+      lineWidth: 840,
     };
 
     writeStoredReaderPreferences(preferences);
@@ -97,7 +99,7 @@ describe('reading storage', () => {
     expect(readStoredReaderPreferences()).toEqual(preferences);
   });
 
-  it('adds the default Close Reading font to legacy reader preferences', () => {
+  it('migrates legacy reader preferences to the new appearance model', () => {
     localStorage.setItem(
       'logosai.workspace.readerPreferences:v1',
       '{"fontFamily":"mono","fontSize":20,"lineSpacing":1.9}',
@@ -105,9 +107,11 @@ describe('reading storage', () => {
 
     expect(readStoredReaderPreferences()).toEqual({
       fontFamily: 'mono',
-      closeReadingFontFamily: 'sans',
+      closeReadingFontFamily: 'mono',
+      fontLinked: false,
       fontSize: 20,
       lineSpacing: 1.9,
+      lineWidth: 760,
     });
   });
 

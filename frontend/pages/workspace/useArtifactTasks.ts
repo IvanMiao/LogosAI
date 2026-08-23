@@ -8,6 +8,7 @@ import {
   type ArtifactStorageState,
 } from '@/features/artifacts';
 import { createClientId } from '@/utils/createClientId';
+import type { AnalysisStreamStage } from '@/types';
 
 interface ArtifactTaskMetadata {
   requestId: string;
@@ -24,6 +25,7 @@ interface ArtifactTaskContext {
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
   onMetadata: (metadata: ArtifactTaskMetadata) => void;
+  onStage: (stage: AnalysisStreamStage) => void;
 }
 
 interface RunArtifactTaskInput {
@@ -146,6 +148,17 @@ export function useArtifactTasks({
             }),
           ));
         },
+        onStage: (stage) => {
+          updateArtifacts((current) => updateArtifact(
+            current,
+            artifact.id,
+            (item) => ({
+              ...item,
+              stage,
+              updatedAt: new Date().toISOString(),
+            }),
+          ));
+        },
       });
       updateArtifacts((current) => updateArtifact(
         current,
@@ -156,6 +169,7 @@ export function useArtifactTasks({
           requestId: result.requestId ?? item.requestId,
           traceId: result.traceId ?? item.traceId,
           status: 'complete',
+          stage: undefined,
           updatedAt: new Date().toISOString(),
         }),
       ));
@@ -166,6 +180,7 @@ export function useArtifactTasks({
         (item) => ({
           ...item,
           status: isAbortError(error) ? 'stopped' : 'failed',
+          stage: undefined,
           errorMessage: isAbortError(error)
             ? undefined
             : error instanceof Error ? error.message : String(error),

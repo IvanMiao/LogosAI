@@ -64,8 +64,10 @@ function createLocalState(): LocalWorkspaceState {
     readerPreferences: {
       fontFamily: 'serif',
       closeReadingFontFamily: 'sans',
+      fontLinked: false,
       fontSize: 18,
       lineSpacing: 1.75,
+      lineWidth: 760,
     },
     analysisLanguage: 'en',
   };
@@ -88,6 +90,16 @@ describe('reading cloud state', () => {
     expect(restored.artifactStorage.artifactsByAnchorId).toEqual(
       local.artifactStorage.artifactsByAnchorId,
     );
+  });
+
+  it('keeps streaming stages out of cloud session snapshots', () => {
+    const local = createLocalState();
+    local.artifactStorage.artifactsByAnchorId['anchor-1'][0].stage = 'interpret';
+
+    const [session] = buildReadingSessions(local);
+
+    expect(session.artifacts[0]).not.toHaveProperty('stage');
+    expect(local.artifactStorage.artifactsByAnchorId['anchor-1'][0].stage).toBe('interpret');
   });
 
   it('keeps an unsynced local session instead of restoring older cloud data', () => {
@@ -205,8 +217,10 @@ describe('reading cloud state', () => {
       readerPreferences: {
         fontFamily: 'sans' as const,
         closeReadingFontFamily: 'serif' as const,
+        fontLinked: false,
         fontSize: 22,
         lineSpacing: 2,
+        lineWidth: 760,
       },
       analysisLanguage: 'fr' as const,
     };

@@ -30,6 +30,18 @@ interface ArtifactTaskControlsProps {
   onRetryArtifact: (artifact: Artifact) => void;
 }
 
+function getArtifactProgressLabel(artifact: Artifact): string {
+  if (artifact.stage === 'detect') return 'Identifying language and structure…';
+  if (artifact.stage === 'correct') return 'Resolving source text…';
+  if (artifact.stage === 'interpret') {
+    if (artifact.type === 'translation') return 'Translating selection…';
+    if (artifact.type === 'vocabulary') return 'Building vocabulary…';
+    if (artifact.type === 'explanation') return 'Explaining selection…';
+    return 'Interpreting the full text…';
+  }
+  return 'Starting analysis…';
+}
+
 export function ArtifactTypeIcon({
   type,
 }: {
@@ -99,6 +111,8 @@ export function ArtifactBody({
     ? {
       fontSize: `${getCloseReadingFontSize(readingPreferences.fontSize)}px`,
       lineHeight: readingPreferences.lineSpacing,
+      maxWidth: `${readingPreferences.lineWidth}px`,
+      marginInline: 'auto',
     }
     : undefined;
 
@@ -111,7 +125,7 @@ export function ArtifactBody({
         </div>
       ) : (
         <p className="text-sm leading-6 text-muted-foreground">
-          {artifact.status === 'running' ? 'Reading closely…' : 'Draft started.'}
+          {artifact.status === 'running' ? getArtifactProgressLabel(artifact) : 'Draft started.'}
         </p>
       )}
     </div>

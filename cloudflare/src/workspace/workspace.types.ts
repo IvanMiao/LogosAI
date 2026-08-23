@@ -4,8 +4,10 @@ export type AnalysisLanguage = 'zh' | 'en' | 'fr' | 'de' | 'es' | 'it' | 'ja';
 export interface ReaderPreferences {
   fontFamily: ReaderFontFamily;
   closeReadingFontFamily: ReaderFontFamily;
+  fontLinked: boolean;
   fontSize: number;
   lineSpacing: number;
+  lineWidth: number;
 }
 
 export interface WorkspacePreferences {

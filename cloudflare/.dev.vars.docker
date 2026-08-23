@@ -1,0 +1,6 @@
+# Local Docker defaults only. Production secrets stay in Wrangler/Fly.
+FASTAPI_ORIGIN=http://backend:8000
+BETTER_AUTH_URL=http://localhost:5173
+TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+BETTER_AUTH_SECRET=logosai-local-only-auth-secret-change-me-2026
+CREDENTIALS_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=

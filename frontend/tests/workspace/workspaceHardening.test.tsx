@@ -26,9 +26,9 @@ const scrollIntoViewMock = vi.fn();
 
 function writeCloseReadingArtifacts() {
   const anchor = {
-    id: 'paragraph-anchor',
+    id: 'document-anchor',
     documentId: workspaceDocument.id,
-    scope: 'paragraph' as const,
+    scope: 'document' as const,
     quote: workspaceDocument.text,
     normalizedQuote: workspaceDocument.text.toLowerCase(),
     quoteHash: 'paragraph-hash',
@@ -148,10 +148,11 @@ describe('workspace hardening', () => {
       expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: 'Analysis language' })).toBeInTheDocument();
       expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
-      expect(screen.queryByRole('complementary', { name: 'Context panel' })).not.toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Workspace mode' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
 
-      await user.click(screen.getByRole('button', { name: 'Open context panel' }));
-      expect(screen.getByRole('complementary', { name: 'Context panel' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'History' }));
+      expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument();
 
       unmount();
     }
@@ -179,10 +180,22 @@ describe('workspace hardening', () => {
     fireEvent.mouseUp(sourceParagraph);
     expect(screen.getAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(2);
 
-    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.queryAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(0);
 
-    fireEvent.mouseUp(sourceParagraph);
+    await user.click(screen.getByRole('button', { name: 'Text' }));
+    const restoredSourceParagraph = screen.getByText(workspaceDocument.text);
+    vi.spyOn(window, 'getSelection').mockReturnValue({
+      rangeCount: 1,
+      getRangeAt: () => ({
+        ...selectionRange,
+        commonAncestorContainer: restoredSourceParagraph.firstChild,
+        startContainer: restoredSourceParagraph.firstChild,
+        endContainer: restoredSourceParagraph.firstChild,
+      }),
+      toString: () => 'calm reading',
+    } as unknown as Selection);
+    fireEvent.mouseUp(restoredSourceParagraph);
     expect(screen.getAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(2);
     await user.keyboard('{Escape}');
     expect(screen.queryAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(0);
@@ -193,7 +206,7 @@ describe('workspace hardening', () => {
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
     writeCloseReadingArtifacts();
     renderWorkspace();
-    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     expect(screen.getByText('Latest close reading content.')).toBeInTheDocument();
 
     const sourceParagraph = screen.getByText(workspaceDocument.text);
@@ -215,7 +228,7 @@ describe('workspace hardening', () => {
 
     expect(screen.getByText('Latest close reading content.')).toBeInTheDocument();
     expect(Object.keys(readStoredAnchors(TEST_USER_ID).anchorsById)).toEqual([
-      'paragraph-anchor',
+      'document-anchor',
     ]);
 
     await user.click(screen.getAllByRole('button', { name: 'Explain' })[0]);
@@ -223,50 +236,30 @@ describe('workspace hardening', () => {
       .toHaveLength(2));
   });
 
-  it('opens paragraph Close Read as a primary reading pane', async () => {
+  it('opens paragraph Explain without creating a Close Reading', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1280;
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));
+    await user.click(screen.getByRole('button', { name: 'Explain paragraph' }));
 
-    expect(screen.getByRole('complementary', { name: 'Close reading' })).toBeInTheDocument();
-    expect(screen.queryByRole('complementary', { name: 'Context panel' })).not.toBeInTheDocument();
-    expect(screen.getByText('Missing Gemini API key. Configure it in Settings.')).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Current explanation' })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Close reading' })).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Gemini API key missing');
     expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Focus analysis' }));
-    const focusDialog = screen.getByRole('dialog', { name: 'Close reading focus' });
-    expect(within(focusDialog).getByRole('button', { name: 'Show source' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open app menu' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: 'Analysis language' })).not.toBeInTheDocument();
-
-    await user.keyboard('{Escape}');
-    expect(screen.queryByRole('dialog', { name: 'Close reading focus' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Focus analysis' })).toHaveFocus();
-
-    await user.click(screen.getByRole('button', { name: 'Focus analysis' }));
-    await user.click(within(
-      screen.getByRole('dialog', { name: 'Close reading focus' }),
-    ).getByRole('button', { name: 'Show source' }));
-    expect(screen.getByRole('button', { name: 'Focus analysis' })).toBeInTheDocument();
-    const sourceParagraph = within(
-      screen.getByRole('region', { name: 'Reading surface' }),
-    ).getByText(workspaceDocument.text);
-    await waitFor(() => {
-      expect(sourceParagraph.parentElement).toHaveClass('bg-secondary/10');
-      expect(scrollIntoViewMock).toHaveBeenCalled();
-    });
+    expect(Object.values(readStoredAnchors(TEST_USER_ID).anchorsById))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'paragraph' })]));
   });
 
   it('resizes the Close Reading split with the keyboard and remembers the ratio', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1280;
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
+    writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const separator = screen.getByRole('separator', {
       name: 'Resize source and Close Reading panes',
     });
@@ -287,16 +280,16 @@ describe('workspace hardening', () => {
     writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Open context panel' }));
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const closeReadingPane = screen.getByRole('complementary', { name: 'Close reading' });
     const closeReadingContent = within(closeReadingPane).getByText('Latest close reading content.');
-    expect(within(closeReadingPane).getByText('Paragraph')).toBeInTheDocument();
+    expect(within(closeReadingPane).getByText('Document')).toBeInTheDocument();
     expect(within(closeReadingPane).queryByText(workspaceDocument.text)).not.toBeInTheDocument();
     expect(within(closeReadingPane).queryByText('Latest reading')).not.toBeInTheDocument();
     expect(within(closeReadingPane).queryByText('complete')).not.toBeInTheDocument();
-    expect(closeReadingContent.closest('.close-reading-prose')).toHaveClass('font-sans');
+    expect(closeReadingContent.closest('.close-reading-prose')).toHaveClass('font-serif');
     expect(closeReadingContent.closest('.close-reading-prose')).toHaveStyle({
-      fontSize: '16px',
+      fontSize: '18px',
       lineHeight: '1.75',
     });
 
@@ -308,18 +301,19 @@ describe('workspace hardening', () => {
     expect(screen.getByRole('button', { name: 'Close Reading copied' })).toBeInTheDocument();
   });
 
-  it('opens paragraph Close Read as a full-screen mobile reading view', async () => {
+  it('opens whole-document Close Reading as a full-screen mobile reading view', async () => {
     const user = userEvent.setup();
     window.innerWidth = 390;
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
+    writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close read paragraph' }));
+    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Close reading' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Back to text' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
   });
 });

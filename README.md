@@ -37,7 +37,25 @@ Workspace request or persistence path.
 
 ## Local Development
 
-Prerequisites: Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
+The quickest path requires only Docker with Compose:
+
+```bash
+make up
+```
+
+Open `http://localhost:5173`. This builds and starts the complete local stack:
+
+- the React production bundle, served by a local Cloudflare Worker;
+- Better Auth, the local D1 database, and Workspace APIs;
+- the FastAPI AI service, reachable internally through the Worker.
+
+`make up` waits until both services are healthy. D1 data survives restarts in a
+Docker volume. Use `make logs` to follow output and `make down` to stop the
+stack. The checked-in defaults are deliberately local-only; never reuse them
+for a deployed environment.
+
+For development with hot reload, use the three-process workflow below.
+Prerequisites are Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
 `npm`, and a logged-in Wrangler CLI.
 
 Start the backend:
@@ -77,19 +95,10 @@ OAuth callback URLs, production secrets, migrations, and deployment order are
 documented in [Cloudflare Operations](./cloudflare/README.md). Optional
 observability configuration is described in [Project Reference](./docs/PROJECT.md).
 
-## Docker
+The equivalent command without Make is:
 
 ```bash
-docker compose up --build
-```
-
-The Compose file starts only the FastAPI AI service at `http://localhost:8000`.
-Use the Worker and Vite processes from Local Development for the browser app.
-If port `8000` is already in use, select another host port without changing
-the container configuration:
-
-```bash
-LOGOSAI_PORT=8001 docker compose up --build
+docker compose up --build --detach --wait
 ```
 
 ## Error Monitoring

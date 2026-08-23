@@ -92,7 +92,7 @@ export interface WorkspaceController {
   updateNoteDraft: (content: string) => void;
   runAnchorSkillForActiveAnchor: (skill: AnchorSkill) => Promise<void>;
   runCloseReadDocument: () => Promise<void>;
-  runCloseReadParagraph: (paragraph: DocumentParagraph) => Promise<void>;
+  runExplainParagraph: (paragraph: DocumentParagraph) => Promise<void>;
   stopArtifact: (artifact: Artifact) => void;
   retryArtifact: (artifact: Artifact) => Promise<void>;
   openDocument: (documentId: string) => void;

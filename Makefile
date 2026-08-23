@@ -1,5 +1,11 @@
+.PHONY: up down logs clean re
+
 up:
-	docker compose up --build
+	docker compose up --build --detach --wait
+	@echo "LogosAI is running at http://localhost:5173"
+
+logs:
+	docker compose logs --follow
 
 down:
 	docker compose down

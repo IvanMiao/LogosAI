@@ -1,39 +1,22 @@
 import type { ReactElement } from 'react';
-import { CloseReadingSplitLayout } from './CloseReadingSplitLayout';
-
 interface ReaderWorkspaceLayoutProps {
   readingSurface: ReactElement;
-  contextPanel: ReactElement;
-  closeReadingPane: ReactElement | null;
-  isContextOpen: boolean;
+  detailPanel: ReactElement | null;
 }
 
 export function ReaderWorkspaceLayout({
   readingSurface,
-  contextPanel,
-  closeReadingPane,
-  isContextOpen,
+  detailPanel,
 }: ReaderWorkspaceLayoutProps): ReactElement {
-  const isCloseReadingOpen = isContextOpen && closeReadingPane !== null;
-
-  if (isCloseReadingOpen) {
-    return (
-      <CloseReadingSplitLayout
-        readingSurface={readingSurface}
-        closeReadingPane={closeReadingPane}
-      />
-    );
-  }
-
   return (
     <div
-      className={isContextOpen
-        ? 'mx-auto grid max-w-7xl lg:grid-cols-[minmax(0,1fr)_380px]'
-        : 'mx-auto grid max-w-7xl grid-cols-1'}
+      className={detailPanel
+        ? 'mx-auto grid max-w-[1500px] lg:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]'
+        : 'mx-auto grid max-w-[1500px] grid-cols-1'}
     >
       <div>{readingSurface}</div>
-      {isContextOpen ? (
-        <div className="border-r-2 border-border">{contextPanel}</div>
+      {detailPanel ? (
+        <div className="border-e-2 border-border">{detailPanel}</div>
       ) : null}
     </div>
   );

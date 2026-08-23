@@ -14,6 +14,7 @@ export interface Artifact {
   requestId?: string;
   traceId?: string;
   errorMessage?: string;
+  stage?: AnalysisStreamStage;
 }
 
 export interface NoteArtifact extends Artifact {
@@ -33,3 +34,4 @@ export interface ArtifactStorageState {
   artifactsByAnchorId: Record<string, Artifact[]>;
   tasksByRequestId: Record<string, ArtifactTask>;
 }
+import type { AnalysisStreamStage } from '@/types';
