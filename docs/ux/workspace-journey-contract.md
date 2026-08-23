@@ -4,6 +4,7 @@
 - 最近同步：2026-08-23
 - 可执行规范：[workspaceJourney.test.tsx](../../frontend/tests/workspace/workspaceJourney.test.tsx)
 - 设计基线：[workspace-information-architecture.md](./workspace-information-architecture.md)
+- 浏览器 QA：[workspace-browser-qa-2026-08-23.md](./workspace-browser-qa-2026-08-23.md)
 
 本文档固定 Workspace 新信息架构的关键用户旅程。测试与本文档是一对同步维护的规范：任何用户行为变化都必须在同一次提交中更新两者。
 
