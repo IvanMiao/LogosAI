@@ -54,12 +54,6 @@ Docker volume. Use `make logs` to follow output and `make down` to stop the
 stack. The checked-in defaults are deliberately local-only; never reuse them
 for a deployed environment.
 
-Set `LOGOSAI_APP_PORT` if port `5173` is unavailable:
-
-```bash
-LOGOSAI_APP_PORT=5174 make up
-```
-
 For development with hot reload, use the three-process workflow below.
 Prerequisites are Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
 `npm`, and a logged-in Wrangler CLI.
