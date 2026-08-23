@@ -64,8 +64,10 @@ function createLocalState(): LocalWorkspaceState {
     readerPreferences: {
       fontFamily: 'serif',
       closeReadingFontFamily: 'sans',
+      fontLinked: false,
       fontSize: 18,
       lineSpacing: 1.75,
+      lineWidth: 760,
     },
     analysisLanguage: 'en',
   };
@@ -205,8 +207,10 @@ describe('reading cloud state', () => {
       readerPreferences: {
         fontFamily: 'sans' as const,
         closeReadingFontFamily: 'serif' as const,
+        fontLinked: false,
         fontSize: 22,
         lineSpacing: 2,
+        lineWidth: 760,
       },
       analysisLanguage: 'fr' as const,
     };
