@@ -2,7 +2,7 @@
 
 - 状态：Active，当前产品与工程事实的唯一参考
 - 更新日期：2026-08-09
-- 实施顺序：[ROADMAP.md](ROADMAP.md)
+- 实施顺序：[roadmap.md](roadmap.md)
 
 本文档记录 LogosAI 现在是什么、代码如何工作，以及跨版本保持稳定的产品和工程边界。它不承诺未来功能，也不定义优先级。
 
@@ -170,7 +170,7 @@ FastAPI 的 Sentry LLM spans 记录 pipeline、detect/correct/interpret stage、
 
 Workspace 已被测试保护的交互旅程以
 [Workspace Journey UX Contract](ux/workspace-journey-contract.md) 为评审参考。该文档与
-`frontend/tests/workspace/workspaceJourney.test.tsx` 必须在同一次变更中同步更新。
+`frontend/tests/workspace/workspace-journey.test.tsx` 必须在同一次变更中同步更新。
 
 ## 已废止的旧结论
 
@@ -185,4 +185,4 @@ Workspace 已被测试保护的交互旅程以
 
 2026-08-09 产品负责人明确要求登录与 Cloudflare durable sessions，因此这一纵切取代了旧文档中“Gate 5 前不做 cloud auth”的限制；它是产品方向决策，不被错误记录成已经获得 repeat-use evidence。
 
-这些能力可以作为 hypothesis 重新进入 [ROADMAP.md](ROADMAP.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。
+这些能力可以作为 hypothesis 重新进入 [roadmap.md](roadmap.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。

@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/utils/className';
+import { cn } from '@/utils/class-name';
 
 interface MobileWorkspaceDialogProps {
   open: boolean;

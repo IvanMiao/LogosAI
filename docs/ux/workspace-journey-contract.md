@@ -2,7 +2,7 @@
 
 - 状态：Active
 - 最近同步：2026-08-23
-- 可执行规范：[workspaceJourney.test.tsx](../../frontend/tests/workspace/workspaceJourney.test.tsx)
+- 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
 - 设计基线：[workspace-information-architecture.md](./workspace-information-architecture.md)
 - 浏览器 QA：[workspace-browser-qa-2026-08-23.md](./workspace-browser-qa-2026-08-23.md)
 
@@ -201,7 +201,7 @@
 
 1. 新增、删除或修改测试时，同步对应 `WJ-*` 场景和核心不变量。
 2. 只重构测试但不改变 UX 时，也要更新同步记录并明确行为未变化。
-3. 从 `frontend/` 运行 `npm test -- --run tests/workspace/workspaceJourney.test.tsx`。
+3. 从 `frontend/` 运行 `npm test -- --run tests/workspace/workspace-journey.test.tsx`。
 4. UI 交付前另行执行 `npm run lint`、`npm test`、`npm run build` 和真实浏览器 QA。
 
 ## 同步记录

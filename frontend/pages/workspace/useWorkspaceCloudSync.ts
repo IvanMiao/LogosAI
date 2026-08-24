@@ -4,7 +4,7 @@ import {
   getCloudWorkspace,
   saveCloudReadingSession,
   saveCloudWorkspacePreferences,
-} from '@/client-api/workspaceApi';
+} from '@/client-api/workspace-api';
 import {
   buildReadingSessions,
   buildWorkspacePreferences,
@@ -12,7 +12,7 @@ import {
   mergeCloudWorkspace,
   type LocalWorkspaceState,
 } from '@/features/reading/reading-cloud-state';
-import type { WorkspaceSyncStatus } from './workspace.types';
+import type { WorkspaceSyncStatus } from './workspace-types';
 import {
   readWorkspaceSyncJournal,
   writeWorkspaceSyncJournal,

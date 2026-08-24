@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RemoteApiError,
   reportUnexpectedApiError,
-} from '@/client-api/apiError';
+} from '@/client-api/api-error';
 import { reportUnexpectedError } from '@/monitoring/sentry';
 
 vi.mock('@/monitoring/sentry', () => ({

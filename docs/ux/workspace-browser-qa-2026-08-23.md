@@ -35,7 +35,7 @@
 
 ### 可执行 Workspace 旅程
 
-`frontend/tests/workspace/workspaceJourney.test.tsx` 固定了 11 条旅程：
+`frontend/tests/workspace/workspace-journey.test.tsx` 固定了 11 条旅程：
 
 1. 三种稳定模式；
 2. 段落 Explain 自动保存；

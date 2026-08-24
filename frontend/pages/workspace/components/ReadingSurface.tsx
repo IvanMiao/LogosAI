@@ -7,7 +7,7 @@ import {
   type TextAnchor,
 } from '@/features/anchors';
 import type { ReaderPreferences, WorkspaceDocument } from '@/features/reading';
-import { cn } from '@/utils/className';
+import { cn } from '@/utils/class-name';
 import {
   splitDocumentParagraphsWithOffsets,
   type DocumentParagraph,
@@ -17,7 +17,7 @@ import type {
   AnchorMarkStatus,
   PendingSelection,
   SelectionToolbarPlacement,
-} from '../workspace.types';
+} from '../workspace-types';
 
 interface ReadingSurfaceProps {
   activeDocument: WorkspaceDocument;

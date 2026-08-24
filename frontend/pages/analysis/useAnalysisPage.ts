@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
-import { streamAnalysis } from '@/client-api/analysisApi';
+import { streamAnalysis } from '@/client-api/analysis-api';
 import type { AnalysisModel, AnalysisStreamStage, HistoryItem } from '@/types';
-import { prependHistoryItem, readHistory, removeHistoryItem } from '@/utils/historyStorage';
+import { prependHistoryItem, readHistory, removeHistoryItem } from '@/utils/history-storage';
 
 export function useAnalysisPage({
   hasApiKey,

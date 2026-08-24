@@ -12,7 +12,7 @@ import {
 } from './components';
 import { useWorkspace } from './useWorkspace';
 import { useWorkspaceViewport } from './useWorkspaceViewport';
-import type { WorkspacePageProps } from './workspace.types';
+import type { WorkspacePageProps } from './workspace-types';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
   const auth = useAuth();

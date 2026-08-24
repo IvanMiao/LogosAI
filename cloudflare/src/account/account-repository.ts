@@ -1,4 +1,4 @@
-import type { AnalysisModel, StoredUserSettings } from './account.types';
+import type { AnalysisModel, StoredUserSettings } from './account-types';
 
 interface UserSettingsRow {
   user_id: string;

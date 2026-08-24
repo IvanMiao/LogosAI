@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { streamAnalysis } from '@/client-api/analysisApi';
-import { runAnchorSkill } from '@/client-api/anchorApi';
+import { streamAnalysis } from '@/client-api/analysis-api';
+import { runAnchorSkill } from '@/client-api/anchor-api';
 
 function createWorkerErrorResponse(message: string): Response {
   return new Response(JSON.stringify({

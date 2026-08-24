@@ -12,7 +12,7 @@ import {
   type TextAnchor,
 } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/features/reading';
-import type { PendingSelection, SelectionToolbarPlacement } from './workspace.types';
+import type { PendingSelection, SelectionToolbarPlacement } from './workspace-types';
 
 interface UseReadingSelectionInput {
   userId: string;

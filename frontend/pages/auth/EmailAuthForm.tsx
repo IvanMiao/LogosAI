@@ -15,7 +15,7 @@ import {
   type AuthFieldErrors,
   type AuthFields,
   type AuthMode,
-} from './auth.helpers';
+} from './auth-helpers';
 
 interface EmailAuthFormProps {
   mode: AuthMode;

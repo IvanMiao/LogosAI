@@ -352,7 +352,7 @@ interface WorkspaceViewState {
 
 ## UX contract 迁移规则
 
-`docs/ux/workspace-journey-contract.md` 与 `frontend/tests/workspace/workspaceJourney.test.tsx` 是一对可执行规范。
+`docs/ux/workspace-journey-contract.md` 与 `frontend/tests/workspace/workspace-journey.test.tsx` 是一对可执行规范。
 本文不提前修改当前 Active contract；每个实施切片在改变行为时，必须在同一提交中更新测试与文档。
 
 预计迁移：

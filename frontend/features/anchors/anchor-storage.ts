@@ -1,5 +1,5 @@
-import type { AnchorStorageState, TextAnchor } from './anchor.types';
-import { readScopedStorage, writeScopedStorage } from '@/utils/scopedStorage';
+import type { AnchorStorageState, TextAnchor } from './anchor-types';
+import { readScopedStorage, writeScopedStorage } from '@/utils/scoped-storage';
 
 const ANCHOR_STORAGE_KEY = 'logosai.workspace.anchors:v1';
 

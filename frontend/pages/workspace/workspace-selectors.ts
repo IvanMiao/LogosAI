@@ -7,7 +7,7 @@ import {
 import type {
   AnchorMarkStatus,
   WorkspaceSessionArtifact,
-} from './workspace.types';
+} from './workspace-types';
 
 interface AnchorMarkStatusInput {
   anchors: TextAnchor[];

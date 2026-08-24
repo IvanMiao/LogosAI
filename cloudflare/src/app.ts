@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { accountRoutes } from './account/account.routes';
+import { accountRoutes } from './account/account-routes';
 import { createAuth } from './auth/auth';
 import { requireAuthenticatedUser } from './auth/require-auth';
 import type { CloudflareApp } from './env';
 import { proxyAiRequest } from './gateway/ai-gateway';
 import { serveStaticAssets } from './gateway/static-assets';
 import { handleApiError } from './http/error-response';
-import { readingRoutes } from './reading/reading.routes';
-import { workspaceRoutes } from './workspace/workspace.routes';
+import { readingRoutes } from './reading/reading-routes';
+import { workspaceRoutes } from './workspace/workspace-routes';
 
 export function createApp(): Hono<CloudflareApp> {
   const app = new Hono<CloudflareApp>();

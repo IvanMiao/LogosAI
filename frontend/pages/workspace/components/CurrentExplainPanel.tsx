@@ -27,7 +27,7 @@ import {
 import {
   formatArtifactTimestamp,
   getArtifactLabel,
-} from './artifact-display.helpers';
+} from './artifact-display-helpers';
 
 interface CurrentExplainPanelProps {
   activeAnchor: TextAnchor;

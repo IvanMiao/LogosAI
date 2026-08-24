@@ -3,7 +3,7 @@ import {
   readApiErrorMessage,
   RemoteApiError,
   reportUnexpectedApiError,
-} from '@/client-api/apiError';
+} from '@/client-api/api-error';
 import {
   consumeSseBuffer,
   type ParsedSseEvent,
@@ -11,7 +11,7 @@ import {
   type StreamDonePayload,
   type StreamErrorPayload,
   type StreamStagePayload,
-} from '@/utils/parseSse';
+} from '@/utils/parse-sse';
 
 const STREAM_FLUSH_INTERVAL_MS = 40;
 

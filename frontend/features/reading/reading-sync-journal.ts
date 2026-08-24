@@ -1,4 +1,4 @@
-import { readScopedStorage, writeScopedStorage } from '@/utils/scopedStorage';
+import { readScopedStorage, writeScopedStorage } from '@/utils/scoped-storage';
 
 const WORKSPACE_SYNC_JOURNAL_KEY = 'logosai.workspace.cloudSyncJournal:v1';
 

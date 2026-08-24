@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSafeNextPath, validateAuthFields } from '@/pages/auth/auth.helpers';
+import { getSafeNextPath, validateAuthFields } from '@/pages/auth/auth-helpers';
 
 describe('auth form helpers', () => {
   it('validates account creation fields with actionable messages', () => {

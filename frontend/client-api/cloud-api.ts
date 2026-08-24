@@ -1,4 +1,4 @@
-import { readApiErrorMessage, RemoteApiError } from './apiError';
+import { readApiErrorMessage, RemoteApiError } from './api-error';
 
 async function getErrorMessage(response: Response): Promise<string> {
   return readApiErrorMessage(

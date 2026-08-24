@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { runAnchorSkill } from '@/client-api/anchorApi';
-import { streamAnalysis } from '@/client-api/analysisApi';
+import { runAnchorSkill } from '@/client-api/anchor-api';
+import { streamAnalysis } from '@/client-api/analysis-api';
 import type { HistoryItem } from '@/types';
 import {
   createAnchorFromRange,
@@ -19,7 +19,7 @@ import type {
   WorkspacePageProps,
   WorkspaceSyncStatus,
   WorkspaceViewModel,
-} from './workspace.types';
+} from './workspace-types';
 import { useArtifactCollection } from './useArtifactCollection';
 import { useArtifactTasks } from './useArtifactTasks';
 import { useReadingLibrary } from './useReadingLibrary';

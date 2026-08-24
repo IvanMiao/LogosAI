@@ -7,7 +7,7 @@ import {
   type Artifact,
   type ArtifactStorageState,
 } from '@/features/artifacts';
-import { createClientId } from '@/utils/createClientId';
+import { createClientId } from '@/utils/create-client-id';
 import type { AnalysisStreamStage } from '@/types';
 
 interface ArtifactTaskMetadata {

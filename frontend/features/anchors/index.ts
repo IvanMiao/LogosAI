@@ -22,4 +22,4 @@ export type {
   AnchorStorageState,
   ResolvedAnchor,
   TextAnchor,
-} from './anchor.types';
+} from './anchor-types';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReadingSessionSnapshotSchema } from '../src/reading/reading.schema';
+import { ReadingSessionSnapshotSchema } from '../src/reading/reading-schema';
 
 const NOW = '2026-08-09T12:00:00.000Z';
 

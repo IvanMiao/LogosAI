@@ -11,7 +11,7 @@ import {
   readStoredCloseReadingSourceWidth,
   writeStoredDocument,
 } from '@/features/reading/reading-storage';
-import { writeHistory } from '@/utils/historyStorage';
+import { writeHistory } from '@/utils/history-storage';
 
 const workspaceDocument = {
   id: 'document-1',

@@ -14,7 +14,7 @@ import type {
   PendingSelection,
   SelectionToolbarPlacement,
   WorkspaceSessionArtifact,
-} from '../workspace.types';
+} from '../workspace-types';
 import { useWorkspaceViewState, type ExplainOrigin } from '../useWorkspaceViewState';
 import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
 import { CloseReadingSplitLayout } from './CloseReadingSplitLayout';

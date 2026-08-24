@@ -5,11 +5,11 @@ import {
   readApiErrorMessage,
   RemoteApiError,
   reportUnexpectedApiError,
-} from '@/client-api/apiError';
+} from '@/client-api/api-error';
 import {
   consumeSseBuffer,
   type ParsedSseEvent,
-} from '@/utils/parseSse';
+} from '@/utils/parse-sse';
 
 export interface AnchorStreamMetadata {
   requestId: string;

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import type { ReaderFontFamily, ReaderPreferences } from '@/features/reading';
 import { DEFAULT_READER_PREFERENCES } from '@/features/reading/reading-storage';
-import { cn } from '@/utils/className';
+import { cn } from '@/utils/class-name';
 import { getReaderFontClassName } from '../reading-typography';
 
 const FONT_OPTIONS: Array<{ label: string; sample: string; value: ReaderFontFamily }> = [

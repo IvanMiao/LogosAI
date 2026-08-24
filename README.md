@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./docs/LOGO.png" alt="LogosAI Logo" width="280" />
+  <img src="./docs/logo.png" alt="LogosAI Logo" width="280" />
 </div>
 
 # LogosAI
@@ -89,7 +89,7 @@ Settings before using AI actions. Local notes work without a key.
 
 Cloudflare setup, OAuth callback URLs, production secrets, migrations, and
 deployment order are documented in [Cloudflare Operations](./cloudflare/README.md). Optional
-observability configuration is described in [Project Reference](./docs/PROJECT.md).
+observability configuration is described in [Project Reference](./docs/project.md).
 
 The equivalent command without Make is:
 
@@ -149,9 +149,9 @@ npm run build
 
 ## Documentation
 
-- [Project Reference](./docs/PROJECT.md): current product boundaries,
+- [Project Reference](./docs/project.md): current product boundaries,
   architecture, domain language, and runtime contracts.
-- [Roadmap](./docs/ROADMAP.md): the only source of truth for priorities,
+- [Roadmap](./docs/roadmap.md): the only source of truth for priorities,
   evidence gates, and deferred work.
 - [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
   auth, D1 ownership, credential handling, and request boundaries.

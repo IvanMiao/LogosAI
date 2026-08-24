@@ -1,5 +1,5 @@
 import type { AnalysisModel } from '@/types';
-import { requestCloudEmpty, requestCloudJson } from './cloudApi';
+import { requestCloudEmpty, requestCloudJson } from './cloud-api';
 
 export interface UserSettingsResponse {
   model: AnalysisModel;

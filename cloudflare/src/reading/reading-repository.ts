@@ -5,7 +5,7 @@ import type {
   ReadingDocument,
   ReadingSessionSnapshot,
   StoredReadingSession,
-} from './reading.types';
+} from './reading-types';
 
 interface SessionRow {
   id: string;

@@ -10,8 +10,8 @@ import {
   clearUserApiKey,
   findUserSettings,
   saveUserSettings,
-} from './account.repository';
-import type { UserSettings } from './account.types';
+} from './account-repository';
+import type { UserSettings } from './account-types';
 
 const SettingsInputSchema = z
   .object({

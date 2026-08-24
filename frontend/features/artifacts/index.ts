@@ -24,4 +24,4 @@ export type {
   ArtifactTask,
   ArtifactType,
   NoteArtifact,
-} from './artifact.types';
+} from './artifact-types';

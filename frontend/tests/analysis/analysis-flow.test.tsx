@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AnalysisPage } from '@/pages/analysis';
-import { readHistory, writeHistory } from '@/utils/historyStorage';
+import { readHistory, writeHistory } from '@/utils/history-storage';
 
 function renderAnalysisPage() {
   return render(

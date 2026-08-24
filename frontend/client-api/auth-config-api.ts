@@ -1,4 +1,4 @@
-import { RemoteApiError } from './apiError';
+import { RemoteApiError } from './api-error';
 
 export interface AuthProviderConfig {
   emailPassword: boolean;

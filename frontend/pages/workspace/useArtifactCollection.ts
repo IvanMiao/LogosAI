@@ -15,7 +15,7 @@ import {
 } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
 import { getAnchorMarkStatusById } from './workspace-selectors';
-import type { AnchorMarkStatus } from './workspace.types';
+import type { AnchorMarkStatus } from './workspace-types';
 
 interface UseArtifactCollectionInput {
   userId: string;
