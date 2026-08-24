@@ -4,4 +4,4 @@ export type {
   UserSettingsContextValue,
   UserSettingsState,
   UserSettingsStatus,
-} from './user-settings.types';
+} from './user-settings-types';

@@ -1,23 +1,21 @@
 import type { AnalysisStreamStage, AnalysisModel } from '@/types';
-import type { TextAnchor } from '@/features/anchors';
+import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/features/reading';
 import {
   readApiErrorMessage,
   RemoteApiError,
   reportUnexpectedApiError,
-} from '@/client-api/apiError';
+} from '@/client-api/api-error';
 import {
   consumeSseBuffer,
   type ParsedSseEvent,
-} from '@/utils/parseSse';
+} from '@/utils/parse-sse';
 
 export interface AnchorStreamMetadata {
   requestId: string;
   traceId: string;
   anchorId: string;
 }
-
-export type AnchorSkill = 'explain' | 'translate' | 'vocab';
 
 export interface RunAnchorExplainRequest {
   model: AnalysisModel;

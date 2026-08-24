@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from llm.prompts import GENERAL_PROMPT
 
@@ -15,26 +15,22 @@ LANG_MAP = {
 }
 
 
-class MultiAgentState(TypedDict):
-    messages: list
+class AnalysisState(TypedDict):
     text: str
     text_language: str
     user_language: str
     genre: str
     needs_correction: bool
-    corrected_text: Optional[str]
-    interpretation: Optional[str]
+    corrected_text: str | None
 
 
-def create_initial_state(text: str, user_language: str) -> MultiAgentState:
+def create_initial_state(text: str, user_language: str) -> AnalysisState:
     return {
-        "messages": [],
         "text": text,
         "text_language": "",
         "genre": "",
         "needs_correction": False,
         "corrected_text": None,
-        "interpretation": None,
         "user_language": user_language.upper(),
     }
 

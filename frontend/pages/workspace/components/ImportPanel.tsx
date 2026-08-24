@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type ReactElement } from 'react';
 import { BookOpen, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { ImportState } from '../workspace.types';
+import type { ImportState } from '../workspace-types';
 
 interface ImportPanelProps {
   importState: ImportState;

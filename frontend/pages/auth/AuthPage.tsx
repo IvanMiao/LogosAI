@@ -4,7 +4,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { EmailAuthForm } from './EmailAuthForm';
 import { SocialAuthButtons } from './SocialAuthButtons';
-import { getSafeNextPath, type AuthMode } from './auth.helpers';
+import { getSafeNextPath, type AuthMode } from './auth-helpers';
 
 interface AuthPageProps {
   mode: AuthMode;

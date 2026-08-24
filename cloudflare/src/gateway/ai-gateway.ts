@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import type { CloudflareApp } from '../env';
 import { ApiError } from '../http/api-error';
-import { findUserSettings } from '../account/account.repository';
+import { findUserSettings } from '../account/account-repository';
 import { decryptUserSecret } from '../security/secret-encryption';
 
 const FORWARDED_AI_PATHS = new Set([

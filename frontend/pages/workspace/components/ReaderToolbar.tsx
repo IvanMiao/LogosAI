@@ -29,7 +29,7 @@ import type {
   ReaderPreferences,
   WorkspaceDocument,
 } from '@/features/reading';
-import { cn } from '@/utils/className';
+import { cn } from '@/utils/class-name';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
 import type { WorkspaceMode } from '../useWorkspaceViewState';
 import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WorkspacePreferencesSchema } from '../src/workspace/workspace.schema';
+import { WorkspacePreferencesSchema } from '../src/workspace/workspace-schema';
 
 function createPreferences() {
   return {

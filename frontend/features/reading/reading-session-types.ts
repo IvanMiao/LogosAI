@@ -4,7 +4,7 @@ import type {
   AnalysisLanguage,
   ReaderPreferences,
   WorkspaceDocument,
-} from './reading.types';
+} from './reading-types';
 
 export interface ReadingSessionSnapshot {
   document: WorkspaceDocument;

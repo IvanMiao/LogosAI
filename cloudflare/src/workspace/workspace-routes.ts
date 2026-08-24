@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import type { CloudflareApp } from '../env';
 import { ApiError } from '../http/api-error';
-import { listReadingSessions } from '../reading/reading.repository';
-import { WorkspacePreferencesSchema } from './workspace.schema';
+import { listReadingSessions } from '../reading/reading-repository';
+import { WorkspacePreferencesSchema } from './workspace-schema';
 import {
   findWorkspacePreferences,
   saveWorkspacePreferences,
-} from './workspace.repository';
+} from './workspace-repository';
 
 export const workspaceRoutes = new Hono<CloudflareApp>();
 

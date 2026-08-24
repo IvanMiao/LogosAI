@@ -3,7 +3,7 @@ export type {
   ReadingSessionSnapshot,
   StoredReadingSession,
   WorkspacePreferencesPayload,
-} from './reading-session.types';
+} from './reading-session-types';
 export type {
   AnalysisLanguage,
   DocumentSourceType,
@@ -12,4 +12,4 @@ export type {
   ReadingSessionStats,
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
-} from './reading.types';
+} from './reading-types';

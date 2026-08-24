@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react';
-import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { Artifact } from '@/features/artifacts';
+import type { AnchorSkill } from '@/features/anchors';
 import { useAuth } from '@/features/auth';
 import { useUserSettings } from '@/features/user-settings';
 import {
@@ -12,7 +12,7 @@ import {
 } from './components';
 import { useWorkspace } from './useWorkspace';
 import { useWorkspaceViewport } from './useWorkspaceViewport';
-import type { WorkspacePageProps } from './workspace.types';
+import type { WorkspacePageProps } from './workspace-types';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
   const auth = useAuth();

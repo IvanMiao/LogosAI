@@ -4,8 +4,8 @@ import { ApiError } from '../http/api-error';
 import {
   deleteReadingSession,
   saveReadingSession,
-} from './reading.repository';
-import { ReadingSessionSnapshotSchema } from './reading.schema';
+} from './reading-repository';
+import { ReadingSessionSnapshotSchema } from './reading-schema';
 
 export const readingRoutes = new Hono<CloudflareApp>();
 

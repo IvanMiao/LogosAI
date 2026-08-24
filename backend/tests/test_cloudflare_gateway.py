@@ -27,7 +27,7 @@ def test_gateway_secret_rejects_direct_api_requests(monkeypatch) -> None:
 
 def test_gateway_secret_accepts_worker_request(monkeypatch, fake_agent) -> None:
     monkeypatch.setenv("LOGOSAI_GATEWAY_SECRET", "worker-shared-secret")
-    fake_agent.graph.invoke.return_value = {"interpretation": "Analysis result."}
+    fake_agent.llm_flash.ainvoke.return_value.content = "Analysis result."
     client = TestClient(
         app,
         headers={

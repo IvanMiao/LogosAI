@@ -1,5 +1,5 @@
-import type { Artifact, ArtifactStorageState, NoteArtifact } from './artifact.types';
-import { createClientId } from '@/utils/createClientId';
+import type { Artifact, ArtifactStorageState, NoteArtifact } from './artifact-types';
+import { createClientId } from '@/utils/create-client-id';
 
 const EMPTY_ARTIFACT_STORAGE: ArtifactStorageState = {
   artifactsByAnchorId: {},

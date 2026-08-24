@@ -1,2 +1,2 @@
 export { AuthPage } from './AuthPage';
-export type { AuthMode } from './auth.helpers';
+export type { AuthMode } from './auth-helpers';

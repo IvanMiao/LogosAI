@@ -1,5 +1,5 @@
-import type { Artifact, ArtifactStorageState } from './artifact.types';
-import { readScopedStorage, writeScopedStorage } from '@/utils/scopedStorage';
+import type { Artifact, ArtifactStorageState } from './artifact-types';
+import { readScopedStorage, writeScopedStorage } from '@/utils/scoped-storage';
 
 const ARTIFACT_STORAGE_KEY = 'logosai.workspace.artifacts:v1';
 

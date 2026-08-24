@@ -12,7 +12,7 @@ per-user Gemini key. The product owner explicitly requested account login via
 email/password, Google, or GitHub; Cloudflare-hosted user data; convenient
 reading-session management; and very clear code ownership.
 
-The existing FastAPI/LangGraph analysis service is working and should not be
+The existing FastAPI analysis service is working and should not be
 rewritten merely to add identity and storage.
 
 ## Decision
@@ -105,7 +105,7 @@ Costs and limits:
   control-plane interface and would put Cloudflare credentials on Fly. A Worker
   binding is the intended application data path.
 - **Move model orchestration into the Worker:** this would duplicate the tested
-  FastAPI/LangGraph workflow and mix identity, persistence, and AI execution.
+  FastAPI workflow and mix identity, persistence, and AI execution.
 - **Keep API keys only in localStorage:** this prevents safe cross-device use and
   exposes long-lived credentials to any successful browser script injection.
 - **Adopt a separate hosted auth vendor:** unnecessary while Better Auth supports

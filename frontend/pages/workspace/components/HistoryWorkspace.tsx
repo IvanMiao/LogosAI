@@ -3,12 +3,12 @@ import { ArrowUpRight, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
-import type { WorkspaceSessionArtifact } from '../workspace.types';
+import type { WorkspaceSessionArtifact } from '../workspace-types';
 import { ArtifactBody, ArtifactStatusIcon } from './ArtifactDisplay';
 import {
   formatArtifactTimestamp,
   getArtifactLabel,
-} from './artifact-display.helpers';
+} from './artifact-display-helpers';
 
 type ArtifactFilter = 'all' | Artifact['type'];
 export type HistorySort = 'recent' | 'source';

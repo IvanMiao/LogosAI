@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Artifact } from '@/features/artifacts';
-import { cn } from '@/utils/className';
-import { formatArtifactTimestamp } from './artifact-display.helpers';
+import { cn } from '@/utils/class-name';
+import { formatArtifactTimestamp } from './artifact-display-helpers';
 
 interface CloseReadingActionsProps {
   artifact: Artifact;

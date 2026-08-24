@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./docs/LOGO.png" alt="LogosAI Logo" width="280" />
+  <img src="./docs/logo.png" alt="LogosAI Logo" width="280" />
 </div>
 
 # LogosAI
@@ -27,13 +27,10 @@ FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 ## Stack
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Radix UI
-- Backend: Python 3.13, FastAPI, Pydantic, LangChain/LangGraph
+- Backend: Python 3.13, FastAPI, Pydantic, LangChain
 - Cloud: Cloudflare Workers, D1, Hono, Better Auth
 - Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
 - Delivery: React static assets, auth, and D1 on Cloudflare Workers; FastAPI on Fly.io
-
-PostgreSQL scaffolding remains in the repository but is not part of the active
-Workspace request or persistence path.
 
 ## Local Development
 
@@ -90,10 +87,9 @@ Open `http://localhost:5173`. Vite proxies `/api/*` to the Worker at
 `http://127.0.0.1:8000`. Create an account, then add a Gemini API key from
 Settings before using AI actions. Local notes work without a key.
 
-No PostgreSQL instance is required for the default workflow. Cloudflare setup,
-OAuth callback URLs, production secrets, migrations, and deployment order are
-documented in [Cloudflare Operations](./cloudflare/README.md). Optional
-observability configuration is described in [Project Reference](./docs/PROJECT.md).
+Cloudflare setup, OAuth callback URLs, production secrets, migrations, and
+deployment order are documented in [Cloudflare Operations](./cloudflare/README.md). Optional
+observability configuration is described in [Project Reference](./docs/project.md).
 
 The equivalent command without Make is:
 
@@ -153,9 +149,9 @@ npm run build
 
 ## Documentation
 
-- [Project Reference](./docs/PROJECT.md): current product boundaries,
+- [Project Reference](./docs/project.md): current product boundaries,
   architecture, domain language, and runtime contracts.
-- [Roadmap](./docs/ROADMAP.md): the only source of truth for priorities,
+- [Roadmap](./docs/roadmap.md): the only source of truth for priorities,
   evidence gates, and deferred work.
 - [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
   auth, D1 ownership, credential handling, and request boundaries.

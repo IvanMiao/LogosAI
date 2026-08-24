@@ -8,7 +8,7 @@ import {
 import {
   getSearchContext,
   getSessionCountLabel,
-} from './sessions-navigation.helpers';
+} from './sessions-navigation-helpers';
 import {
   WorkspaceDeleteDialog,
 } from './WorkspaceDeleteDialog';

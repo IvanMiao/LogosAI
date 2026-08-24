@@ -14,7 +14,8 @@ import {
   type ArtifactStorageState,
 } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
-import type { AnchorMarkStatus } from './workspace.types';
+import { getAnchorMarkStatusById } from './workspace-selectors';
+import type { AnchorMarkStatus } from './workspace-types';
 
 interface UseArtifactCollectionInput {
   userId: string;
@@ -41,23 +42,6 @@ interface ArtifactCollection {
     updater: (current: ArtifactStorageState) => ArtifactStorageState,
   ) => void;
   hydrateArtifactStorage: (storage: ArtifactStorageState) => void;
-}
-
-function getAnchorMarkStatusById({
-  anchors,
-  activeAnchorId,
-  artifactStorage,
-}: {
-  anchors: TextAnchor[];
-  activeAnchorId: string | null;
-  artifactStorage: ArtifactStorageState;
-}): Record<string, AnchorMarkStatus> {
-  return anchors.reduce<Record<string, AnchorMarkStatus>>((statuses, anchor) => {
-    const artifacts = getArtifactsForAnchor(artifactStorage, anchor.id);
-    const hasDraft = Boolean(getNoteDraft(artifacts));
-    const status = anchor.id === activeAnchorId ? 'active' : hasDraft ? 'draft' : 'saved';
-    return { ...statuses, [anchor.id]: status };
-  }, {});
 }
 
 export function useArtifactCollection({

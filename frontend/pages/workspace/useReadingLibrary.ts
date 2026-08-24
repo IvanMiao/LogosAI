@@ -21,8 +21,8 @@ import {
   readStoredDocumentLibrary,
   writeStoredDocumentLibrary,
 } from '@/features/reading/reading-storage';
-import { readHistory, removeHistoryItem } from '@/utils/historyStorage';
-import type { ImportState } from './workspace.types';
+import { readHistory, removeHistoryItem } from '@/utils/history-storage';
+import type { ImportState } from './workspace-types';
 
 interface ReadingLibrary {
   documentLibrary: WorkspaceDocumentLibrary;

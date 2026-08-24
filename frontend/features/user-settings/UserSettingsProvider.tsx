@@ -10,13 +10,13 @@ import {
   clearUserApiKey,
   getUserSettings,
   saveUserSettings,
-} from '@/client-api/userSettingsApi';
+} from '@/client-api/user-settings-api';
 import type { AnalysisModel } from '@/types';
 import type {
   UserSettingsContextValue,
   UserSettingsState,
   UserSettingsStatus,
-} from './user-settings.types';
+} from './user-settings-types';
 import { UserSettingsContext } from './user-settings-context';
 
 const DEFAULT_SETTINGS: UserSettingsState = {

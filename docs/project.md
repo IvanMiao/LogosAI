@@ -2,7 +2,7 @@
 
 - 状态：Active，当前产品与工程事实的唯一参考
 - 更新日期：2026-08-09
-- 实施顺序：[ROADMAP.md](ROADMAP.md)
+- 实施顺序：[roadmap.md](roadmap.md)
 
 本文档记录 LogosAI 现在是什么、代码如何工作，以及跨版本保持稳定的产品和工程边界。它不承诺未来功能，也不定义优先级。
 
@@ -39,7 +39,6 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 | Observability | Sentry 记录前端、Cloudflare Worker 与 FastAPI 经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
 | Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
 | Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
-| PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、auth、history 和 API 都不依赖 PostgreSQL。 |
 
 ## 领域语言
 
@@ -141,7 +140,7 @@ Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同�
 
 ### LLM workflow
 
-`TextAnalysisLangchain` 使用 Flash Lite 检测语言、genre 和 correction need，必要时纠错，再由配置的 Flash/Pro 生成连续讲解。Streaming 直接执行这一流程；同步接口使用等价 LangGraph。
+`TextAnalysisLangchain` 使用 Flash Lite 检测语言、genre 和 correction need，必要时纠错，再由配置的 Flash/Pro 生成连续讲解。同步与 streaming 入口复用相同的 detect、correct 和 interpret 阶段实现；streaming 只额外负责逐块输出。
 
 当前 Explain、Translate、Vocab 只是给同一通用 workflow 增加不同 task instruction，并默认把全文作为上下文。它们尚不是经过独立 prompt、context policy 和 eval 验证的稳定 skill semantics。
 
@@ -171,7 +170,7 @@ FastAPI 的 Sentry LLM spans 记录 pipeline、detect/correct/interpret stage、
 
 Workspace 已被测试保护的交互旅程以
 [Workspace Journey UX Contract](ux/workspace-journey-contract.md) 为评审参考。该文档与
-`frontend/tests/workspace/workspaceJourney.test.tsx` 必须在同一次变更中同步更新。
+`frontend/tests/workspace/workspace-journey.test.tsx` 必须在同一次变更中同步更新。
 
 ## 已废止的旧结论
 
@@ -182,8 +181,8 @@ Workspace 已被测试保护的交互旅程以
 - 在真实文档分布出现前固定长文阈值、chunking、digest 或 storage 技术。
 - 立即建设 persona、memory、skill marketplace、auto recommendation、PreReadAgent 或 planner。
 - 在真实分享需求出现前承诺 E2E note encryption、public feed 或 collaboration schema。
-- 为实现未来能力而提前改写所有目录、API 或 LangGraph orchestration。
+- 为实现未来能力而提前改写所有目录、API 或 LLM orchestration。
 
 2026-08-09 产品负责人明确要求登录与 Cloudflare durable sessions，因此这一纵切取代了旧文档中“Gate 5 前不做 cloud auth”的限制；它是产品方向决策，不被错误记录成已经获得 repeat-use evidence。
 
-这些能力可以作为 hypothesis 重新进入 [ROADMAP.md](ROADMAP.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。
+这些能力可以作为 hypothesis 重新进入 [roadmap.md](roadmap.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。

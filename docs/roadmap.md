@@ -3,7 +3,7 @@
 - 状态：Active，唯一有效的实施顺序
 - 更新日期：2026-08-09
 - 当前阶段：`Discover 0`、`Delivery 1` 与已交付的 Cloud Foundation
-- 当前事实与架构：[PROJECT.md](PROJECT.md)
+- 当前事实与架构：[project.md](project.md)
 
 ## 文档规则
 

@@ -17,8 +17,9 @@ export {
 export { getSelectionOffsets } from './selection-offsets';
 export type { SelectionOffsets } from './selection-offsets';
 export type {
+  AnchorSkill,
   AnchorScope,
   AnchorStorageState,
   ResolvedAnchor,
   TextAnchor,
-} from './anchor.types';
+} from './anchor-types';

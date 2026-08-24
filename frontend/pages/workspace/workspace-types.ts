@@ -1,6 +1,6 @@
 import type { AnalysisModel } from '@/types';
 import type { HistoryItem } from '@/types';
-import type { TextAnchor } from '@/features/anchors';
+import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type {
   AnalysisLanguage,
@@ -8,7 +8,6 @@ import type {
   ReadingSessionStats,
   WorkspaceDocument,
 } from '@/features/reading';
-import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
 
 export interface WorkspacePageProps {

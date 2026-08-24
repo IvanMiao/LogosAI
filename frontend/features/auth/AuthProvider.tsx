@@ -6,7 +6,7 @@ import {
 } from 'react';
 import { authClient } from './auth-client';
 import { AuthContext } from './auth-context';
-import type { AuthContextValue, AuthStatus } from './auth.types';
+import type { AuthContextValue, AuthStatus } from './auth-types';
 
 interface AuthProviderProps {
   children: ReactNode;

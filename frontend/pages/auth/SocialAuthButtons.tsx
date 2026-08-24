@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { Github, LoaderCircle } from 'lucide-react';
-import { getAuthProviderConfig, type AuthProviderConfig } from '@/client-api/authConfigApi';
+import { getAuthProviderConfig, type AuthProviderConfig } from '@/client-api/auth-config-api';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/features/auth';
 

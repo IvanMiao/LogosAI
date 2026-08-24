@@ -4,12 +4,12 @@ import type {
   AnalysisLanguage,
   ReaderPreferences,
   WorkspaceDocumentLibrary,
-} from './reading.types';
+} from './reading-types';
 import type {
   CloudWorkspaceState,
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
-} from './reading-session.types';
+} from './reading-session-types';
 import type { WorkspaceSyncJournal } from './reading-sync-journal';
 
 export interface LocalWorkspaceState {

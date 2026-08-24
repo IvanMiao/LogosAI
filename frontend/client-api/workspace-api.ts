@@ -3,7 +3,7 @@ import type {
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
 } from '@/features/reading';
-import { requestCloudEmpty, requestCloudJson } from './cloudApi';
+import { requestCloudEmpty, requestCloudJson } from './cloud-api';
 
 export function getCloudWorkspace(): Promise<CloudWorkspaceState> {
   return requestCloudJson<CloudWorkspaceState>('/api/workspace');

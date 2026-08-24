@@ -1,5 +1,5 @@
 import { ApiError } from '../http/api-error';
-import type { WorkspacePreferences } from './workspace.types';
+import type { WorkspacePreferences } from './workspace-types';
 
 const DEFAULT_WORKSPACE_PREFERENCES: WorkspacePreferences = {
   activeDocumentId: null,

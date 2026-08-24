@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { BookOpen, Brain, Cloud, Languages, Zap, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
-import { cn } from '@/utils/className';
+import { cn } from '@/utils/class-name';
 
 interface LandingFeature {
   title: string;

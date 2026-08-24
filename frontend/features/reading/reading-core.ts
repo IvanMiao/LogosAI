@@ -4,8 +4,8 @@ import type {
   DocumentSourceType,
   ReadingSessionStats,
   WorkspaceDocument,
-} from './reading.types';
-import { createClientId } from '@/utils/createClientId';
+} from './reading-types';
+import { createClientId } from '@/utils/create-client-id';
 
 const SUPPORTED_TEXT_FILE_EXTENSIONS = ['.txt', '.md'];
 const MARKDOWN_TITLE_PATTERN = /^#\s+(.+)$/m;

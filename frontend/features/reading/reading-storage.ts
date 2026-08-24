@@ -4,12 +4,12 @@ import type {
   ReaderPreferences,
   WorkspaceDocument,
   WorkspaceDocumentLibrary,
-} from './reading.types';
+} from './reading-types';
 import {
   readScopedStorage,
   removeScopedStorage,
   writeScopedStorage,
-} from '@/utils/scopedStorage';
+} from '@/utils/scoped-storage';
 
 const LEGACY_DOCUMENT_STORAGE_KEY = 'logosai.workspace.document:v1';
 const DOCUMENT_LIBRARY_STORAGE_KEY = 'logosai.workspace.documentLibrary:v2';

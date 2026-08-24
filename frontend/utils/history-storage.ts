@@ -1,5 +1,5 @@
 import type { HistoryItem } from '@/types';
-import { readScopedStorage, writeScopedStorage } from './scopedStorage';
+import { readScopedStorage, writeScopedStorage } from './scoped-storage';
 
 const HISTORY_STORAGE_KEY = 'logosai_history';
 

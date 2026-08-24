@@ -22,8 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/utils/className';
-import type { WorkspaceViewModel } from '../workspace.types';
+import { cn } from '@/utils/class-name';
+import type { WorkspaceViewModel } from '../workspace-types';
 
 interface WorkspaceHeaderProps {
   viewModel: WorkspaceViewModel;
