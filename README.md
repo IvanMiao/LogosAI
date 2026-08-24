@@ -32,9 +32,6 @@ FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 - Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
 - Delivery: React static assets, auth, and D1 on Cloudflare Workers; FastAPI on Fly.io
 
-PostgreSQL scaffolding remains in the repository but is not part of the active
-Workspace request or persistence path.
-
 ## Local Development
 
 The quickest path requires only Docker with Compose:
@@ -90,9 +87,8 @@ Open `http://localhost:5173`. Vite proxies `/api/*` to the Worker at
 `http://127.0.0.1:8000`. Create an account, then add a Gemini API key from
 Settings before using AI actions. Local notes work without a key.
 
-No PostgreSQL instance is required for the default workflow. Cloudflare setup,
-OAuth callback URLs, production secrets, migrations, and deployment order are
-documented in [Cloudflare Operations](./cloudflare/README.md). Optional
+Cloudflare setup, OAuth callback URLs, production secrets, migrations, and
+deployment order are documented in [Cloudflare Operations](./cloudflare/README.md). Optional
 observability configuration is described in [Project Reference](./docs/PROJECT.md).
 
 The equivalent command without Make is:

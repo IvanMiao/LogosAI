@@ -54,7 +54,6 @@ export function AboutPage() {
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">Langchain</Badge>
                       <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">FastAPI</Badge>
-                      <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">PostgreSQL</Badge>
                       <Badge variant="outline" className="border-2 border-border bg-card text-xs font-bold text-foreground">Pydantic</Badge>
                     </div>
                   </div>

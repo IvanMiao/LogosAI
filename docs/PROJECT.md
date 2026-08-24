@@ -39,7 +39,6 @@ LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文�
 | Observability | Sentry 记录前端、Cloudflare Worker 与 FastAPI 经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
 | Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
 | Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
-| PostgreSQL | 仓库保留未接线的 SQLAlchemy scaffolding。 | 当前 Workspace、auth、history 和 API 都不依赖 PostgreSQL。 |
 
 ## 领域语言
 
