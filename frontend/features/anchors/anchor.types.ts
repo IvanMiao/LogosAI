@@ -1,4 +1,5 @@
 export type AnchorScope = 'document' | 'paragraph' | 'selection';
+export type AnchorSkill = 'explain' | 'translate' | 'vocab';
 
 export interface TextAnchor {
   id: string;

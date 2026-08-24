@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { AnchorSkill } from '@/client-api/anchorApi';
-import { getSelectionOffsets, type TextAnchor } from '@/features/anchors';
+import {
+  getSelectionOffsets,
+  type AnchorSkill,
+  type TextAnchor,
+} from '@/features/anchors';
 import type { ReaderPreferences, WorkspaceDocument } from '@/features/reading';
 import { cn } from '@/utils/className';
 import {

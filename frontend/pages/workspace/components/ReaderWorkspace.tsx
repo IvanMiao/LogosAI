@@ -1,8 +1,7 @@
 import { useRef, useState, type ReactElement } from 'react';
 import { ScanText } from 'lucide-react';
-import type { AnchorSkill } from '@/client-api/anchorApi';
 import { Button } from '@/components/ui/button';
-import type { TextAnchor } from '@/features/anchors';
+import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type {
   AnalysisLanguage,

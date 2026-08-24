@@ -55,5 +55,38 @@ export default tseslint.config(
     languageOptions: {
       globals: globals.node,
     },
-  }
+  },
+  {
+    files: ['client-api/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['@/app/**', '@/components/**', '@/pages/**'],
+          message: 'Transport modules may depend on domain types, not UI or page layers.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['@/app/**', '@/pages/**'],
+          message: 'Feature modules must not depend on app or page layers.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['pages/**/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['@/client-api/**'],
+          message: 'Presentation components receive domain types and callbacks from their page.',
+        }],
+      }],
+    },
+  },
 )

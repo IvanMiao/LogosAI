@@ -1,14 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
-import { runAnchorSkill, type AnchorSkill } from '@/client-api/anchorApi';
+import { runAnchorSkill } from '@/client-api/anchorApi';
 import { streamAnalysis } from '@/client-api/analysisApi';
 import type { HistoryItem } from '@/types';
 import {
   createAnchorFromRange,
   getAnchorsForDocument,
   resolveAnchor,
+  type AnchorSkill,
   type TextAnchor,
 } from '@/features/anchors';
-import type { Artifact, ArtifactStorageState } from '@/features/artifacts';
+import type { Artifact } from '@/features/artifacts';
 import {
   buildReadingSessionStats,
   type DocumentParagraph,
@@ -16,7 +17,6 @@ import {
 import type {
   WorkspaceController,
   WorkspacePageProps,
-  WorkspaceSessionArtifact,
   WorkspaceSyncStatus,
   WorkspaceViewModel,
 } from './workspace.types';
@@ -26,25 +26,8 @@ import { useReadingLibrary } from './useReadingLibrary';
 import { useReadingPreferences } from './useReadingPreferences';
 import { useReadingSelection } from './useReadingSelection';
 import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
+import { getSessionArtifacts } from './workspace-selectors';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
-
-function getSessionArtifacts(
-  artifactStorage: ArtifactStorageState,
-  anchorsById: Record<string, TextAnchor>,
-  documentId: string | undefined,
-): WorkspaceSessionArtifact[] {
-  if (!documentId) {
-    return [];
-  }
-
-  return Object.values(artifactStorage.artifactsByAnchorId)
-    .flat()
-    .flatMap((artifact) => {
-      const anchor = anchorsById[artifact.anchorId];
-      return artifact.documentId === documentId && anchor ? [{ artifact, anchor }] : [];
-    })
-    .sort((left, right) => right.artifact.updatedAt.localeCompare(left.artifact.updatedAt));
-}
 
 function buildWorkspaceViewModel({
   hasApiKey,

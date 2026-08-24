@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from 'react';
-import type { AnchorSkill } from '@/client-api/anchorApi';
 import type { Artifact } from '@/features/artifacts';
+import type { AnchorSkill } from '@/features/anchors';
 import { useAuth } from '@/features/auth';
 import { useUserSettings } from '@/features/user-settings';
 import {

@@ -1,5 +1,5 @@
 import type { AnalysisStreamStage, AnalysisModel } from '@/types';
-import type { TextAnchor } from '@/features/anchors';
+import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/features/reading';
 import {
   readApiErrorMessage,
@@ -16,8 +16,6 @@ export interface AnchorStreamMetadata {
   traceId: string;
   anchorId: string;
 }
-
-export type AnchorSkill = 'explain' | 'translate' | 'vocab';
 
 export interface RunAnchorExplainRequest {
   model: AnalysisModel;

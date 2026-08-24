@@ -7,7 +7,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import type { AnchorSkill } from '@/client-api/anchorApi';
+import type { AnchorSkill } from '@/features/anchors';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
