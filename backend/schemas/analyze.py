@@ -13,7 +13,7 @@ class AnalysisResponse(BaseModel):
     error: str | None = None
 
 
-class TextDerectives(BaseModel):
+class TextDirectives(BaseModel):
     language: str
     genre: str
     correction_needed: bool

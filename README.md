@@ -27,7 +27,7 @@ FastAPI service on Fly.io. FastAPI never stores the Gemini key.
 ## Stack
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Radix UI
-- Backend: Python 3.13, FastAPI, Pydantic, LangChain/LangGraph
+- Backend: Python 3.13, FastAPI, Pydantic, LangChain
 - Cloud: Cloudflare Workers, D1, Hono, Better Auth
 - Models: Gemini 2.5 Flash or Pro; Flash Lite for detection and correction
 - Delivery: React static assets, auth, and D1 on Cloudflare Workers; FastAPI on Fly.io

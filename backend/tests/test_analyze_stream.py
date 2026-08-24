@@ -50,6 +50,20 @@ async def test_stream_emits_detect_interpret_done():
 
 
 @pytest.mark.asyncio
+async def test_sync_and_stream_share_correction_pipeline():
+    agent = make_fake_agent(
+        needs_correction=True,
+        corrected_text="corrected source",
+        chunks=["shared result"],
+    )
+
+    result = await agent.analyze("source with typo", "EN")
+
+    assert result == "shared result"
+    agent.llm_lite.ainvoke.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_stream_with_correction():
     agent = make_fake_agent(
         needs_correction=True,
@@ -145,7 +159,7 @@ class TestStreamEndpoint:
         capture_exception.assert_called_once()
 
     def test_sync_error_is_reported_without_changing_response(self, client, fake_agent):
-        fake_agent.graph.invoke.side_effect = RuntimeError("Graph exploded")
+        fake_agent.llm_flash.ainvoke.side_effect = RuntimeError("Analysis exploded")
 
         with patch("routers.routes.capture_exception") as capture_exception:
             resp = client.post(
@@ -157,6 +171,6 @@ class TestStreamEndpoint:
         assert resp.json() == {
             "result": "",
             "success": False,
-            "error": "Graph exploded",
+            "error": "Analysis exploded",
         }
         capture_exception.assert_called_once()

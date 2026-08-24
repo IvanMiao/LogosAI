@@ -140,7 +140,7 @@ Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同�
 
 ### LLM workflow
 
-`TextAnalysisLangchain` 使用 Flash Lite 检测语言、genre 和 correction need，必要时纠错，再由配置的 Flash/Pro 生成连续讲解。Streaming 直接执行这一流程；同步接口使用等价 LangGraph。
+`TextAnalysisLangchain` 使用 Flash Lite 检测语言、genre 和 correction need，必要时纠错，再由配置的 Flash/Pro 生成连续讲解。同步与 streaming 入口复用相同的 detect、correct 和 interpret 阶段实现；streaming 只额外负责逐块输出。
 
 当前 Explain、Translate、Vocab 只是给同一通用 workflow 增加不同 task instruction，并默认把全文作为上下文。它们尚不是经过独立 prompt、context policy 和 eval 验证的稳定 skill semantics。
 
@@ -181,7 +181,7 @@ Workspace 已被测试保护的交互旅程以
 - 在真实文档分布出现前固定长文阈值、chunking、digest 或 storage 技术。
 - 立即建设 persona、memory、skill marketplace、auto recommendation、PreReadAgent 或 planner。
 - 在真实分享需求出现前承诺 E2E note encryption、public feed 或 collaboration schema。
-- 为实现未来能力而提前改写所有目录、API 或 LangGraph orchestration。
+- 为实现未来能力而提前改写所有目录、API 或 LLM orchestration。
 
 2026-08-09 产品负责人明确要求登录与 Cloudflare durable sessions，因此这一纵切取代了旧文档中“Gate 5 前不做 cloud auth”的限制；它是产品方向决策，不被错误记录成已经获得 repeat-use evidence。
 
