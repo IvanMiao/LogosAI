@@ -25,6 +25,7 @@ import { MobileWorkspaceDialog } from './MobileWorkspaceDialog';
 import { ReaderToolbar } from './ReaderToolbar';
 import { ReadingSurface } from './ReadingSurface';
 import { ReaderWorkspaceLayout } from './ReaderWorkspaceLayout';
+import type { WorkspaceAppChromeProps } from './WorkspaceHeader';
 import {
   WorkspaceDeleteDialog,
   type WorkspaceDeletionTarget,
@@ -70,6 +71,7 @@ interface ReaderWorkspaceActions {
 }
 
 interface ReaderWorkspaceProps {
+  appChrome: WorkspaceAppChromeProps;
   reading: ReaderWorkspaceState;
   actions: ReaderWorkspaceActions;
   isDesktopViewport: boolean;
@@ -86,7 +88,7 @@ interface ReaderWorkspaceProps {
 
 function CloseReadingEmptyState({ onStart }: { onStart: () => void }): ReactElement {
   return (
-    <section className="flex min-h-[32rem] items-center justify-center border-e-2 border-border bg-[#fbfbf8] p-6">
+    <section className="flex h-full min-h-0 items-center justify-center overflow-y-auto border-e-2 border-border bg-[#fbfbf8] p-6">
       <div className="max-w-md border-2 border-border bg-card p-6 text-center shadow-[6px_6px_0px_0px_var(--border)]">
         <ScanText className="mx-auto h-7 w-7" aria-hidden="true" />
         <h2 className="mt-3 text-xl font-black">Read the whole text closely</h2>
@@ -111,6 +113,7 @@ function getActiveExplainArtifact(reading: ReaderWorkspaceState): Artifact | nul
 }
 
 export function ReaderWorkspace({
+  appChrome,
   reading,
   actions,
   isDesktopViewport,
@@ -201,9 +204,7 @@ export function ReaderWorkspace({
     <ReadingSurface
       activeDocument={reading.activeDocument}
       preferences={reading.readerPreferences}
-      isIndependentScroll={isDesktopViewport && (
-        view.mode === 'close-reading' || view.isExplainOpen
-      )}
+      isIndependentScroll
       sourceRevealRequest={view.sourceRevealRequest}
       activeAnchor={reading.activeAnchor}
       anchors={reading.anchors}
@@ -311,9 +312,10 @@ export function ReaderWorkspace({
   }
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{reading.activeDocument.title}</h1>
       <ReaderToolbar
+        appChrome={appChrome}
         activeDocument={reading.activeDocument}
         preferences={reading.readerPreferences}
         analysisLanguage={reading.analysisLanguage}
@@ -330,7 +332,9 @@ export function ReaderWorkspace({
         onOpenLibrary={onOpenLibrary}
         onRenameDocument={(title) => actions.renameDocument(reading.activeDocument.id, title)}
       />
-      {workspaceContent}
+      <div className="min-h-0 flex-1">
+        {workspaceContent}
+      </div>
       {!isDesktopViewport && view.mode === 'text' && currentExplainPanel ? (
         <MobileWorkspaceDialog
           open={view.isExplainOpen}
@@ -357,6 +361,6 @@ export function ReaderWorkspace({
         onCancel={() => setDeletionTarget(null)}
         onConfirm={confirmDeletion}
       />
-    </>
+    </div>
   );
 }

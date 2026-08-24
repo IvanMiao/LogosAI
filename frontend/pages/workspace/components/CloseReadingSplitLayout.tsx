@@ -20,10 +20,10 @@ export function CloseReadingSplitLayout({
   return (
     <div
       ref={resize.containerRef}
-      className="mx-auto grid max-w-[1600px] grid-cols-1 xl:grid-cols-[minmax(380px,var(--close-reading-source-width))_12px_minmax(560px,1fr)]"
+      className="mx-auto grid h-full min-h-0 max-w-[1600px] grid-cols-1 xl:grid-cols-[minmax(380px,var(--close-reading-source-width))_12px_minmax(560px,1fr)]"
       style={resize.gridStyle}
     >
-      <div id="close-reading-source-pane" className="hidden xl:block">
+      <div id="close-reading-source-pane" className="hidden min-h-0 xl:block">
         {readingSurface}
       </div>
       <div
@@ -47,7 +47,7 @@ export function CloseReadingSplitLayout({
       >
         <GripVertical className="h-5 w-5 transition-transform group-hover:scale-110" />
       </div>
-      <div id="close-reading-analysis-pane">{closeReadingPane}</div>
+      <div id="close-reading-analysis-pane" className="min-h-0">{closeReadingPane}</div>
     </div>
   );
 }

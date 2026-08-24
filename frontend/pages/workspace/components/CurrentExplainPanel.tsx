@@ -162,7 +162,7 @@ export function CurrentExplainPanel({
   return (
     <aside
       aria-label="Current explanation"
-      className="h-full min-h-[32rem] overflow-y-auto border-border bg-[#fbfbf8]"
+      className="h-full min-h-0 overflow-y-auto border-border bg-[#fbfbf8]"
     >
       <header className="sticky top-0 z-10 border-b-2 border-border bg-card px-4 py-3 font-mono shadow-[0_4px_0px_0px_var(--border)]">
         {onBack ? (

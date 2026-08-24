@@ -1,7 +1,6 @@
 import { useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
 import {
   BookOpen,
-  Eraser,
   FileText,
   History,
   Languages,
@@ -11,12 +10,6 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -33,6 +26,11 @@ import { cn } from '@/utils/class-name';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
 import type { WorkspaceMode } from '../useWorkspaceViewState';
 import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';
+import {
+  WorkspaceAppActions,
+  WorkspaceBrandButton,
+  type WorkspaceAppChromeProps,
+} from './WorkspaceHeader';
 
 const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [
   { label: '中文', value: 'zh' },
@@ -45,6 +43,7 @@ const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage 
 ];
 
 interface ReaderToolbarProps {
+  appChrome: WorkspaceAppChromeProps;
   activeDocument: WorkspaceDocument;
   preferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
@@ -77,7 +76,7 @@ function WorkspaceModeNavigation({
 }: Pick<ReaderToolbarProps, 'mode' | 'onModeChange'>): ReactElement {
   return (
     <div
-      className="order-3 grid w-full grid-cols-3 border-2 border-border bg-background sm:order-none sm:w-auto"
+      className="order-3 grid w-full grid-cols-3 border-2 border-border bg-background sm:w-auto xl:order-none"
       role="group"
       aria-label="Workspace mode"
     >
@@ -218,6 +217,7 @@ function ReadingSettingsMenu({
 }
 
 export function ReaderToolbar({
+  appChrome,
   activeDocument,
   preferences,
   analysisLanguage,
@@ -231,14 +231,16 @@ export function ReaderToolbar({
   onRenameDocument,
 }: ReaderToolbarProps): ReactElement {
   return (
-    <div className="sticky top-0 z-20 border-b-2 border-border bg-card px-3 py-1.5 shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
+    <header className="z-20 shrink-0 border-b-2 border-border bg-card px-3 py-1.5 shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
       <div
         className={cn(
-          'mx-auto flex flex-wrap items-center gap-2 font-mono sm:flex-nowrap sm:justify-between sm:gap-3',
+          'mx-auto flex flex-wrap items-center gap-2 font-mono sm:gap-3 xl:flex-nowrap xl:justify-between',
           mode === 'close-reading' ? 'max-w-[1600px]' : 'max-w-[1500px]',
         )}
       >
-        <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden sm:flex-1">
+        <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden xl:flex-1">
+          <WorkspaceBrandButton compact />
+          <span aria-hidden="true" className="h-8 border-e-2 border-border" />
           <Button
             type="button"
             variant="outline"
@@ -267,7 +269,7 @@ export function ReaderToolbar({
           </p>
         </div>
         <WorkspaceModeNavigation mode={mode} onModeChange={onModeChange} />
-        <div className="flex w-full shrink-0 items-center justify-between gap-1.5 sm:w-auto sm:justify-end sm:gap-2">
+        <div className="order-4 flex w-full shrink-0 items-center justify-between gap-1.5 sm:ms-auto sm:w-auto sm:justify-end sm:gap-2 xl:order-none xl:ms-0">
           <AnalysisLanguageSelect
             language={analysisLanguage}
             onLanguageChange={onAnalysisLanguageChange}
@@ -276,27 +278,12 @@ export function ReaderToolbar({
             preferences={preferences}
             onPreferenceChange={onPreferenceChange}
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-11 w-11"
-                aria-label="Document menu"
-              >
-                <span className="text-lg leading-none">•••</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onClearDocument} className="gap-2">
-                <Eraser className="h-4 w-4" />
-                <span>New document</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <WorkspaceAppActions
+            {...appChrome}
+            onStartNewDocument={onClearDocument}
+          />
         </div>
       </div>
-    </div>
+    </header>
   );
 }

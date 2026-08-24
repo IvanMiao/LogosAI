@@ -273,7 +273,7 @@ export function ReadingSurface({
       className={cn(
         'reader-surface border-x-2 border-border bg-[#fbfbf8] px-4 py-8 sm:py-12',
         isIndependentScroll
-          ? 'h-[calc(100dvh-8.25rem)] min-h-[32rem] overflow-y-auto'
+          ? 'h-full min-h-0 overflow-y-auto'
           : 'min-h-[calc(100vh-7rem)]',
       )}
     >

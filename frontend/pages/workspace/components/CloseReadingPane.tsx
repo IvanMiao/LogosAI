@@ -40,11 +40,11 @@ function getSourceScopeLabel(activeAnchor: TextAnchor): string {
 }
 
 function getPaneSizeClassName(mode: CloseReadingPaneMode): string {
-  if (mode === 'split') {
-    return 'h-[calc(100dvh-8.25rem)] min-h-[32rem] border-r-2';
+  if (mode === 'focus') {
+    return 'h-[100dvh]';
   }
 
-  return 'h-[100dvh]';
+  return mode === 'split' ? 'h-full min-h-0 border-r-2' : 'h-full min-h-0';
 }
 
 function SourceViewControl({
@@ -125,13 +125,13 @@ export function CloseReadingPane({
 
   return (
     <aside aria-label="Close reading" className={paneClassName}>
-      <header className="sticky top-0 z-10 border-b-2 border-border bg-card px-3 py-2 font-mono shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
+      <header className="sticky top-0 z-10 border-b-2 border-border bg-card px-3 py-1.5 font-mono sm:px-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <ArtifactStatusIcon artifact={artifact} />
-            <h2 className="truncate text-sm font-black uppercase tracking-[0.1em]">
-              <span className="hidden sm:inline">Close Reading</span>
-              <span className="sm:hidden">Analysis</span>
+            <h2 className="truncate text-xs font-black uppercase tracking-[0.1em] sm:text-sm">
+              <span className={mode === 'focus' ? '' : 'hidden'}>Close Reading</span>
+              <span className={mode === 'focus' ? 'hidden' : ''}>Analysis</span>
             </h2>
             <span className="hidden shrink-0 border-2 border-border bg-background px-2 py-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground sm:inline-flex">
               {sourceScopeLabel}

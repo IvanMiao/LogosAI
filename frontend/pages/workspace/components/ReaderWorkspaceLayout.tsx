@@ -11,12 +11,12 @@ export function ReaderWorkspaceLayout({
   return (
     <div
       className={detailPanel
-        ? 'mx-auto grid max-w-[1500px] lg:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]'
-        : 'mx-auto grid max-w-[1500px] grid-cols-1'}
+        ? 'mx-auto grid h-full min-h-0 max-w-[1500px] lg:grid-cols-[minmax(0,1.65fr)_minmax(22rem,1fr)]'
+        : 'mx-auto grid h-full min-h-0 max-w-[1500px] grid-cols-1'}
     >
-      <div>{readingSurface}</div>
+      <div className="min-h-0">{readingSurface}</div>
       {detailPanel ? (
-        <div className="border-e-2 border-border">{detailPanel}</div>
+        <div className="min-h-0 border-e-2 border-border">{detailPanel}</div>
       ) : null}
     </div>
   );
