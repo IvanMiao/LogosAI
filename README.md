@@ -51,6 +51,19 @@ Docker volume. Use `make logs` to follow output and `make down` to stop the
 stack. The checked-in defaults are deliberately local-only; never reuse them
 for a deployed environment.
 
+The local stack also creates and resets one deterministic browser-test account:
+
+```text
+Email:    local-test@logosai.invalid
+Password: LogosAI-local-test-2026!
+```
+
+Its seeded reading session includes source text and a completed Close Reading,
+so browser, visual, and manual QA can start from the same state. The seeder
+refuses non-loopback origins and is run only by the local Docker entrypoint;
+production deployment does not invoke it. Restarting `make up` resets this
+account's reading sessions, so do not use it for personal local work.
+
 For development with hot reload, use the three-process workflow below.
 Prerequisites are Node.js 20+, Python 3.13, [`uv`](https://docs.astral.sh/uv/),
 `npm`, and a logged-in Wrangler CLI.
@@ -82,10 +95,19 @@ npm ci
 npm run dev
 ```
 
+For the hot-reload workflow, prepare the same deterministic account after the
+Worker is listening:
+
+```bash
+cd cloudflare
+npm run seed:local-test-account
+```
+
 Open `http://localhost:5173`. Vite proxies `/api/*` to the Worker at
 `http://127.0.0.1:8787`; the Worker forwards only AI routes to FastAPI at
-`http://127.0.0.1:8000`. Create an account, then add a Gemini API key from
-Settings before using AI actions. Local notes work without a key.
+`http://127.0.0.1:8000`. Sign in with the local test account above (or create a
+separate personal local account), then add a Gemini API key from Settings before
+using AI actions. Local notes work without a key.
 
 Cloudflare setup, OAuth callback URLs, production secrets, migrations, and
 deployment order are documented in [Cloudflare Operations](./cloudflare/README.md). Optional

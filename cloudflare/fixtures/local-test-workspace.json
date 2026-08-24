@@ -1,0 +1,52 @@
+{
+  "preferences": {
+    "activeDocumentId": "local-test-reading-session",
+    "readerPreferences": {
+      "fontFamily": "serif",
+      "closeReadingFontFamily": "serif",
+      "fontLinked": true,
+      "fontSize": 18,
+      "lineSpacing": 1.75,
+      "lineWidth": 760
+    },
+    "analysisLanguage": "en"
+  },
+  "session": {
+    "document": {
+      "id": "local-test-reading-session",
+      "title": "The shape of attentive reading in an age of agents",
+      "text": "Reading should feel calm even when the ideas are difficult. The interface should preserve context without asking the reader to pay a permanent tax in vertical space.\n\nA durable session is more than a page title. It is the reader's place in an ongoing body of work: the source, saved interpretations, notes, and the path back to them.\n\nGlobal identity, session context, and local analytical tools all matter. They should remain available without competing as three equally weighted headers.\n\nThe strongest interface keeps the active text primary, the session easy to recover, and local tools close to the material they affect.\n\nWhen the reader moves into Close Reading, the analysis becomes a second surface rather than a second application. The source and interpretation should share one stable frame.\n\nConsistent scrolling is part of that frame. Switching modes should not silently change which header can move, which pane owns the wheel, or how much of the viewport remains for the text.\n\nA compact application bar can preserve identity and critical status. A session title can sit beside it, while mode navigation communicates the current working view.\n\nLocal analysis controls belong to the analysis pane. Their visual weight should be lower than the session itself, because they operate on the current artifact rather than defining the workspace.\n\nThis hierarchy makes long reading sessions quieter. The interface remains legible, recoverable, and ready for the next action without continually announcing its own structure.\n\nThe result is not minimalism for its own sake. It is an allocation of attention: durable context stays available, temporary controls stay local, and the text receives the largest uninterrupted field.",
+      "sourceType": "paste",
+      "createdAt": "2026-08-24T10:00:00.000Z",
+      "updatedAt": "2026-08-24T10:00:00.000Z",
+      "lastOpenedAt": "2026-08-24T10:00:00.000Z"
+    },
+    "activeAnchorId": "local-test-document-anchor",
+    "anchors": [
+      {
+        "id": "local-test-document-anchor",
+        "documentId": "local-test-reading-session",
+        "scope": "document",
+        "quote": "The shape of attentive reading in an age of agents",
+        "normalizedQuote": "the shape of attentive reading in an age of agents",
+        "quoteHash": "local-test-document-anchor-v1",
+        "startOffset": 0,
+        "endOffset": 50,
+        "createdAt": "2026-08-24T10:01:00.000Z"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "local-test-close-reading",
+        "documentId": "local-test-reading-session",
+        "anchorId": "local-test-document-anchor",
+        "type": "close_read",
+        "title": "Close Reading",
+        "content": "## Central movement\n\nThe text argues that interface hierarchy is part of the reading experience. Global identity, session context, and local analytical tools should remain available, but they should not compete as three equally weighted headers.\n\n## Design consequence\n\nKeep the durable session visible and let local analysis tools occupy a quieter, subordinate layer.",
+        "status": "complete",
+        "createdAt": "2026-08-24T10:02:00.000Z",
+        "updatedAt": "2026-08-24T10:03:00.000Z"
+      }
+    ]
+  }
+}
