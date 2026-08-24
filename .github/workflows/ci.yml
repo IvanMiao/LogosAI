@@ -7,6 +7,42 @@ on:
     branches: [ main ]
 
 jobs:
+  changes:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      cloudflare: ${{ steps.paths.outputs.cloudflare }}
+      fly: ${{ steps.paths.outputs.fly }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: paths
+        name: Detect production changes
+        env:
+          AFTER_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            BEFORE_SHA="$(git rev-list --max-parents=0 "$AFTER_SHA")"
+          fi
+
+          if git diff --quiet "$BEFORE_SHA" "$AFTER_SHA" -- \
+            backend fly.toml .dockerignore .github/workflows/ci.yml; then
+            echo "fly=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "fly=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          if git diff --quiet "$BEFORE_SHA" "$AFTER_SHA" -- \
+            frontend cloudflare .github/workflows/ci.yml; then
+            echo "cloudflare=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "cloudflare=true" >> "$GITHUB_OUTPUT"
+          fi
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -55,3 +91,79 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest tests/ -v
+
+  deploy-production:
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.frontend.result == 'success' &&
+      needs.cloudflare.result == 'success' &&
+      needs.backend.result == 'success' &&
+      (needs.changes.outputs.fly == 'true' ||
+      needs.changes.outputs.cloudflare == 'true')
+    needs: [changes, frontend, cloudflare, backend]
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: needs.changes.outputs.fly == 'true'
+        with:
+          version: 0.4.76
+      - name: Deploy FastAPI to Fly.io
+        if: needs.changes.outputs.fly == 'true'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only
+      - uses: actions/setup-node@v6
+        if: needs.changes.outputs.cloudflare == 'true'
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            cloudflare/package-lock.json
+      - name: Install frontend dependencies
+        if: needs.changes.outputs.cloudflare == 'true'
+        working-directory: frontend
+        run: npm ci
+      - name: Install Cloudflare dependencies
+        if: needs.changes.outputs.cloudflare == 'true'
+        working-directory: cloudflare
+        run: npm ci
+      - name: Build frontend assets
+        if: needs.changes.outputs.cloudflare == 'true'
+        working-directory: cloudflare
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ github.sha }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_SENTRY_RELEASE: ${{ github.sha }}
+        run: npm run build:frontend
+      - name: Apply D1 migrations
+        if: needs.changes.outputs.cloudflare == 'true'
+        working-directory: cloudflare
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npm run db:migrate:remote
+      - name: Deploy Worker and frontend assets
+        if: needs.changes.outputs.cloudflare == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy
+          workingDirectory: cloudflare
+      - name: Smoke test production
+        if: needs.changes.outputs.cloudflare == 'true'
+        run: >-
+          curl --fail --silent --show-error
+          --retry 5 --retry-delay 5 --retry-all-errors
+          https://logosai-cloud.ymiao.workers.dev/api/public/auth-config
