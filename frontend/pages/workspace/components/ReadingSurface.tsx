@@ -110,11 +110,13 @@ function AnchorMark({
   status,
   onSelectAnchor,
 }: AnchorMarkProps): ReactElement {
+  const scopeLabel = anchor.scope === 'document' ? 'document source' : anchor.scope;
+
   return (
     <button
       type="button"
-      aria-label={`Open ${status} selection`}
-      title={`${status} selection`}
+      aria-label={`Open ${status} ${scopeLabel}`}
+      title={`${status} ${scopeLabel}`}
       onClick={() => onSelectAnchor(anchor.id)}
       className={cn(
         'h-4 w-4 border-2 border-border shadow-[2px_2px_0px_0px_var(--border)] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -271,7 +273,7 @@ export function ReadingSurface({
     <section
       aria-label="Reading surface"
       className={cn(
-        'reader-surface border-x-2 border-border bg-[#fbfbf8] px-4 py-8 sm:py-12',
+        'reader-surface bg-[#fbfbf8] px-5 py-8 sm:px-7 sm:py-10 lg:px-9',
         isIndependentScroll
           ? 'h-full min-h-0 overflow-y-auto'
           : 'min-h-[calc(100vh-7rem)]',
@@ -283,7 +285,7 @@ export function ReadingSurface({
         style={{
           fontSize: `${preferences.fontSize}px`,
           lineHeight: preferences.lineSpacing,
-          maxWidth: `${preferences.lineWidth}px`,
+          maxWidth: `min(${preferences.lineWidth}px, 68ch)`,
         }}
         onMouseUp={handleSelection}
         onKeyUp={handleSelection}
@@ -300,7 +302,7 @@ export function ReadingSurface({
               key={`${activeDocument.id}-${index}`}
               data-active-source={isActiveSource ? 'true' : undefined}
               className={cn(
-                'group grid scroll-mt-36 grid-cols-1 border-l-4 border-l-transparent px-3 transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
+                'group grid scroll-mt-36 grid-cols-1 border-s-4 border-s-transparent transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
                 isRevealedSource ? 'border-l-secondary bg-secondary/10' : '',
               )}
             >
@@ -327,7 +329,7 @@ export function ReadingSurface({
               </div>
               <p
                 data-paragraph-start={paragraph.startOffset}
-                className="mb-7 whitespace-pre-wrap"
+                className="mb-[1em] whitespace-pre-wrap"
               >
                 {renderParagraphText(paragraph, activeAnchor)}
               </p>

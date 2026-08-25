@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -15,7 +16,7 @@ import {
 } from '@/features/reading/reading-storage';
 
 type CloseReadingGridStyle = CSSProperties & {
-  '--close-reading-source-width': string;
+  '--reader-source-width': string;
 };
 
 interface CloseReadingResizeController {
@@ -48,40 +49,60 @@ function getPointerSourceWidth(container: HTMLElement, clientX: number): number 
 }
 
 function getKeyboardSourceWidth(event: KeyboardEvent, currentWidth: number): number | null {
-  if (event.key === 'ArrowLeft') return currentWidth - 2;
-  if (event.key === 'ArrowRight') return currentWidth + 2;
+  const step = event.shiftKey ? 8 : 2;
+  if (event.key === 'ArrowLeft') return currentWidth - step;
+  if (event.key === 'ArrowRight') return currentWidth + step;
   if (event.key === 'Home') return MIN_CLOSE_READING_SOURCE_WIDTH;
   if (event.key === 'End') return MAX_CLOSE_READING_SOURCE_WIDTH;
   return null;
 }
 
-export function useCloseReadingResize(): CloseReadingResizeController {
-  const [sourceWidth, setSourceWidth] = useState(readStoredCloseReadingSourceWidth);
+function getRatioLabel(sourceWidth: number): string {
+  return `Source ${Math.round(sourceWidth)}%, analysis ${Math.round(100 - sourceWidth)}%`;
+}
+
+export function useCloseReadingResize(storageScope: string): CloseReadingResizeController {
+  const [sourceWidth, setSourceWidth] = useState(
+    () => readStoredCloseReadingSourceWidth(storageScope),
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const separatorRef = useRef<HTMLDivElement | null>(null);
   const dragPointerIdRef = useRef<number | null>(null);
   const transientSourceWidthRef = useRef(sourceWidth);
 
+  useEffect(() => {
+    const storedWidth = readStoredCloseReadingSourceWidth(storageScope);
+    transientSourceWidthRef.current = storedWidth;
+    setSourceWidth(storedWidth);
+    containerRef.current?.style.setProperty('--reader-source-width', `${storedWidth}%`);
+    separatorRef.current?.setAttribute('aria-valuenow', String(Math.round(storedWidth)));
+    separatorRef.current?.setAttribute('aria-valuetext', getRatioLabel(storedWidth));
+  }, [storageScope]);
+
   const applyTransientWidth = (nextWidth: number) => {
     const normalizedWidth = normalizeSourceWidth(nextWidth);
     transientSourceWidthRef.current = normalizedWidth;
     containerRef.current?.style.setProperty(
-      '--close-reading-source-width',
+      '--reader-source-width',
       `${normalizedWidth}%`,
     );
     separatorRef.current?.setAttribute('aria-valuenow', String(Math.round(normalizedWidth)));
+    separatorRef.current?.setAttribute('aria-valuetext', getRatioLabel(normalizedWidth));
   };
 
   const commitWidth = (nextWidth: number) => {
     const normalizedWidth = normalizeSourceWidth(nextWidth);
     transientSourceWidthRef.current = normalizedWidth;
     setSourceWidth(normalizedWidth);
-    writeStoredCloseReadingSourceWidth(normalizedWidth);
+    writeStoredCloseReadingSourceWidth(normalizedWidth, storageScope);
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
+    event.preventDefault();
     dragPointerIdRef.current = event.pointerId;
+    containerRef.current?.classList.add('select-none');
+    event.currentTarget.dataset.dragging = 'true';
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
@@ -93,6 +114,8 @@ export function useCloseReadingResize(): CloseReadingResizeController {
   const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
     if (dragPointerIdRef.current !== event.pointerId) return;
     dragPointerIdRef.current = null;
+    containerRef.current?.classList.remove('select-none');
+    delete event.currentTarget.dataset.dragging;
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture?.(event.pointerId);
     }
@@ -108,7 +131,7 @@ export function useCloseReadingResize(): CloseReadingResizeController {
 
   return {
     sourceWidth,
-    gridStyle: { '--close-reading-source-width': `${sourceWidth}%` },
+    gridStyle: { '--reader-source-width': `${sourceWidth}%` },
     containerRef,
     separatorRef,
     onPointerDown,

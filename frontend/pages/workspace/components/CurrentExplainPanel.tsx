@@ -164,23 +164,26 @@ export function CurrentExplainPanel({
       aria-label="Current explanation"
       className="h-full min-h-0 overflow-y-auto border-border bg-[#fbfbf8]"
     >
-      <header className="sticky top-0 z-10 border-b-2 border-border bg-card px-4 py-3 font-mono shadow-[0_4px_0px_0px_var(--border)]">
-        {onBack ? (
-          <Button type="button" size="sm" variant="outline" className="mb-3" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            {backLabel ?? 'Back'}
-          </Button>
-        ) : null}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
-              {getSourceLabel(activeAnchor)}
-            </p>
-            <blockquote className="mt-2 line-clamp-3 border-s-4 border-secondary ps-3 font-sans text-sm leading-6">
-              {activeAnchor.quote}
-            </blockquote>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
+      <header className="sticky top-0 z-10 flex min-h-10 items-center justify-between gap-2 border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          {onBack ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              aria-label={backLabel ?? 'Back'}
+              title={backLabel ?? 'Back'}
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          ) : null}
+          <h2 className="truncate text-xs font-black uppercase tracking-[0.1em] sm:text-sm">
+            Explain
+          </h2>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
             <SourceActions
               activeAnchor={activeAnchor}
               onOpenNoteEditor={onOpenNoteEditor}
@@ -192,11 +195,18 @@ export function CurrentExplainPanel({
                 <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             ) : null}
-          </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[68ch] px-5 py-6 sm:px-7">
+      <div className="mx-auto max-w-[68ch] px-5 py-8 sm:px-8 sm:py-10">
+        <section className="mb-8" aria-label="Selected source">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
+            {getSourceLabel(activeAnchor)}
+          </p>
+          <blockquote className="mt-3 border-s-4 border-secondary ps-4 font-sans text-[15px] leading-7 text-foreground">
+            {activeAnchor.quote}
+          </blockquote>
+        </section>
         {isNoteEditorOpen ? (
           <label className="mb-6 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
             Note
@@ -213,7 +223,7 @@ export function CurrentExplainPanel({
 
         {activeArtifact ? (
           <section aria-label="Active output">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b-2 border-border pb-3 font-mono">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
               <div className="flex min-w-0 items-center gap-2">
                 <ArtifactStatusIcon artifact={activeArtifact} />
                 <h2 className="truncate text-sm font-black">{getArtifactLabel(activeArtifact)}</h2>

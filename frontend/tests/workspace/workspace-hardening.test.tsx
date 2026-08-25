@@ -6,9 +6,11 @@ import userEvent from '@testing-library/user-event';
 import { readStoredAnchors, writeStoredAnchors } from '@/features/anchors';
 import { writeStoredArtifacts } from '@/features/artifacts';
 import { WorkspacePage } from '@/pages/workspace';
+import { CloseReadingSplitLayout } from '@/pages/workspace/components/CloseReadingSplitLayout';
 import {
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
   readStoredCloseReadingSourceWidth,
+  writeStoredCloseReadingSourceWidth,
   writeStoredDocument,
 } from '@/features/reading/reading-storage';
 import { writeHistory } from '@/utils/history-storage';
@@ -148,8 +150,12 @@ describe('workspace hardening', () => {
       expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: 'Analysis language' })).toBeInTheDocument();
       expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
-      expect(screen.getByRole('group', { name: 'Workspace mode' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('group', { name: 'Reader layout' })).toBeInTheDocument();
+      const activeLayoutName = width === 390
+        ? 'Show source only'
+        : 'Show source and analysis';
+      expect(screen.getByRole('button', { name: activeLayoutName }))
+        .toHaveAttribute('aria-pressed', 'true');
 
       await user.click(screen.getByRole('button', { name: 'History' }));
       expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument();
@@ -183,7 +189,7 @@ describe('workspace hardening', () => {
     await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.queryAllByRole('toolbar', { name: 'Selection actions' })).toHaveLength(0);
 
-    await user.click(screen.getByRole('button', { name: 'Text' }));
+    await user.click(screen.getByRole('button', { name: 'Show source only' }));
     const restoredSourceParagraph = screen.getByText(workspaceDocument.text);
     vi.spyOn(window, 'getSelection').mockReturnValue({
       rangeCount: 1,
@@ -206,7 +212,6 @@ describe('workspace hardening', () => {
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
     writeCloseReadingArtifacts();
     renderWorkspace();
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     expect(screen.getByText('Latest close reading content.')).toBeInTheDocument();
 
     const sourceParagraph = screen.getByText(workspaceDocument.text);
@@ -252,25 +257,48 @@ describe('workspace hardening', () => {
       .toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'paragraph' })]));
   });
 
-  it('resizes the Close Reading split with the keyboard and remembers the ratio', async () => {
-    const user = userEvent.setup();
+  it('resizes the Close Reading split with the keyboard and remembers the ratio', () => {
     window.innerWidth = 1280;
     writeStoredDocument(workspaceDocument, TEST_USER_ID);
     writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const separator = screen.getByRole('separator', {
       name: 'Resize source and Close Reading panes',
     });
 
     expect(separator).toHaveAttribute('aria-valuenow', String(DEFAULT_CLOSE_READING_SOURCE_WIDTH));
-    await user.type(separator, '{ArrowRight}');
-    expect(separator).toHaveAttribute('aria-valuenow', '43');
-    expect(readStoredCloseReadingSourceWidth()).toBe(43);
+    fireEvent.keyDown(separator, { key: 'ArrowRight' });
+    expect(separator).toHaveAttribute('aria-valuenow', '44');
+    expect(readStoredCloseReadingSourceWidth(workspaceDocument.id)).toBe(44);
 
-    await user.type(separator, '{Home}');
-    expect(separator).toHaveAttribute('aria-valuenow', '30');
+    fireEvent.keyDown(separator, { key: 'Home' });
+    expect(separator).toHaveAttribute('aria-valuenow', '32');
+  });
+
+  it('restores the saved split ratio when the active document changes', async () => {
+    writeStoredCloseReadingSourceWidth(48, 'document-a');
+    writeStoredCloseReadingSourceWidth(60, 'document-b');
+    const { rerender } = render(
+      <CloseReadingSplitLayout
+        storageScope="document-a"
+        readingSurface={<div>Source A</div>}
+        analysisPane={<div>Analysis A</div>}
+      />,
+    );
+
+    expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '48');
+    rerender(
+      <CloseReadingSplitLayout
+        storageScope="document-b"
+        readingSurface={<div>Source B</div>}
+        analysisPane={<div>Analysis B</div>}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '60');
+    });
   });
 
   it('navigates and copies Close Reading outputs for the active source', async () => {
@@ -280,7 +308,6 @@ describe('workspace hardening', () => {
     writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const closeReadingPane = screen.getByRole('complementary', { name: 'Close reading' });
     const closeReadingContent = within(closeReadingPane).getByText('Latest close reading content.');
     expect(within(closeReadingPane).getByText('Document')).toBeInTheDocument();
@@ -308,12 +335,12 @@ describe('workspace hardening', () => {
     writeCloseReadingArtifacts();
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
+    await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
 
     expect(screen.getByRole('complementary', { name: 'Close reading' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Back to text' }));
+    await user.click(screen.getByRole('button', { name: 'Back to source' }));
     expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
   });
 });

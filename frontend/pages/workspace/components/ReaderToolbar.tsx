@@ -1,12 +1,13 @@
 import { useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
 import {
   BookOpen,
-  FileText,
+  Columns2,
   History,
   Languages,
+  PanelLeft,
   PanelLeftClose,
+  PanelRight,
   Pencil,
-  ScanText,
   SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,10 @@ import type {
 } from '@/features/reading';
 import { cn } from '@/utils/class-name';
 import { formatDocumentMeta } from '@/features/reading/reading-core';
-import type { WorkspaceMode } from '../useWorkspaceViewState';
+import type {
+  ReaderLayout,
+  WorkspaceDestination,
+} from '../useWorkspaceViewState';
 import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';
 import {
   WorkspaceAppActions,
@@ -47,55 +51,68 @@ interface ReaderToolbarProps {
   activeDocument: WorkspaceDocument;
   preferences: ReaderPreferences;
   analysisLanguage: AnalysisLanguage;
-  mode: WorkspaceMode;
+  destination: WorkspaceDestination;
+  readerLayout: ReaderLayout;
+  isDesktopViewport: boolean;
   isSessionsNavigationPinned: boolean;
   onPreferenceChange: <Key extends keyof ReaderPreferences>(
     key: Key,
     value: ReaderPreferences[Key],
   ) => void;
   onAnalysisLanguageChange: (language: AnalysisLanguage) => void;
-  onModeChange: (mode: WorkspaceMode) => void;
+  onReaderLayoutChange: (layout: ReaderLayout) => void;
+  onOpenHistory: () => void;
   onClearDocument: () => void;
   onOpenLibrary: () => void;
   onRenameDocument: (title: string) => void;
 }
 
-const MODE_OPTIONS = [
-  { icon: FileText, label: 'Text', value: 'text' },
-  { icon: ScanText, label: 'Close Reading', value: 'close-reading' },
-  { icon: History, label: 'History', value: 'history' },
+const LAYOUT_OPTIONS = [
+  { icon: PanelLeft, label: 'Show source only', value: 'source' },
+  { icon: Columns2, label: 'Show source and analysis', value: 'split' },
+  { icon: PanelRight, label: 'Show analysis only', value: 'analysis' },
 ] satisfies Array<{
-  icon: typeof FileText;
+  icon: typeof PanelLeft;
   label: string;
-  value: WorkspaceMode;
+  value: ReaderLayout;
 }>;
 
-function WorkspaceModeNavigation({
-  mode,
-  onModeChange,
-}: Pick<ReaderToolbarProps, 'mode' | 'onModeChange'>): ReactElement {
+function ReaderLayoutControl({
+  destination,
+  readerLayout,
+  isDesktopViewport,
+  onReaderLayoutChange,
+}: Pick<
+  ReaderToolbarProps,
+  'destination' | 'readerLayout' | 'isDesktopViewport' | 'onReaderLayoutChange'
+>): ReactElement {
+  const options = isDesktopViewport
+    ? LAYOUT_OPTIONS
+    : LAYOUT_OPTIONS.filter((option) => option.value !== 'split');
+
   return (
     <div
-      className="order-3 grid w-full grid-cols-3 border-2 border-border bg-background sm:w-auto xl:order-none"
+      className="flex shrink-0 border-2 border-border bg-background"
       role="group"
-      aria-label="Workspace mode"
+      aria-label="Reader layout"
     >
-      {MODE_OPTIONS.map((option) => {
+      {options.map((option) => {
         const Icon = option.icon;
-        const isActive = mode === option.value;
+        const isActive = destination === 'reader' && readerLayout === option.value;
         return (
           <button
             key={option.value}
             type="button"
+            aria-label={option.label}
             aria-pressed={isActive}
+            title={option.label}
             className={cn(
-              'flex min-h-11 items-center justify-center gap-2 border-e-2 border-border px-3 text-xs font-black last:border-e-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'flex h-10 w-10 touch-manipulation items-center justify-center border-e-2 border-border last:border-e-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
               isActive ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary/40',
             )}
-            onClick={() => onModeChange(option.value)}
+            onClick={() => onReaderLayoutChange(option.value)}
           >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            <span>{option.label}</span>
+            <Icon className="h-4 w-4" strokeWidth={isActive ? 2 : 1.5} aria-hidden="true" />
           </button>
         );
       })}
@@ -139,7 +156,7 @@ function EditableDocumentTitle({
           maxLength={160}
           onChange={(event) => setDraftTitle(event.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-11 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-base font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-10 w-full max-w-[42ch] border-2 border-border bg-input px-2 text-base font-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </form>
     );
@@ -177,7 +194,7 @@ function AnalysisLanguageSelect({
         <SelectTrigger
           aria-label="Analysis language"
           title="Analysis language"
-          className="h-11 w-24 bg-card sm:w-28"
+          className="h-10 w-24 bg-card sm:w-28"
         >
           <SelectValue />
         </SelectTrigger>
@@ -206,7 +223,7 @@ function ReadingSettingsMenu({
         type="button"
         variant="outline"
         size="icon"
-        className="h-11 w-11"
+        className="h-10 w-10"
         aria-label="Reading appearance"
         title="Reading appearance"
       >
@@ -221,31 +238,31 @@ export function ReaderToolbar({
   activeDocument,
   preferences,
   analysisLanguage,
-  mode,
+  destination,
+  readerLayout,
+  isDesktopViewport,
   isSessionsNavigationPinned,
   onPreferenceChange,
   onAnalysisLanguageChange,
-  onModeChange,
+  onReaderLayoutChange,
+  onOpenHistory,
   onClearDocument,
   onOpenLibrary,
   onRenameDocument,
 }: ReaderToolbarProps): ReactElement {
   return (
-    <header className="z-20 shrink-0 border-b-2 border-border bg-card px-3 py-1.5 shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
+    <header className="z-20 shrink-0 border-b-2 border-border bg-card px-3 py-1 sm:px-4">
       <div
-        className={cn(
-          'mx-auto flex flex-wrap items-center gap-2 font-mono sm:gap-3 xl:flex-nowrap xl:justify-between',
-          mode === 'close-reading' ? 'max-w-[1600px]' : 'max-w-[1500px]',
-        )}
+        className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-2 font-mono lg:flex-nowrap lg:justify-between"
       >
-        <div className="flex w-full min-w-0 items-center gap-2 overflow-hidden xl:flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           <WorkspaceBrandButton compact />
           <span aria-hidden="true" className="h-8 border-e-2 border-border" />
           <Button
             type="button"
             variant="outline"
             size="icon"
-            className="h-11 w-11 shrink-0"
+            className="h-10 w-10 shrink-0"
             aria-label={isSessionsNavigationPinned
               ? 'Collapse sessions sidebar'
               : 'Open reading sessions'}
@@ -264,12 +281,28 @@ export function ReaderToolbar({
             onRename={onRenameDocument}
           />
           <span aria-hidden="true" className="hidden text-muted-foreground md:inline">·</span>
-          <p className="hidden shrink-0 text-xs text-muted-foreground md:block">
+          <p className="hidden shrink-0 text-xs tabular-nums text-muted-foreground 2xl:block">
             {formatDocumentMeta(activeDocument)}
           </p>
         </div>
-        <WorkspaceModeNavigation mode={mode} onModeChange={onModeChange} />
-        <div className="order-4 flex w-full shrink-0 items-center justify-between gap-1.5 sm:ms-auto sm:w-auto sm:justify-end sm:gap-2 xl:order-none xl:ms-0">
+        <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:ms-auto sm:w-auto sm:justify-end">
+          <ReaderLayoutControl
+            destination={destination}
+            readerLayout={readerLayout}
+            isDesktopViewport={isDesktopViewport}
+            onReaderLayoutChange={onReaderLayoutChange}
+          />
+          <Button
+            type="button"
+            variant={destination === 'history' ? 'default' : 'outline'}
+            className="h-10 px-3"
+            aria-label="History"
+            aria-pressed={destination === 'history'}
+            onClick={onOpenHistory}
+          >
+            <History className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">History</span>
+          </Button>
           <AnalysisLanguageSelect
             language={analysisLanguage}
             onLanguageChange={onAnalysisLanguageChange}
@@ -280,6 +313,7 @@ export function ReaderToolbar({
           />
           <WorkspaceAppActions
             {...appChrome}
+            compact
             onStartNewDocument={onClearDocument}
           />
         </div>

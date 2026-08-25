@@ -15,12 +15,13 @@ const LEGACY_DOCUMENT_STORAGE_KEY = 'logosai.workspace.document:v1';
 const DOCUMENT_LIBRARY_STORAGE_KEY = 'logosai.workspace.documentLibrary:v2';
 const READER_PREFERENCES_STORAGE_KEY = 'logosai.workspace.readerPreferences:v1';
 const ANALYSIS_LANGUAGE_STORAGE_KEY = 'logosai.workspace.analysisLanguage:v1';
-const CLOSE_READING_SOURCE_WIDTH_KEY = 'logosai.workspace.closeReadingSourceWidth:v1';
+const LEGACY_CLOSE_READING_SOURCE_WIDTH_KEY = 'logosai.workspace.closeReadingSourceWidth:v1';
+const CLOSE_READING_SOURCE_WIDTH_KEY = 'logosai.workspace.closeReadingSourceWidth:v2';
 
 export const DEFAULT_ANALYSIS_LANGUAGE: AnalysisLanguage = 'en';
-export const DEFAULT_CLOSE_READING_SOURCE_WIDTH = 41;
-export const MIN_CLOSE_READING_SOURCE_WIDTH = 30;
-export const MAX_CLOSE_READING_SOURCE_WIDTH = 54;
+export const DEFAULT_CLOSE_READING_SOURCE_WIDTH = 42;
+export const MIN_CLOSE_READING_SOURCE_WIDTH = 32;
+export const MAX_CLOSE_READING_SOURCE_WIDTH = 68;
 
 export const DEFAULT_READER_PREFERENCES: ReaderPreferences = {
   fontFamily: 'serif',
@@ -260,23 +261,41 @@ export function writeStoredAnalysisLanguage(
   }
 }
 
-export function readStoredCloseReadingSourceWidth(): number {
+export function readStoredCloseReadingSourceWidth(storageScope?: string): number {
   try {
-    const storedValue = localStorage.getItem(CLOSE_READING_SOURCE_WIDTH_KEY);
+    const storedValue = readScopedStorage(CLOSE_READING_SOURCE_WIDTH_KEY, storageScope);
     const parsedValue = storedValue === null ? Number.NaN : Number(storedValue);
-    return Number.isFinite(parsedValue)
-      ? normalizeCloseReadingSourceWidth(parsedValue)
-      : DEFAULT_CLOSE_READING_SOURCE_WIDTH;
+    if (Number.isFinite(parsedValue)) {
+      return normalizeCloseReadingSourceWidth(parsedValue);
+    }
+
+    const legacyValue = localStorage.getItem(LEGACY_CLOSE_READING_SOURCE_WIDTH_KEY);
+    const parsedLegacyValue = legacyValue === null ? Number.NaN : Number(legacyValue);
+    if (Number.isFinite(parsedLegacyValue)) {
+      const normalizedValue = normalizeCloseReadingSourceWidth(parsedLegacyValue);
+      writeScopedStorage(
+        CLOSE_READING_SOURCE_WIDTH_KEY,
+        String(normalizedValue),
+        storageScope,
+      );
+      return normalizedValue;
+    }
+
+    return DEFAULT_CLOSE_READING_SOURCE_WIDTH;
   } catch {
     return DEFAULT_CLOSE_READING_SOURCE_WIDTH;
   }
 }
 
-export function writeStoredCloseReadingSourceWidth(sourceWidth: number): void {
+export function writeStoredCloseReadingSourceWidth(
+  sourceWidth: number,
+  storageScope?: string,
+): void {
   try {
-    localStorage.setItem(
+    writeScopedStorage(
       CLOSE_READING_SOURCE_WIDTH_KEY,
       String(normalizeCloseReadingSourceWidth(sourceWidth)),
+      storageScope,
     );
   } catch {
     // Storage can fail in private browsing or when quota is exhausted.

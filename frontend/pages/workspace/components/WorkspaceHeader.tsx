@@ -40,6 +40,7 @@ interface WorkspaceBrandButtonProps {
 }
 
 interface WorkspaceAppActionsProps extends WorkspaceAppChromeProps {
+  compact?: boolean;
   onStartNewDocument?: () => void;
   showApiKeyShortcut?: boolean;
 }
@@ -55,7 +56,7 @@ export function WorkspaceBrandButton({
       onClick={() => navigate('/app')}
       aria-label={compact ? 'LogosAI home' : undefined}
       title={compact ? 'LogosAI home' : undefined}
-      className="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left"
+      className="flex min-h-10 min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-primary shadow-[4px_4px_0px_0px_var(--border)]">
         <Brain className="h-5 w-5" aria-hidden="true" />
@@ -79,12 +80,13 @@ export function WorkspaceAppActions({
   onSignOut,
   onOpenLibrary,
   onRetryCloudSync,
+  compact = false,
   onStartNewDocument,
   showApiKeyShortcut = true,
 }: WorkspaceAppActionsProps): ReactElement {
   const navigate = useNavigate();
   const apiKeyClassName = cn(
-    'h-11 w-11',
+    'h-10 w-10',
     viewModel.apiKeyStatusTone === 'ready' ? 'bg-secondary' : 'bg-accent',
   );
   const signOut = async () => {
@@ -94,17 +96,19 @@ export function WorkspaceAppActions({
 
   return (
     <div className="flex shrink-0 items-center gap-2 font-mono">
-      <CloudSyncIndicator
-        label={viewModel.cloudSyncLabel}
-        tone={viewModel.cloudSyncTone}
-        onRetry={onRetryCloudSync}
-      />
+      <span className={compact ? 'hidden sm:inline-flex' : 'inline-flex'}>
+        <CloudSyncIndicator
+          label={viewModel.cloudSyncLabel}
+          tone={viewModel.cloudSyncTone}
+          onRetry={onRetryCloudSync}
+        />
+      </span>
       {showApiKeyShortcut ? (
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className={apiKeyClassName}
+          className={cn(apiKeyClassName, compact ? 'hidden sm:inline-flex' : '')}
           aria-label={viewModel.apiKeyStatusLabel}
           title={viewModel.apiKeyStatusLabel}
           onClick={() => navigate('/app/settings')}
@@ -119,7 +123,7 @@ export function WorkspaceAppActions({
             aria-label="Open app menu"
             variant="secondary"
             size="icon"
-            className="h-11 w-11"
+            className="h-10 w-10"
           >
             <Menu className="h-4 w-4" aria-hidden="true" />
           </Button>
@@ -190,7 +194,7 @@ function CloudSyncIndicator({
         type="button"
         variant="outline"
         size="icon"
-        className="h-11 w-11 bg-accent"
+        className="h-10 w-10 bg-accent"
         aria-label={label}
         title={label}
         onClick={onRetry}
@@ -205,7 +209,7 @@ function CloudSyncIndicator({
       role="status"
       aria-label={label}
       title={label}
-      className="flex h-11 w-11 items-center justify-center border-2 border-border bg-card"
+      className="flex h-10 w-10 items-center justify-center border-2 border-border bg-card"
     >
       {tone === 'saved'
         ? <Check className="h-4 w-4" aria-hidden="true" />

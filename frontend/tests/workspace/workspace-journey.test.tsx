@@ -135,16 +135,21 @@ describe('workspace journey contract', () => {
     vi.unstubAllGlobals();
   });
 
-  it('provides stable Text, Close Reading, and History modes', async () => {
+  it('defaults to dual panes and keeps layout controls separate from History', async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Show source and analysis' }))
+      .toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('heading', { name: 'History' })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
-    expect(screen.getByRole('button', { name: 'Close Reading' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Start Close Reading' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show source only' }));
+    expect(screen.getByRole('button', { name: 'Show source only' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
+    expect(screen.getByRole('button', { name: 'Show analysis only' }))
+      .toHaveAttribute('aria-pressed', 'true');
 
     await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument();
@@ -176,7 +181,6 @@ describe('workspace journey contract', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createAnalysisResponse('Whole-document reading.')));
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     await user.click(screen.getByRole('button', { name: 'Start Close Reading' }));
     expect(await screen.findByText('Whole-document reading.')).toBeInTheDocument();
 
@@ -208,7 +212,6 @@ describe('workspace journey contract', () => {
     );
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     expect(screen.getByText(closeReading.content)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Open saved selection' }));
     expect(screen.getByText(explanation.content)).toBeInTheDocument();
@@ -241,13 +244,12 @@ describe('workspace journey contract', () => {
     );
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     await user.click(screen.getByRole('button', { name: 'Open Close Reading outputs' }));
     await user.click(screen.getAllByRole('menuitem')[1]);
     expect(screen.getByText(earlierReading.content)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Text' }));
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
+    await user.click(screen.getByRole('button', { name: 'Show source only' }));
+    await user.click(screen.getByRole('button', { name: 'Show source and analysis' }));
 
     expect(screen.getByText(earlierReading.content)).toBeInTheDocument();
     expect(screen.queryByText(latestReading.content)).not.toBeInTheDocument();
@@ -306,7 +308,8 @@ describe('workspace journey contract', () => {
     await user.click(screen.getByRole('button', { name: 'History' }));
     await user.click(screen.getByRole('button', { name: 'Open in Text' }));
 
-    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Show source and analysis' }))
+      .toHaveAttribute('aria-pressed', 'true');
     expect(screen.getAllByText(secondSelectionAnchor.quote).some(
       (element) => element.tagName === 'MARK',
     )).toBe(true);
@@ -325,12 +328,11 @@ describe('workspace journey contract', () => {
     seedReadingWork([documentAnchor], { [documentAnchor.id]: [closeReading] });
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const sourceArticle = screen.getByText(firstParagraphQuote).closest('article');
     const analysisBody = screen.getByText(closeReading.content).closest('.close-reading-prose');
     expect(sourceArticle).toHaveClass('font-serif');
     expect(analysisBody).toHaveClass('font-serif');
-    expect(sourceArticle).toHaveStyle({ fontSize: '18px', maxWidth: '760px' });
+    expect(sourceArticle).toHaveStyle({ fontSize: '18px', maxWidth: 'min(760px, 68ch)' });
     expect(analysisBody).toHaveStyle({ fontSize: '18px', maxWidth: '760px' });
 
     await user.click(screen.getByRole('button', { name: 'Reading appearance' }));
@@ -378,7 +380,6 @@ describe('workspace journey contract', () => {
     )));
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     await user.click(screen.getByRole('button', { name: 'Start Close Reading' }));
     await act(async () => {
       streamController?.enqueue(encoder.encode(
@@ -408,8 +409,7 @@ describe('workspace journey contract', () => {
     expect(screen.getByRole('heading', { name: 'No saved work yet' })).toBeInTheDocument();
   });
 
-  it('recovers an interrupted Close Reading as retryable', async () => {
-    const user = userEvent.setup();
+  it('recovers an interrupted Close Reading as retryable', () => {
     const interrupted: Artifact = {
       ...createArtifact(
         'interrupted-reading',
@@ -424,7 +424,6 @@ describe('workspace journey contract', () => {
     seedReadingWork([documentAnchor], { [documentAnchor.id]: [interrupted] });
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Close Reading' }));
     const pane = screen.getByRole('complementary', { name: 'Close reading' });
     expect(within(pane).getByText('stopped')).toBeInTheDocument();
     expect(within(pane).getByRole('button', { name: 'Retry artifact' })).toBeEnabled();
