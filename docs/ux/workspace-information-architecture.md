@@ -6,6 +6,7 @@
 - 目标用户：阅读长文、对特定文本反复解释，并回看整篇精读的深度阅读者
 - 交付物：已确认产品决策、目标信息架构、低保真布局、状态模型、实施切片和验证计划
 - 实施约束：本文是代码改造基线；具体尺寸、文案和视觉细节仍需在实现中验证
+- 后续技术探索：[Reading Workbench 技术设计探索](./reading-workbench-technical-design.md)；该文档保留 History 名称，并在实施前重新拆分 destination、reader layout 与 analysis route。
 
 ## 结论
 
