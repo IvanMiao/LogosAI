@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react';
 import { BookOpen, Brain, Cloud, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
+import { SiteFooter } from '@/components/SiteFooter';
 import { useAuth } from '@/features/auth';
 import { EmailAuthForm } from './EmailAuthForm';
 import { SocialAuthButtons } from './SocialAuthButtons';
@@ -22,13 +23,13 @@ export function AuthPage({ mode }: AuthPageProps): ReactElement {
   }
 
   return (
-    <main
-      id="main-content"
-      data-route-focus
-      tabIndex={-1}
-      className="min-h-dvh bg-background px-4 py-8 text-foreground sm:px-6 lg:py-12"
-    >
-      <div className="mx-auto grid w-full min-w-0 max-w-5xl overflow-hidden border-4 border-border bg-card shadow-[10px_10px_0px_0px_var(--border)] lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="flex min-h-dvh flex-col bg-background px-4 py-8 text-foreground sm:px-6 lg:py-12">
+      <main
+        id="main-content"
+        data-route-focus
+        tabIndex={-1}
+        className="mx-auto grid w-full min-w-0 max-w-5xl flex-1 overflow-hidden border-4 border-border bg-card shadow-[10px_10px_0px_0px_var(--border)] lg:grid-cols-[1.05fr_0.95fr]"
+      >
         <section className="min-w-0 border-b-4 border-border bg-secondary p-6 text-secondary-foreground lg:border-b-0 lg:border-r-4 lg:p-10">
           <Link to="/" className="inline-flex items-center gap-3 font-brand text-2xl font-black">
             <span className="flex h-11 w-11 items-center justify-center border-2 border-border bg-primary shadow-hard-sm">
@@ -82,7 +83,10 @@ export function AuthPage({ mode }: AuthPageProps): ReactElement {
             </Link>
           </p>
         </section>
+      </main>
+      <div className="mx-auto mt-8 w-full max-w-5xl">
+        <SiteFooter source="auth" />
       </div>
-    </main>
+    </div>
   );
 }
