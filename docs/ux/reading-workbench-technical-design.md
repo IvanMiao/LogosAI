@@ -21,6 +21,14 @@
 
 第一阶段建议不新增运行时依赖。只有在实际复杂度或性能达到明确阈值后，再评估专项 headless library。
 
+### 已确认的界面方向
+
+- 桌面端 Reader 默认是 Source 与 Analysis 并列的双栏工作台；双栏不是第三个内容目的地，而是默认空间状态。
+- `Split` 不再以与 Source、Analysis 同等重量的文字标签出现，改为紧凑的三态布局控件：`source focus / dual pane / analysis focus`。
+- 双栏中间的 separator 可直接拖动，初始比例为 `42 / 58`，用户可按阅读任务调整两侧宽度。
+- 视觉优先级从高到低为：正在阅读的正文或分析、与其相关的局部标题、session 上下文、全局品牌与工具。
+- 保留 **History** 名称和独立入口；它不是布局状态。
+
 ## 产品与界面模型
 
 ### 对象层级
@@ -53,13 +61,17 @@ Analysis content: close-reading | anchor-artifact
 推荐工具栏结构：
 
 ```text
-[Session ▾]       [Source | Split | Analysis]       [History]
+[L] [Session title ▾]                         [▯ | ◫ | ▯] [History] [⋯]
+                                                 source dual analysis
 ```
 
-- `Source / Split / Analysis` 只改变 reader canvas 的空间排列。
+- 布局控件是紧凑的 icon segmented control，不再显示显眼的 `Split` 文字；双栏图标是桌面端默认选中状态。
+- 三个图标只改变 reader canvas 的空间排列，不代表三个内容栏目。每个按钮仍提供明确的 accessible name 与 tooltip，例如 `Show source only`、`Show source and analysis`、`Show analysis only`。
+- 控件视觉尺寸建议为 `28–32px`，但可点击区域保持至少 `40px`；选中态使用现有强调色和 filled icon，未选中态使用 outline icon。
 - `History` 保留当前名称，进入 session-wide 查询界面。
 - 从 History 返回 reader 时恢复进入 History 前的 layout、pane 滚动位置和 Analysis 内容。
 - Close Reading 不再与 Source、Split、History 共用一个枚举层级。
+- 用户选择单栏时属于临时 focus mode；再次选择双栏图标即可回到先前的 pane 比例与两侧滚动位置。
 
 ## 当前技术栈判断
 
@@ -189,15 +201,78 @@ ReadingWorkbench
 
 ```text
 source only:   minmax(0, 1fr)
-split:         minmax(26rem, var(--source-width)) divider minmax(30rem, 1fr)
+dual pane:     minmax(24rem, var(--source-width)) resize-handle minmax(26rem, 1fr)
 analysis only: minmax(0, 1fr)
 ```
 
-- 默认 Split 比例建议从 `42 / 58` 开始。
+- 桌面端首次进入 session 默认使用双栏，初始比例为 `42 / 58`；这不是需要用户主动选择的模式。
 - Source 和 Analysis 都必须保持自己的可读行长，而不是让文字铺满 pane。
 - 两个 pane 独立滚动；切换 single/split 不重置 scrollTop。
-- 分隔器继续支持 pointer drag、方向键、Home/End、双击恢复默认比例。
+- 分隔器支持 pointer drag、方向键、Home/End、双击恢复 `42 / 58` 默认比例。
 - pane 隐藏后不删除 artifact state；恢复时回到原内容。
+
+### 可拖动比例
+
+- separator 的可见线可以保持 `1px`，实际 hit area 使用 `12–16px`，避免为了易拖动而制造沉重的视觉分隔。
+- hover、drag 与 keyboard focus 时，用现有强调色将中心线增强为 `2px`；鼠标使用 `col-resize` cursor，不加入高频装饰动画。
+- Source 建议限制在工作区的 `32%–68%`，Analysis 使用余下空间；两侧最小宽度同时受各自可读行宽约束。
+- 拖动过程中直接更新 CSS custom property，并使用 pointer capture；不要在每个 `pointermove` 中触发整棵 React tree render。
+- 方向键按小步调整，`Shift + Arrow` 按大步调整；`Home`、`End` 到安全边界，双击 separator 恢复默认比例。
+- 用户比例按 session、按设备本地保存；跨设备同步不是首版要求。focus mode 不覆盖已保存比例。
+- 当容器不足以容纳两个最小 pane 时自动进入单栏，但保留用户的双栏偏好；空间恢复后重新显示双栏。
+
+## 内容优先的视觉层级
+
+### 垂直空间预算
+
+目标不是继续增加横向长条，而是让全局上下文和 pane 上下文各只占一层：
+
+```text
+Workspace bar      48px 左右：品牌、session、紧凑布局控件、History
+Pane header        36–40px：Source 或 Close Reading / Explain 的局部上下文
+Reading content    占据其余可视区域
+```
+
+- 品牌与 session title 合并在同一条 workspace bar，不再形成两个连续的 full-width header。
+- `Close Reading`、`Explain`、版本与返回动作属于 Analysis pane header，不再增加跨越整个工作区的第三条 bar。
+- 桌面端从 viewport 顶部到正文起点建议控制在 `88–96px` 内。
+- pane header 可以在自己的 pane 内 sticky；两个 pane 独立滚动时，不让其中一侧的 scroll 随机推走整个 workspace bar。
+- session title 单行截断，完整标题通过 switcher 或 tooltip 可达；words、阅读进度、版本等 metadata 不与标题争夺同一视觉重量。
+
+### 字号与行宽
+
+保留现有字体与 brutalist 视觉语言，只建立角色清晰的小型 type scale：
+
+| 角色 | 建议字号 | 行高 | 使用方式 |
+| --- | --- | --- | --- |
+| Source 正文 | `17px`，可在 `16–18px` 内调校 | `1.65–1.75` | 阅读主角；正常字重，保持可选择 |
+| Analysis 正文 | `16px` | `1.6–1.7` | 与原文接近但略低一层，避免争抢 |
+| Analysis section heading | `19–22px` | `1.2–1.3` | 稳定分隔长分析，不依赖更多边框 |
+| Session title / pane title | `14–15px` | `1.2–1.35` | 中等字重，单行显示 |
+| Toolbar action | `13–14px` | `1.2` | 紧凑但不低于可读下限 |
+| Metadata / eyebrow | `12–13px` | `1.3` | 弱化颜色；大写时增加少量 letter-spacing |
+
+- Source 与 Analysis 的长段落都限制在约 `60–75ch`，在宽 pane 中通过内层 reading column 居中，而不是无限拉长行宽。
+- 正文不使用两端对齐；使用 start alignment，段落间距约为 `0.8–1em`。
+- 正文下方的 Explain、Vocabulary 等结果继续沿用 Analysis 的字号体系，不再创造更大的“AI 输出”字体。
+- 动态 words、progress、版本编号使用 tabular numerals，避免数字变化造成控件位移。
+- 最终数值需要在现有实际字体、中法英混排、200% zoom 和长段落上视觉校准；这些值是设计 token 起点，不是散落在组件中的 hard-coded exception。
+
+### 边距与阅读密度
+
+- 使用现有 `4px` 基础 spacing scale；界面层级优先由留白表达，减少重复边框和横线。
+- pane 内容区桌面端建议 `padding-block: 32–48px`、`padding-inline: 32–48px`；容器变窄时降到 `24px`，移动端降到 `16–20px`。
+- pane header 使用 `12–16px` inline padding，与正文 reading column 的起始边保持明确对齐。
+- 段落内部间距小、section 之间间距至少为其两倍，例如段落 `12–16px`、section `32–40px`。
+- 双栏 separator 两侧不额外堆叠卡片边框；结构由空间、pane header 和 separator 本身表达。
+- 选择 action bar、layout control、History 等工具使用现有强调色；大面积正文背景保持安静，让选段和当前分析成为主要视觉焦点。
+
+### 单栏与移动端
+
+- Source only 与 Analysis only 都让 reading column 在可用 pane 中居中，仍保持最大行宽，不把内容铺满窗口。
+- 窄屏只显示一个 pane，直接在 Source、Analysis、History 之间切换，不展示双栏图标或不可用 separator。
+- 移动端正文保持至少 `16px`；内容边距 `16–20px`，pane header 与主内容共享对齐边。
+- 从移动端返回桌面时恢复之前的双栏比例，而不是把移动端单栏选择写回桌面偏好。
 
 ### 不再只依赖 viewport breakpoint
 
@@ -365,8 +440,10 @@ session.summary           session switcher 的稳定摘要
 
 ## Accessibility 不变量
 
-- layout control 使用带文字的 `radiogroup` 或 `aria-pressed` buttons；不能只依靠三个抽象图标。
+- 紧凑 layout control 使用 `radiogroup` 或 `aria-pressed` buttons；图标按钮必须有明确 accessible name、tooltip、选中态和 focus ring，不能只靠图形差异传达状态。
+- 视觉图标可保持 `28–32px`，但 pointer hit area 至少 `40px`，并避免与相邻 History/overflow 控件的点击区域重叠。
 - split separator 保持 `role="separator"`、`aria-orientation`、`aria-valuemin/max/now` 和键盘操作。
+- separator 的 `aria-valuetext` 应表达 Source/Analysis 当前比例；拖动时无需连续播报每个像素变化，结束或键盘步进后再更新可感知状态。
 - 从 History 打开 artifact 后，焦点移动到 Analysis heading；Source anchor 同时可通过明确动作跳转。
 - `Back to Close Reading` 恢复内容后，将焦点返回 pane heading 或原触发器。
 - mobile 只显示一个 pane，DOM reading order 与视觉顺序一致，不用 CSS 隐藏造成重复朗读。
@@ -378,15 +455,19 @@ session.summary           session switcher 的稳定摘要
 ### Reducer 单元测试
 
 - Source → Split → Analysis 不改变 Analysis route；
+- 新 session 在容量足够时默认进入 Split；空间不足时进入单栏但保留 Split 偏好；
 - Reader → History → Reader 恢复之前 layout；
 - Close Reading → Explain → Back 恢复 artifact 和 scroll；
 - switch session 保存并恢复各自 snapshot；
+- focus mode 不覆盖已保存 pane ratio，双击 separator 恢复 `42 / 58`；
 - 空 Close Reading、deleted artifact 和无效 deep link 有稳定 fallback。
 
 ### 组件与旅程测试
 
 - History 名称、入口和显式 destination 保持不变；
+- layout control 保持紧凑但可通过 accessible name 清楚区分 source only、dual pane、analysis only；
 - Split 中两个 pane 独立滚动；
+- separator 支持 pointer、keyboard、最小 pane 约束与比例本地恢复；
 - Source only / Analysis only 不卸载或丢失另一侧状态；
 - History Overview、Source order、Recent 分组正确；
 - session row 不出现 artifact 子树；
@@ -397,7 +478,8 @@ session.summary           session switcher 的稳定摘要
 - 极宽桌面、常见笔记本、窄窗口、390px mobile；
 - pinned/unpinned Session navigation；
 - 200% zoom、长 session title、中/法/德文案增长；
-- separator pointer + keyboard；
+- separator pointer + keyboard、`32 / 68` 边界、双击复位和拖动期间文本不误选；
+- Source `60–75ch` 行宽、正文 `16–18px`、pane padding 与顶部 `88–96px` 空间预算；
 - pane focus、browser back、deep link 和刷新恢复；
 - 100、200、500 条 History fixture 的筛选和滚动性能。
 
@@ -405,7 +487,8 @@ session.summary           session switcher 的稳定摘要
 
 ### Slice 0：低保真原型，不接数据
 
-- 验证 toolbar 中 layout control 与 History 的层级；
+- 验证紧凑 layout control、默认双栏、可拖动 separator 与 History 的层级；
+- 验证正文行宽、字号、pane padding 和顶部 chrome 空间预算；
 - 验证 Source/Split/Analysis、History、mobile 单 pane；
 - 暂不改变现有 journey contract。
 
@@ -418,7 +501,7 @@ session.summary           session switcher 的稳定摘要
 ### Slice 2：统一 ReaderCanvas
 
 - 泛化 resize hook；
-- Source、Split、Analysis 三种 layout；
+- 默认 Split 与 Source/Analysis 两种 focus mode；
 - 保存 per-session scroll 与 pane 比例。
 
 ### Slice 3：Analysis route 与返回路径
@@ -449,11 +532,11 @@ session.summary           session switcher 的稳定摘要
 
 在开始产品代码改动前，应先确认：
 
-1. `Source / Split / Analysis` 是否作为 layout control，而 History 保持独立入口；
-2. 从 History 返回时是否恢复原 layout；
-3. Vocabulary/短 Translation 是临时小结果还是立即进入 Analysis pane；
-4. pane ratio 和 scroll 只本地保存，还是需要跨设备同步；
-5. Close Reading revisions 首版是否接受客户端按 document anchor 分组。
+1. **已确认**：桌面端默认双栏；`Source / Split / Analysis` 降级为紧凑 layout control，History 保持独立入口；
+2. **建议确认**：从 History 返回时恢复原 layout；
+3. **待确认**：Vocabulary/短 Translation 是临时小结果还是立即进入 Analysis pane；
+4. **当前建议**：pane ratio 和 scroll 按 session、按设备本地保存，不做跨设备同步；
+5. **待确认**：Close Reading revisions 首版是否接受客户端按 document anchor 分组。
 
 只有这些行为被低保真原型确认后，才进入 Slice 1。这样可以避免先换组件或引入 library，最后才发现产品层级仍需重做。
 
