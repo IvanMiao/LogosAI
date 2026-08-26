@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react';
 import type { Artifact } from '@/features/artifacts';
 import type { AnchorSkill } from '@/features/anchors';
+import { SiteFooter } from '@/components/SiteFooter';
 import { useAuth } from '@/features/auth';
 import { useUserSettings } from '@/features/user-settings';
 import {
@@ -205,6 +206,7 @@ export function WorkspacePage({
               onImportTextFile={workspace.importTextFile}
             />
           )}
+          <SiteFooter source="workspace" />
         </main>
       </div>
       <DocumentLibraryDrawer

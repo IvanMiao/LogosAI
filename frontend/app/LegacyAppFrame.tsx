@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Header } from '@/components/Header';
+import { SiteFooter } from '@/components/SiteFooter';
 
 interface LegacyAppFrameProps {
   children: ReactNode;
@@ -24,6 +25,7 @@ export function LegacyAppFrame({ children }: LegacyAppFrameProps) {
         >
           {children}
         </main>
+        <SiteFooter source="app_chrome" />
       </div>
     </div>
   );

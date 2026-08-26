@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { BookOpen, Brain, Cloud, Languages, Zap, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SiteFooter } from '@/components/SiteFooter';
 import { useAuth } from '@/features/auth';
 import { cn } from '@/utils/class-name';
 
@@ -93,12 +94,7 @@ export function LandingPage(): ReactElement {
   const isAuthenticated = auth.status === 'authenticated';
 
   return (
-    <main
-      id="main-content"
-      data-route-focus
-      tabIndex={-1}
-      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background p-6 font-mono text-foreground sm:p-12"
-    >
+    <div className="relative flex min-h-dvh flex-col items-center overflow-x-hidden bg-background p-6 font-mono text-foreground sm:p-12">
       <nav aria-label="Account" className="absolute right-4 top-4 z-20 sm:right-8 sm:top-8">
         <Link
           to={isAuthenticated ? '/app' : '/login'}
@@ -117,7 +113,12 @@ export function LandingPage(): ReactElement {
         }}
       />
 
-      <div className="z-10 flex w-full max-w-5xl flex-col items-center">
+      <main
+        id="main-content"
+        data-route-focus
+        tabIndex={-1}
+        className="z-10 flex w-full max-w-5xl flex-1 flex-col items-center justify-center"
+      >
         <LandingHero isAuthenticated={isAuthenticated} />
         <section
           aria-label="What LogosAI keeps together"
@@ -127,7 +128,10 @@ export function LandingPage(): ReactElement {
             <FeatureCard key={feature.title} feature={feature} />
           ))}
         </section>
+      </main>
+      <div className="z-10 w-full max-w-5xl">
+        <SiteFooter source="landing" />
       </div>
-    </main>
+    </div>
   );
 }
