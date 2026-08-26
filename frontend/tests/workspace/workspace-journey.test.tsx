@@ -355,6 +355,13 @@ describe('workspace journey contract', () => {
     renderWorkspace();
 
     await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    const sessionsDialog = screen.getByRole('dialog', { name: 'Reading sessions' });
+    const sessionButton = within(sessionsDialog).getByText('Two paragraph journey')
+      .closest('button');
+    const sessionCard = sessionButton?.closest('article');
+    if (!sessionCard) throw new Error('Expected the reading session card to render');
+    expect(sessionsDialog).toHaveClass('min-w-0', 'overflow-x-hidden');
+    expect(sessionCard).toHaveClass('min-w-0', 'overflow-hidden');
     await user.click(screen.getByRole('button', { name: 'Pin' }));
     const sessionsNavigation = screen.getByRole('navigation', { name: 'Reading sessions' });
     expect(within(sessionsNavigation).getByText('Two paragraph journey')).toBeInTheDocument();
