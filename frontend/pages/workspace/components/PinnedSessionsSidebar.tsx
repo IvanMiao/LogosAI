@@ -47,7 +47,7 @@ export function PinnedSessionsSidebar({
     <>
       <nav
         aria-label="Reading sessions"
-        className="sticky top-0 h-dvh w-72 shrink-0 overflow-y-auto border-e-2 border-border bg-background p-4"
+        className="h-full min-h-0 w-72 shrink-0 overflow-x-hidden overflow-y-auto border-e-2 border-border bg-background p-4"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-mono text-sm font-black uppercase tracking-wide">

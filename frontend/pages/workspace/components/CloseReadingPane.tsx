@@ -1,9 +1,6 @@
-import type { ReactElement, Ref } from 'react';
+import type { ReactElement } from 'react';
 import {
   ArrowLeft,
-  Columns2,
-  Maximize2,
-  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { TextAnchor } from '@/features/anchors';
@@ -25,10 +22,7 @@ interface CloseReadingPaneProps {
   activeAnchor: TextAnchor;
   readingPreferences: ReaderPreferences;
   mode: CloseReadingPaneMode;
-  focusButtonRef?: Ref<HTMLButtonElement>;
-  onFocus: () => void;
   onShowSource: () => void;
-  onClose: () => void;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onStopArtifact: (artifact: Artifact) => void;
@@ -40,64 +34,23 @@ function getSourceScopeLabel(activeAnchor: TextAnchor): string {
 }
 
 function getPaneSizeClassName(mode: CloseReadingPaneMode): string {
-  if (mode === 'split') {
-    return 'h-[calc(100dvh-8.25rem)] min-h-[32rem] border-r-2';
-  }
-
-  return 'h-[100dvh]';
+  return mode === 'mobile' ? 'h-full min-h-0' : 'h-full min-h-0';
 }
 
 function SourceViewControl({
   mode,
-  focusButtonRef,
-  onFocus,
   onShowSource,
 }: Pick<
   CloseReadingPaneProps,
-  'mode' | 'focusButtonRef' | 'onFocus' | 'onShowSource'
->): ReactElement {
-  if (mode === 'mobile') {
-    return (
-      <Button type="button" size="sm" variant="outline" onClick={onShowSource}>
-        <ArrowLeft className="h-4 w-4" />
-        Back to text
-      </Button>
-    );
-  }
-
-  if (mode === 'focus') {
-    return (
-      <Button type="button" size="sm" variant="outline" onClick={onShowSource}>
-        <Columns2 className="h-4 w-4" />
-        Show source
-      </Button>
-    );
-  }
+  'mode' | 'onShowSource'
+>): ReactElement | null {
+  if (mode !== 'mobile') return null;
 
   return (
-    <>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="hidden xl:inline-flex"
-        ref={focusButtonRef}
-        onClick={onFocus}
-      >
-        <Maximize2 className="h-4 w-4" />
-        Focus analysis
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="xl:hidden"
-        onClick={onShowSource}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to text
-      </Button>
-    </>
+    <Button type="button" size="sm" variant="outline" onClick={onShowSource}>
+      <ArrowLeft className="h-4 w-4" />
+      Back to source
+    </Button>
   );
 }
 
@@ -107,10 +60,7 @@ export function CloseReadingPane({
   activeAnchor,
   readingPreferences,
   mode,
-  focusButtonRef,
-  onFocus,
   onShowSource,
-  onClose,
   onSelectArtifact,
   onRequestDeleteArtifact,
   onStopArtifact,
@@ -125,13 +75,12 @@ export function CloseReadingPane({
 
   return (
     <aside aria-label="Close reading" className={paneClassName}>
-      <header className="sticky top-0 z-10 border-b-2 border-border bg-card px-3 py-2 font-mono shadow-[0_4px_0px_0px_var(--border)] sm:px-4">
-        <div className="flex items-center justify-between gap-2">
+      <header className="sticky top-0 z-10 flex min-h-10 items-center border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
+        <div className="flex w-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <ArtifactStatusIcon artifact={artifact} />
-            <h2 className="truncate text-sm font-black uppercase tracking-[0.1em]">
-              <span className="hidden sm:inline">Close Reading</span>
-              <span className="sm:hidden">Analysis</span>
+            <h2 className="truncate text-xs font-black uppercase tracking-[0.1em] sm:text-sm">
+              Close Reading
             </h2>
             <span className="hidden shrink-0 border-2 border-border bg-background px-2 py-1 text-[10px] font-black uppercase tracking-wide text-muted-foreground sm:inline-flex">
               {sourceScopeLabel}
@@ -140,8 +89,6 @@ export function CloseReadingPane({
           <div className="flex items-center gap-1">
             <SourceViewControl
               mode={mode}
-              focusButtonRef={focusButtonRef}
-              onFocus={onFocus}
               onShowSource={onShowSource}
             />
             <CloseReadingActions
@@ -158,23 +105,11 @@ export function CloseReadingPane({
                 onRetryArtifact={onRetryArtifact}
               />
             ) : null}
-            {mode !== 'mobile' ? (
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="h-9 w-9"
-                aria-label="Close analysis"
-                onClick={onClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            ) : null}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[68ch] px-5 py-6 sm:px-8 sm:py-7 lg:px-10">
+      <div className="mx-auto max-w-[68ch] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
         <ArtifactBody
           artifact={artifact}
           variant="reading"

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
+    "seed:local-test-account": "node scripts/seed-local-test-account.mjs --base-url http://127.0.0.1:8787 --origin http://localhost:5173",
     "db:migrate:local": "wrangler d1 migrations apply logosai-users --local",
     "db:migrate:remote": "wrangler d1 migrations apply logosai-users --remote",
     "cf:whoami": "wrangler whoami"

@@ -13,6 +13,7 @@ import {
 import { useWorkspace } from './useWorkspace';
 import { useWorkspaceViewport } from './useWorkspaceViewport';
 import type { WorkspacePageProps } from './workspace-types';
+import { cn } from '@/utils/class-name';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
   const auth = useAuth();
@@ -122,21 +123,31 @@ export function WorkspacePage({
   };
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <WorkspaceHeader
-        viewModel={workspace.viewModel}
-        userName={userName}
-        userEmail={userEmail}
-        onSignOut={onSignOut}
-        onOpenLibrary={() => setIsLibraryOpen(true)}
-        onRetryCloudSync={workspace.retryCloudSync}
-      />
+    <div className={cn(
+      'bg-background text-foreground',
+      workspace.activeDocument
+        ? 'flex h-dvh min-h-0 flex-col overflow-hidden'
+        : 'min-h-dvh',
+    )}>
+      {!workspace.activeDocument ? (
+        <WorkspaceHeader
+          viewModel={workspace.viewModel}
+          userName={userName}
+          userEmail={userEmail}
+          onSignOut={onSignOut}
+          onOpenLibrary={() => setIsLibraryOpen(true)}
+          onRetryCloudSync={workspace.retryCloudSync}
+        />
+      ) : null}
       {workspace.workspaceError ? (
         <p role="alert" className="border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground">
           {workspace.workspaceError}
         </p>
       ) : null}
-      <div className="flex min-w-0 items-start">
+      <div className={cn(
+        'flex min-w-0 items-start',
+        workspace.activeDocument ? 'min-h-0 flex-1 items-stretch' : '',
+      )}>
         {isDesktopViewport && isSessionsPinned ? (
           <PinnedSessionsSidebar
             documents={workspace.documents}
@@ -149,12 +160,28 @@ export function WorkspacePage({
             onStartNewDocument={workspace.startNewDocument}
           />
         ) : null}
-        <main id="main-content" data-route-focus tabIndex={-1} className="min-w-0 flex-1">
+        <main
+          id="main-content"
+          data-route-focus
+          tabIndex={-1}
+          className={cn(
+            'min-w-0 flex-1',
+            workspace.activeDocument ? 'h-full min-h-0' : '',
+          )}
+        >
           {readerWorkspaceState ? (
             <ReaderWorkspace
               key={readerWorkspaceState.activeDocument.id}
               reading={readerWorkspaceState}
               actions={readerWorkspaceActions}
+              appChrome={{
+                viewModel: workspace.viewModel,
+                userName,
+                userEmail,
+                onSignOut,
+                onOpenLibrary: () => setIsLibraryOpen(true),
+                onRetryCloudSync: workspace.retryCloudSync,
+              }}
               isDesktopViewport={isDesktopViewport}
               isSessionsNavigationPinned={isDesktopViewport && isSessionsPinned}
               noteEditorAnchorId={noteEditorAnchorId}

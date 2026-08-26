@@ -117,7 +117,7 @@ export function HistoryWorkspace({
   ) ?? visibleEntries[0] ?? null;
 
   return (
-    <section aria-labelledby="history-heading" className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6">
+    <section aria-labelledby="history-heading" className="mx-auto h-full w-full max-w-[1500px] overflow-y-auto px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">

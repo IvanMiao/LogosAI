@@ -6,6 +6,7 @@
 - 目标用户：阅读长文、对特定文本反复解释，并回看整篇精读的深度阅读者
 - 交付物：已确认产品决策、目标信息架构、低保真布局、状态模型、实施切片和验证计划
 - 实施约束：本文是代码改造基线；具体尺寸、文案和视觉细节仍需在实现中验证
+- 后续技术探索：[Reading Workbench 技术设计探索](./reading-workbench-technical-design.md)；该文档保留 History 名称，并在实施前重新拆分 destination、reader layout 与 analysis route。
 
 ## 结论
 
@@ -17,7 +18,8 @@ Workspace 不再以一个“什么都能打开”的 `ContextPanel` 组织体验
 4. **Close Reading** 是整篇文本的独立深度解读模式；
 5. Close Reading 的原文对照区允许直接 Explain，进入可返回的二级详情；
 6. **History** 只在用户明确打开时查询已保存工作，默认按时间排序，可切换为原文顺序；
-7. **Reading appearance** 默认统一作用于原文和分析，同时允许用户自由调节。
+7. **Reading appearance** 默认统一作用于原文和分析，同时允许用户自由调节；
+8. 品牌、session 上下文和模式导航组合成一个紧凑的持久工具栏；Close Reading 的局部操作保持为更安静的次级层级，不再堆成第三个同权重长条。
 
 ## 已确认产品决策
 
@@ -58,6 +60,14 @@ Workspace 不再以一个“什么都能打开”的 `ContextPanel` 组织体验
 - Close Reading 的原文对照区允许直接 Explain。触发后，分析侧暂时进入
   `Close Reading → Explain selection` 二级详情，返回时恢复原 Close Reading 和阅读位置。
 - History 默认按时间倒序，允许切换为原文顺序。
+
+### 6. 持久上下文只占一个顶层工具栏
+
+- LogosAI 品牌、session 标题/字数、Text / Close Reading / History、阅读设置和全局状态属于同一个 workspace chrome。
+- 顶层工具栏保持在视口中，让跨模式导航、session 识别和同步状态始终可找回；正文、History 和 Close Reading 内容在其下方独立滚动。
+- Close Reading 自身的返回、删除和复制属于局部任务操作，使用更矮、低强调的次级工具栏，不重复品牌、session 标题或模式导航。
+- 窄屏允许同一个工具栏响应式换行，但不拆回多个相邻、同权重的 header；次要操作进入 overflow menu。
+- 保留现有 brutalist 颜色、边框、字体、图标和交互状态，只调整信息分组、空间占用与滚动所有权。
 
 ## 目标信息架构
 
@@ -405,7 +415,8 @@ interface WorkspaceViewState {
 - 2026-08-23 已在生产 Cloudflare Worker 完成新测试账号注册，注册后自动进入 `/app`。
 - 已在本地 Wrangler + D1 环境使用等价账号完成注册与 session 创建。
 - 当前主线在 1280×720 下复现 Context 职责混杂、首屏裁切和 active artifact 影响面板入口的问题。
-- 仓库不记录测试账号密码；精确凭据与部署细节保留在 Git 之外。
+- 生产 QA 凭据与部署细节继续保留在 Git 之外。
+- 本地开发另设确定性的专用测试账号；其 `.invalid` 邮箱、固定密码和预置 session 仅供 loopback Docker/Wrangler 环境使用，并随本地启动重置。精确用法记录在根目录 `README.md`。
 
 ## 明确不做
 

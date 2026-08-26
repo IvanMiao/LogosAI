@@ -146,7 +146,7 @@ describe('reading storage', () => {
     writeStoredCloseReadingSourceWidth(95);
     expect(readStoredCloseReadingSourceWidth()).toBe(MAX_CLOSE_READING_SOURCE_WIDTH);
 
-    localStorage.setItem('logosai.workspace.closeReadingSourceWidth:v1', 'wide');
+    localStorage.setItem('logosai.workspace.closeReadingSourceWidth:v2', 'wide');
     expect(readStoredCloseReadingSourceWidth()).toBe(DEFAULT_CLOSE_READING_SOURCE_WIDTH);
   });
 });

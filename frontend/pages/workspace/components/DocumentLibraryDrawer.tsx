@@ -74,22 +74,26 @@ export function DocumentListItem({
   };
 
   return (
-    <article className="border-2 border-border bg-card p-3">
-      <div className="flex items-start gap-2">
-        <button type="button" className="min-w-0 flex-1 text-left" onClick={onOpen}>
-          <span className="flex items-center gap-2">
+    <article className="min-w-0 overflow-hidden border-2 border-border bg-card p-3">
+      <div className="flex min-w-0 items-start gap-2">
+        <button
+          type="button"
+          className="min-w-0 flex-1 overflow-hidden text-start"
+          onClick={onOpen}
+        >
+          <span className="flex min-w-0 w-full items-center gap-2">
             {isActive ? <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
-            <span className="truncate text-sm font-black">{document.title}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-black">{document.title}</span>
           </span>
           {searchContext ? (
-            <span className="mt-2 block line-clamp-2 font-sans text-xs leading-5 text-muted-foreground">
+            <span className="mt-2 block line-clamp-2 break-words font-sans text-xs leading-5 text-muted-foreground">
               {searchContext}
             </span>
           ) : null}
-          <span className="mt-2 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <span className="mt-2 block break-words text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {formatDocumentMeta(document)} · Last opened {formatDateTime(document.lastOpenedAt ?? document.updatedAt)}
           </span>
-          <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <span className="mt-1 block break-words text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {stats.selectionCount} {stats.selectionCount === 1 ? 'selection' : 'selections'}
             {' · '}
             {stats.entryCount} {stats.entryCount === 1 ? 'reading entry' : 'reading entries'}
@@ -229,21 +233,27 @@ export function DocumentLibraryDrawer({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="left-auto right-0 top-0 h-dvh max-h-dvh max-w-md translate-x-0 translate-y-0 overflow-y-auto p-5">
-          <DialogHeader>
-            <div className="flex items-center justify-between gap-3">
-              <DialogTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" aria-hidden="true" />
+        <DialogContent className="left-auto right-0 top-0 h-dvh max-h-dvh min-w-0 max-w-md grid-cols-[minmax(0,1fr)] translate-x-0 translate-y-0 overflow-x-hidden overflow-y-auto p-5">
+          <DialogHeader className="min-w-0 pe-7">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <DialogTitle className="flex min-w-0 items-center gap-2 text-balance">
+                <BookOpen className="h-5 w-5 shrink-0" aria-hidden="true" />
                 Reading sessions
               </DialogTitle>
               {canPin && onPin ? (
-                <Button type="button" size="sm" variant="outline" onClick={onPin}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={onPin}
+                >
                   <Pin className="h-4 w-4" aria-hidden="true" />
                   Pin
                 </Button>
               ) : null}
             </div>
-            <DialogDescription>
+            <DialogDescription className="break-words text-pretty">
               Find, rename, or switch sessions. Full text opens in the reading workspace.
             </DialogDescription>
           </DialogHeader>
@@ -252,20 +262,20 @@ export function DocumentLibraryDrawer({
             New session
           </Button>
           <label className="relative mt-2 block">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute start-3 top-3 h-4 w-4 text-muted-foreground" />
             <span className="sr-only">Search reading sessions</span>
             <input
               type="search"
               value={query}
               placeholder="Search title or full text…"
               onChange={(event) => setQuery(event.target.value)}
-              className="h-11 w-full border-2 border-border bg-input pl-9 pr-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+              className="h-11 w-full min-w-0 border-2 border-border bg-input ps-9 pe-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
             />
           </label>
           <p className="mt-3 text-xs font-bold uppercase tracking-wide text-muted-foreground" aria-live="polite">
             {getSessionCountLabel(visibleDocuments.length, documents.length)}
           </p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 min-w-0 space-y-3">
             {visibleDocuments.length > 0 ? visibleDocuments.map((document) => (
               <DocumentListItem
                 key={document.id}

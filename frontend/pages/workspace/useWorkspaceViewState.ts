@@ -1,81 +1,66 @@
 import { useState } from 'react';
 
-export type WorkspaceMode = 'text' | 'close-reading' | 'history';
-export type ExplainOrigin = 'text' | 'close-reading';
+export type WorkspaceDestination = 'reader' | 'history';
+export type ReaderLayout = 'source' | 'split' | 'analysis';
+export type ExplainOrigin = 'source' | 'analysis';
 
 interface WorkspaceViewState {
-  mode: WorkspaceMode;
+  destination: WorkspaceDestination;
+  readerLayout: ReaderLayout;
   explainOrigin: ExplainOrigin;
   isExplainOpen: boolean;
-  focusedCloseReadingId: string | null;
   selectedCloseReadingId: string | null;
   sourceRevealRequest: number;
 }
 
 interface WorkspaceViewController extends WorkspaceViewState {
-  openMode: (mode: WorkspaceMode) => void;
-  openExplain: (origin: ExplainOrigin) => void;
+  openReaderLayout: (layout: ReaderLayout) => void;
+  openHistory: () => void;
+  openExplain: (origin: ExplainOrigin, layout: ReaderLayout) => void;
   closeExplain: () => void;
-  focusCloseReading: (artifactId: string) => void;
-  exitFocus: () => void;
   selectCloseReading: (artifactId: string | null) => void;
   revealSource: () => void;
 }
 
-export function useWorkspaceViewState(): WorkspaceViewController {
-  const [view, setView] = useState<WorkspaceViewState>({
-    mode: 'text',
-    explainOrigin: 'text',
+export function useWorkspaceViewState(
+  initialReaderLayout: ReaderLayout,
+): WorkspaceViewController {
+  const [view, setView] = useState<WorkspaceViewState>(() => ({
+    destination: 'reader',
+    readerLayout: initialReaderLayout,
+    explainOrigin: 'source',
     isExplainOpen: false,
-    focusedCloseReadingId: null,
     selectedCloseReadingId: null,
     sourceRevealRequest: 0,
-  });
+  }));
 
-  const openMode = (mode: WorkspaceMode) => {
-    setView((current) => ({
-      ...current,
-      mode,
-      explainOrigin: mode === 'close-reading' ? current.explainOrigin : 'text',
-      isExplainOpen: false,
-      focusedCloseReadingId: null,
-    }));
+  const openReaderLayout = (readerLayout: ReaderLayout) => {
+    setView((current) => ({ ...current, destination: 'reader', readerLayout }));
   };
 
-  const openExplain = (origin: ExplainOrigin) => {
+  const openExplain = (origin: ExplainOrigin, readerLayout: ReaderLayout) => {
     setView((current) => ({
       ...current,
-      mode: origin === 'text' ? 'text' : 'close-reading',
+      destination: 'reader',
+      readerLayout,
       explainOrigin: origin,
       isExplainOpen: true,
-      focusedCloseReadingId: null,
-    }));
-  };
-
-  const closeExplain = () => {
-    setView((current) => ({ ...current, isExplainOpen: false }));
-  };
-
-  const selectCloseReading = (artifactId: string | null) => {
-    setView((current) => ({
-      ...current,
-      selectedCloseReadingId: artifactId,
-      focusedCloseReadingId: current.focusedCloseReadingId ? artifactId : null,
     }));
   };
 
   return {
     ...view,
-    openMode,
+    openReaderLayout,
+    openHistory: () => {
+      setView((current) => ({ ...current, destination: 'history' }));
+    },
     openExplain,
-    closeExplain,
-    focusCloseReading: (artifactId) => {
-      setView((current) => ({ ...current, focusedCloseReadingId: artifactId }));
+    closeExplain: () => {
+      setView((current) => ({ ...current, isExplainOpen: false }));
     },
-    exitFocus: () => {
-      setView((current) => ({ ...current, focusedCloseReadingId: null }));
+    selectCloseReading: (artifactId) => {
+      setView((current) => ({ ...current, selectedCloseReadingId: artifactId }));
     },
-    selectCloseReading,
     revealSource: () => {
       setView((current) => ({
         ...current,
