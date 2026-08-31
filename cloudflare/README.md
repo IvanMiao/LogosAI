@@ -47,7 +47,8 @@ buttons.
 ## Production resources
 
 - Worker: `logosai-cloud`
-- URL: `https://logosai-cloud.ymiao.workers.dev`
+- Canonical URL: `https://logosai.ymiao.dev`
+- Migration fallback: `https://logosai-cloud.ymiao.workers.dev`
 - D1 database: `logosai-users`
 - D1 ID: `b5d33fc3-5c6c-4646-a27f-5fe826eab5fd`
 - D1 jurisdiction: EU (EEUR)
@@ -103,10 +104,12 @@ for 25%). Development defaults to 100%. Breadcrumbs stay disabled.
 Create one web OAuth application in each provider and use these exact callback
 URLs:
 
-- Google: `https://logosai-cloud.ymiao.workers.dev/api/auth/callback/google`
-- GitHub: `https://logosai-cloud.ymiao.workers.dev/api/auth/callback/github`
+- Google: `https://logosai.ymiao.dev/api/auth/callback/google`
+- GitHub: `https://logosai.ymiao.dev/api/auth/callback/github`
 
-Use `https://logosai-cloud.ymiao.workers.dev` as the application/homepage URL.
+Use `https://logosai.ymiao.dev` as the application/homepage URL. Keep the old
+`workers.dev` callback URLs only during the migration rollback window, then
+remove them after authentication has been verified on the canonical domain.
 After writing both values for a provider, redeploy the Worker and verify its
 button appears on `/login`.
 

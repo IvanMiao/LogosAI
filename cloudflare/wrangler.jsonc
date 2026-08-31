@@ -6,8 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "FASTAPI_ORIGIN": "https://logosai.fly.dev",
-    "BETTER_AUTH_URL": "https://logosai-cloud.ymiao.workers.dev",
-    "TRUSTED_ORIGINS": "https://logosai-cloud.ymiao.workers.dev"
+    "BETTER_AUTH_URL": "https://logosai.ymiao.dev",
+    "TRUSTED_ORIGINS": "https://logosai.ymiao.dev"
   },
   "assets": {
     "directory": "../frontend/dist",
