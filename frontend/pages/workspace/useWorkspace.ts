@@ -29,6 +29,9 @@ import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
 import { getSessionArtifacts } from './workspace-selectors';
 import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 
+const MISSING_API_KEY_ACTION_ERROR =
+  'Gemini API key missing. Open Settings to add it, then try again.';
+
 function buildWorkspaceViewModel({
   hasApiKey,
   syncStatus,
@@ -257,7 +260,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activateAnchor(anchor);
 
     if (!hasApiKey) {
-      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
+      setWorkspaceActionError(MISSING_API_KEY_ACTION_ERROR);
       return;
     }
     setWorkspaceActionError('');
@@ -293,7 +296,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     const title = getArtifactTitleForSkill(skill);
     const artifactType = getArtifactTypeForSkill(skill);
     if (!hasApiKey) {
-      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
+      setWorkspaceActionError(MISSING_API_KEY_ACTION_ERROR);
       return;
     }
     setWorkspaceActionError('');

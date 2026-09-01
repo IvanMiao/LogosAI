@@ -410,6 +410,8 @@ describe('workspace journey contract', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Explain paragraph' })[0]);
     expect(screen.getByRole('alert')).toHaveTextContent('Gemini API key missing');
+    expect(within(screen.getByRole('alert')).getByRole('link', { name: 'Open Settings' }))
+      .toHaveAttribute('href', '/app/settings');
     expect(Object.values(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId).flat()).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'History' }));

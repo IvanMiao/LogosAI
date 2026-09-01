@@ -1,6 +1,8 @@
 import { useState, type ReactElement } from 'react';
+import { Link } from 'react-router-dom';
 import type { Artifact } from '@/features/artifacts';
 import type { AnchorSkill } from '@/features/anchors';
+import { MissingApiKeyBanner } from '@/components/MissingApiKeyBanner';
 import { SiteFooter } from '@/components/SiteFooter';
 import { useAuth } from '@/features/auth';
 import { useUserSettings } from '@/features/user-settings';
@@ -140,10 +142,11 @@ export function WorkspacePage({
           onRetryCloudSync={workspace.retryCloudSync}
         />
       ) : null}
+      {workspace.viewModel.apiKeyStatusTone === 'missing' ? (
+        <MissingApiKeyBanner />
+      ) : null}
       {workspace.workspaceError ? (
-        <p role="alert" className="border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground">
-          {workspace.workspaceError}
-        </p>
+        <WorkspaceActionError message={workspace.workspaceError} />
       ) : null}
       <div className={cn(
         'flex min-w-0 items-start',
@@ -167,36 +170,38 @@ export function WorkspacePage({
           tabIndex={-1}
           className={cn(
             'min-w-0 flex-1',
-            workspace.activeDocument ? 'h-full min-h-0' : '',
+            workspace.activeDocument ? 'flex h-full min-h-0 flex-col' : '',
           )}
         >
           {readerWorkspaceState ? (
-            <ReaderWorkspace
-              key={readerWorkspaceState.activeDocument.id}
-              reading={readerWorkspaceState}
-              actions={readerWorkspaceActions}
-              appChrome={{
-                viewModel: workspace.viewModel,
-                userName,
-                userEmail,
-                onSignOut,
-                onOpenLibrary: () => setIsLibraryOpen(true),
-                onRetryCloudSync: workspace.retryCloudSync,
-              }}
-              isDesktopViewport={isDesktopViewport}
-              isSessionsNavigationPinned={isDesktopViewport && isSessionsPinned}
-              noteEditorAnchorId={noteEditorAnchorId}
-              onRunSkill={handleRunSkill}
-              onStartNote={handleStartNote}
-              onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
-              onStartPendingSelectionNote={handleStartPendingSelectionNote}
-              onClearActiveAnchor={handleClearActiveAnchor}
-              onRetryArtifact={handleRetryArtifact}
-              onOpenLibrary={() => {
-                if (isDesktopViewport && isSessionsPinned) updateSessionsPinned(false);
-                else setIsLibraryOpen(true);
-              }}
-            />
+            <div className="min-h-0 flex-1">
+              <ReaderWorkspace
+                key={readerWorkspaceState.activeDocument.id}
+                reading={readerWorkspaceState}
+                actions={readerWorkspaceActions}
+                appChrome={{
+                  viewModel: workspace.viewModel,
+                  userName,
+                  userEmail,
+                  onSignOut,
+                  onOpenLibrary: () => setIsLibraryOpen(true),
+                  onRetryCloudSync: workspace.retryCloudSync,
+                }}
+                isDesktopViewport={isDesktopViewport}
+                isSessionsNavigationPinned={isDesktopViewport && isSessionsPinned}
+                noteEditorAnchorId={noteEditorAnchorId}
+                onRunSkill={handleRunSkill}
+                onStartNote={handleStartNote}
+                onRunPendingSelectionSkill={handleRunPendingSelectionSkill}
+                onStartPendingSelectionNote={handleStartPendingSelectionNote}
+                onClearActiveAnchor={handleClearActiveAnchor}
+                onRetryArtifact={handleRetryArtifact}
+                onOpenLibrary={() => {
+                  if (isDesktopViewport && isSessionsPinned) updateSessionsPinned(false);
+                  else setIsLibraryOpen(true);
+                }}
+              />
+            </div>
           ) : (
             <ImportPanel
               importState={workspace.importState}
@@ -229,5 +234,25 @@ export function WorkspacePage({
         onDeleteHistoryItem={workspace.deleteHistoryItem}
       />
     </div>
+  );
+}
+
+function WorkspaceActionError({ message }: { message: string }): ReactElement {
+  const isMissingApiKey = message.includes('API key missing');
+  return (
+    <p
+      role="alert"
+      className="shrink-0 border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground"
+    >
+      {isMissingApiKey ? (
+        <>
+          Gemini API key missing.{' '}
+          <Link to="/app/settings" className="underline underline-offset-2">
+            Open Settings
+          </Link>
+          {' '}to add it, then try again.
+        </>
+      ) : message}
+    </p>
   );
 }

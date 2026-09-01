@@ -7,7 +7,7 @@ interface SiteFooterProps {
 
 export function SiteFooter({ source }: SiteFooterProps): ReactElement {
   return (
-    <footer className="border-t-2 border-border px-4 py-3">
+    <footer className="mt-8 shrink-0 border-t-2 border-border px-4 py-3">
       <a
         href={getFeedbackFormUrl(source)}
         target="_blank"
