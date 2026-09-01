@@ -85,10 +85,6 @@ export function WorkspaceAppActions({
   showApiKeyShortcut = true,
 }: WorkspaceAppActionsProps): ReactElement {
   const navigate = useNavigate();
-  const apiKeyClassName = cn(
-    'h-10 w-10',
-    viewModel.apiKeyStatusTone === 'ready' ? 'bg-secondary' : 'bg-accent',
-  );
   const signOut = async () => {
     await onSignOut();
     navigate('/');
@@ -104,17 +100,7 @@ export function WorkspaceAppActions({
         />
       </span>
       {showApiKeyShortcut ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className={cn(apiKeyClassName, compact ? 'hidden sm:inline-flex' : '')}
-          aria-label={viewModel.apiKeyStatusLabel}
-          title={viewModel.apiKeyStatusLabel}
-          onClick={() => navigate('/app/settings')}
-        >
-          <KeyRound className="h-4 w-4" />
-        </Button>
+        <ApiKeyShortcutButton viewModel={viewModel} compact={compact} />
       ) : null}
 
       <DropdownMenu>
@@ -176,6 +162,37 @@ export function WorkspaceHeader(props: WorkspaceAppChromeProps): ReactElement {
         <WorkspaceAppActions {...props} />
       </div>
     </header>
+  );
+}
+
+function ApiKeyShortcutButton({
+  viewModel,
+  compact,
+}: {
+  viewModel: WorkspaceViewModel;
+  compact: boolean;
+}): ReactElement {
+  const navigate = useNavigate();
+  const isMissing = viewModel.apiKeyStatusTone === 'missing';
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size={isMissing && !compact ? 'default' : 'icon'}
+      className={cn(
+        isMissing ? 'bg-accent' : 'h-10 w-10 bg-secondary',
+        compact && !isMissing ? 'hidden sm:inline-flex' : '',
+      )}
+      aria-label={viewModel.apiKeyStatusLabel}
+      title={viewModel.apiKeyStatusLabel}
+      onClick={() => navigate('/app/settings')}
+    >
+      <KeyRound className="h-4 w-4" />
+      {isMissing ? (
+        <span className={compact ? 'sr-only' : undefined}>Add API key</span>
+      ) : null}
+    </Button>
   );
 }
 

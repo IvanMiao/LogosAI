@@ -257,7 +257,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     activateAnchor(anchor);
 
     if (!hasApiKey) {
-      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
       return;
     }
     setWorkspaceActionError('');
@@ -293,7 +292,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     const title = getArtifactTitleForSkill(skill);
     const artifactType = getArtifactTypeForSkill(skill);
     if (!hasApiKey) {
-      setWorkspaceActionError('Gemini API key missing. Open Settings from the API key status control, then try again.');
       return;
     }
     setWorkspaceActionError('');

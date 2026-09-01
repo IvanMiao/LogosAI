@@ -79,6 +79,7 @@ function renderWorkspace() {
 describe('workspace hardening', () => {
   beforeEach(() => {
     localStorage.clear();
+    window.innerWidth = 1280;
     scrollIntoViewMock.mockClear();
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
@@ -119,6 +120,16 @@ describe('workspace hardening', () => {
     expect(screen.queryByRole('complementary', { name: 'Context panel' })).not.toBeInTheDocument();
   });
 
+  it('points missing API key readers to Settings before they start', () => {
+    renderWorkspace();
+
+    const banner = screen.getByRole('status', { name: 'Gemini API key missing' });
+    expect(within(banner).getByRole('link', { name: 'Open Settings' }))
+      .toHaveAttribute('href', '/app/settings');
+    expect(screen.getByRole('button', { name: /API key missing/i }))
+      .toHaveTextContent('Add API key');
+  });
+
   it('keeps pasted text available when browser storage fails', async () => {
     const user = userEvent.setup();
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
@@ -147,6 +158,7 @@ describe('workspace hardening', () => {
       const { unmount } = renderWorkspace();
 
       expect(screen.getByRole('button', { name: /API key missing/i })).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: 'Analysis language' })).toBeInTheDocument();
       expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
@@ -251,7 +263,10 @@ describe('workspace hardening', () => {
 
     expect(screen.getByRole('complementary', { name: 'Current explanation' })).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Close reading' })).not.toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Gemini API key missing');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
+    expect(within(screen.getByRole('status', { name: 'Gemini API key missing' })).getByRole('link', { name: 'Open Settings' }))
+      .toHaveAttribute('href', '/app/settings');
     expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
     expect(Object.values(readStoredAnchors(TEST_USER_ID).anchorsById))
       .toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'paragraph' })]));

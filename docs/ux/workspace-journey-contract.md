@@ -176,7 +176,8 @@
 
 **必须保持**
 
-- 页面显示带 Settings 修复方向的可操作错误信息。
+- 缺 key 时页面顶部显示指向 Settings 的黄条入口。
+- 发起 AI 后仍只显示该黄条，不另出红色错误。
 - source anchor 可保留，便于配置后重试。
 - 不创建 failed artifact，History 仍为空。
 

@@ -84,7 +84,7 @@ export function AuthPage({ mode }: AuthPageProps): ReactElement {
           </p>
         </section>
       </main>
-      <div className="mx-auto mt-8 w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-5xl">
         <SiteFooter source="auth" />
       </div>
     </div>
