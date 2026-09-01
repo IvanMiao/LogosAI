@@ -263,8 +263,9 @@ describe('workspace hardening', () => {
 
     expect(screen.getByRole('complementary', { name: 'Current explanation' })).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Close reading' })).not.toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('Gemini API key missing');
-    expect(within(screen.getByRole('alert')).getByRole('link', { name: 'Open Settings' }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
+    expect(within(screen.getByRole('status', { name: 'Gemini API key missing' })).getByRole('link', { name: 'Open Settings' }))
       .toHaveAttribute('href', '/app/settings');
     expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
     expect(Object.values(readStoredAnchors(TEST_USER_ID).anchorsById))

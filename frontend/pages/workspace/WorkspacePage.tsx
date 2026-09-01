@@ -1,5 +1,4 @@
 import { useState, type ReactElement } from 'react';
-import { Link } from 'react-router-dom';
 import type { Artifact } from '@/features/artifacts';
 import type { AnchorSkill } from '@/features/anchors';
 import { MissingApiKeyBanner } from '@/components/MissingApiKeyBanner';
@@ -146,7 +145,12 @@ export function WorkspacePage({
         <MissingApiKeyBanner />
       ) : null}
       {workspace.workspaceError ? (
-        <WorkspaceActionError message={workspace.workspaceError} />
+        <p
+          role="alert"
+          className="shrink-0 border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground"
+        >
+          {workspace.workspaceError}
+        </p>
       ) : null}
       <div className={cn(
         'flex min-w-0 items-start',
@@ -234,25 +238,5 @@ export function WorkspacePage({
         onDeleteHistoryItem={workspace.deleteHistoryItem}
       />
     </div>
-  );
-}
-
-function WorkspaceActionError({ message }: { message: string }): ReactElement {
-  const isMissingApiKey = message.includes('API key missing');
-  return (
-    <p
-      role="alert"
-      className="shrink-0 border-b-2 border-border bg-destructive px-4 py-2 text-center font-mono text-sm font-bold text-destructive-foreground"
-    >
-      {isMissingApiKey ? (
-        <>
-          Gemini API key missing.{' '}
-          <Link to="/app/settings" className="underline underline-offset-2">
-            Open Settings
-          </Link>
-          {' '}to add it, then try again.
-        </>
-      ) : message}
-    </p>
   );
 }

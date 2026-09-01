@@ -176,8 +176,8 @@
 
 **必须保持**
 
-- 缺 key 时页面顶部显示指向 Settings 的可见入口。
-- 发起 AI 后的错误信息包含可点击的 Open Settings 链接。
+- 缺 key 时页面顶部显示指向 Settings 的黄条入口。
+- 发起 AI 后仍只显示该黄条，不另出红色错误。
 - source anchor 可保留，便于配置后重试。
 - 不创建 failed artifact，History 仍为空。
 
