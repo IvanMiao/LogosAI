@@ -48,7 +48,7 @@ buttons.
 
 - Worker: `logosai-cloud`
 - Canonical URL: `https://logosai.ymiao.dev`
-- Migration fallback: `https://logosai-cloud.ymiao.workers.dev`
+- The `workers.dev` route is disabled in `wrangler.jsonc`.
 - D1 database: `logosai-users`
 - D1 ID: `b5d33fc3-5c6c-4646-a27f-5fe826eab5fd`
 - D1 jurisdiction: EU (EEUR)
@@ -107,11 +107,10 @@ URLs:
 - Google: `https://logosai.ymiao.dev/api/auth/callback/google`
 - GitHub: `https://logosai.ymiao.dev/api/auth/callback/github`
 
-Use `https://logosai.ymiao.dev` as the application/homepage URL. Keep the old
-`workers.dev` callback URLs only during the migration rollback window, then
-remove them after authentication has been verified on the canonical domain.
-After writing both values for a provider, redeploy the Worker and verify its
-button appears on `/login`.
+Use `https://logosai.ymiao.dev` as the application/homepage URL. Do not use the
+old `workers.dev` callback URLs because that route is disabled. After writing
+both values for a provider, redeploy the Worker and verify its button appears
+on `/login`.
 
 ## Data and credential rules
 
