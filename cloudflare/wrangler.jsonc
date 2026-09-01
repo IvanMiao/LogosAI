@@ -4,6 +4,15 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-08",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
+  },
   "vars": {
     "FASTAPI_ORIGIN": "https://logosai.fly.dev",
     "BETTER_AUTH_URL": "https://logosai.ymiao.dev",
