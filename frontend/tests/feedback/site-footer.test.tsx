@@ -60,7 +60,7 @@ describe('Share feedback footer', () => {
     expect(screen.getByRole('contentinfo')).toHaveClass('mt-8');
   });
 
-  it('reserves space for the survey below an open reading surface', () => {
+  it('hides the survey while a document is open for reading or analysis', () => {
     writeStoredDocument({
       id: 'document-1',
       title: 'Workspace document',
@@ -76,10 +76,7 @@ describe('Share feedback footer', () => {
       </MemoryRouter>,
     );
 
-    const main = screen.getByRole('main');
-    const feedback = screen.getByRole('link', { name: 'Share feedback' });
-    expect(main).toContainElement(feedback);
-    expect(main).toHaveClass('flex', 'flex-col');
-    expect(screen.getByRole('contentinfo')).toHaveClass('mt-8', 'shrink-0');
+    expect(screen.queryByRole('link', { name: 'Share feedback' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
   });
 });
