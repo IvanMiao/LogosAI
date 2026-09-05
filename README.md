@@ -12,7 +12,7 @@ outputs attached to the source context.
 
 - Import pasted text and local `.txt` or `.md` files.
 - Explain, translate, define vocabulary, and annotate selected passages.
-- Create close readings for a paragraph or full document.
+- Explain paragraphs and create close readings for full documents.
 - Keep reading sessions, notes, and AI entries with the signed-in user.
 
 ## Run locally
@@ -78,3 +78,13 @@ npm run check
 - [Roadmap](./docs/roadmap.md): priorities and evidence gates.
 - [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
   auth, data ownership, and credential boundaries.
+- [Workspace Journey Contract](./docs/ux/workspace-journey-contract.md): current
+  behavior and test coverage.
+- [User Evidence](./docs/user-evidence.md): historical reports, hypotheses, and
+  evidence limits.
+Historical designs, QA, and learning material may be kept locally in
+`docs/archive/`; this directory is ignored by Git and is not an implementation backlog.
+
+Start with this README, Project Reference, and Roadmap. Keep current facts in
+Project Reference, execution priorities in Roadmap, and UX invariants in the
+Journey Contract. Link to the owning document instead of copying its contents.

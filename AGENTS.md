@@ -1,6 +1,7 @@
 # Engineering Rules
 
 This repo uses React + Vite + TypeScript on the frontend and FastAPI + Pydantic on the backend.
+A Cloudflare Worker (Hono + Better Auth + D1) serves the app and owns auth and user data.
 
 This repository keeps one tracked `AGENTS.md` at the root. Add a subdirectory
 file only when that subtree genuinely needs different rules; the nearest file
@@ -9,7 +10,8 @@ then takes precedence.
 ## Commands
 
 - Backend uses `uv`
-- Frontend uses `npm`
+- Frontend and Cloudflare Worker use `npm`
+- Worker verification: run `npm run check` from `cloudflare/`
 
 ### Linting
 
@@ -64,7 +66,9 @@ For frontend changes, run from `frontend/`:
 - `llm/` — `agent.py` (`TextAnalysisLangchain` class), `state.py`, `prompts.py`
 - `schemas/` — Pydantic models (`analyze.py`)
 
-**Auth**: Gemini API key is passed per-request via `X-Gemini-Key` header — no server-side key storage.
+**Auth**: The Worker decrypts the authenticated user’s stored Gemini key and passes
+it via `X-Gemini-Key`. FastAPI does not persist keys; production also requires
+the shared `X-LogosAI-Gateway` header.
 
 **Analysis Workflow** (in `llm/agent.py`, class `TextAnalysisLangchain`):
 ```
@@ -82,7 +86,15 @@ remove them without an explicit product and data-migration decision.
 
 ## Deployment
 
-Deployed on **Fly.io**. Use `flyctl` CLI for deployment operations.
+The Cloudflare Worker serves the browser app and API gateway; FastAPI runs on
+**Fly.io**. Use the Worker npm/Wrangler commands for app deployment and `flyctl`
+for the AI backend. See [operations](cloudflare/README.md).
+
+## Documentation
+
+Current facts belong in `docs/project.md`, priorities in `docs/roadmap.md`, and
+workspace behavior in `docs/ux/workspace-journey-contract.md`. Update the owning
+document when behavior changes. `docs/archive/` is historical, not an active plan.
 
 ## Definition of Done
 
