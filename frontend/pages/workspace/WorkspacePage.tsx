@@ -207,15 +207,17 @@ export function WorkspacePage({
               />
             </div>
           ) : (
-            <ImportPanel
-              importState={workspace.importState}
-              onPasteTextChange={workspace.setPasteText}
-              onSessionTitleChange={workspace.setSessionTitle}
-              onImportPastedText={workspace.importPastedText}
-              onImportTextFile={workspace.importTextFile}
-            />
+            <>
+              <ImportPanel
+                importState={workspace.importState}
+                onPasteTextChange={workspace.setPasteText}
+                onSessionTitleChange={workspace.setSessionTitle}
+                onImportPastedText={workspace.importPastedText}
+                onImportTextFile={workspace.importTextFile}
+              />
+              <SiteFooter source="workspace" />
+            </>
           )}
-          <SiteFooter source="workspace" />
         </main>
       </div>
       <DocumentLibraryDrawer
