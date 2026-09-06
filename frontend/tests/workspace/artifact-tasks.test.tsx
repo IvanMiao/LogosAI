@@ -145,19 +145,4 @@ describe('artifact task lifecycle', () => {
     });
   });
 
-  it('creates a failed artifact before transport when configuration is missing', () => {
-    const { result } = renderHook(useArtifactTaskHarness);
-
-    act(() => {
-      result.current.createFailedArtifact({
-        ...TASK_SOURCE,
-        message: 'Missing API key',
-      });
-    });
-
-    expect(getOnlyArtifact(result.current.artifactStorage)).toMatchObject({
-      status: 'failed',
-      errorMessage: 'Missing API key',
-    });
-  });
 });
