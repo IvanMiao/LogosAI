@@ -37,8 +37,9 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 
 旅程测试使用 React Testing Library、localStorage fixture、mock SSE 和模拟 1280px 桌面。
 它不调用真实 Gemini、后端或云同步，不替代真实浏览器及模型质量检查。
-尤其不能用 WJ-11 的重载恢复证明 Anchor EOF 已被正确处理，后者仍是
-[路线图 N1](../roadmap.md#n1explain-流终态可靠性工程第一项) 的缺口。
+WJ-11 仅覆盖重载恢复。Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
+和 UTF-8 分片由独立的 [SSE 客户端测试](../../frontend/tests/client-api/anchor-stream.test.ts)
+覆盖；真实服务断流与恢复仍需浏览器验收。
 
 浏览器验收应另记环境、日期、版本和结果：
 

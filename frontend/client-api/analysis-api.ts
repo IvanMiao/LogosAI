@@ -5,13 +5,13 @@ import {
   reportUnexpectedApiError,
 } from '@/client-api/api-error';
 import {
-  consumeSseBuffer,
   type ParsedSseEvent,
   type StreamChunkPayload,
   type StreamDonePayload,
   type StreamErrorPayload,
   type StreamStagePayload,
 } from '@/utils/parse-sse';
+import { readSseStream } from './sse-stream';
 
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
@@ -72,9 +72,6 @@ async function readAnalysisStream(
   body: ReadableStream<Uint8Array>,
   callbacks: StreamAnalysisCallbacks,
 ): Promise<string> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
   let pendingChunk = '';
   let finalResult = '';
   let hasDoneEvent = false;
@@ -121,18 +118,7 @@ async function readAnalysisStream(
     }
   };
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) {
-      break;
-    }
-
-    buffer += decoder.decode(value, { stream: true }).replace(/\r/g, '');
-    buffer = consumeSseBuffer(buffer, handleSseEvent);
-  }
-
-  buffer += decoder.decode().replace(/\r/g, '');
-  consumeSseBuffer(buffer, handleSseEvent);
+  await readSseStream(body, handleSseEvent);
   flushPendingChunk();
 
   if (!hasDoneEvent) {

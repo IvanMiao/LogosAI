@@ -158,9 +158,10 @@ describe('workspace journey contract', () => {
 
   it('treats paragraph actions as saved Explain work', async () => {
     const user = userEvent.setup();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      createAnchorResponse('generated-paragraph-anchor', 'A paragraph explanation.'),
-    ));
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body)) as { anchor: { id: string } };
+      return Promise.resolve(createAnchorResponse(body.anchor.id, 'A paragraph explanation.'));
+    }));
     renderWorkspace();
 
     await user.click(screen.getAllByRole('button', { name: 'Explain paragraph' })[0]);
@@ -174,6 +175,27 @@ describe('workspace journey contract', () => {
     expect(artifacts.some((artifact) => artifact.type === 'close_read')).toBe(false);
     expect(Object.values(readStoredAnchors(TEST_USER_ID).anchorsById))
       .toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'paragraph' })]));
+  });
+
+  it('keeps a truncated paragraph explanation failed with partial text and retry available', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body)) as { anchor: { id: string } };
+      const payload = {
+        request_id: 'request-truncated', trace_id: 'trace-truncated',
+        anchor_id: body.anchor.id, delta: 'Partial explanation',
+      };
+      return Promise.resolve(new Response(`event: chunk\ndata: ${JSON.stringify(payload)}\n\n`));
+    }));
+    renderWorkspace();
+
+    await user.click(screen.getAllByRole('button', { name: 'Explain paragraph' })[0]);
+    expect(await screen.findByText('Stream ended unexpectedly before completion')).toBeInTheDocument();
+    const artifacts = Object.values(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId).flat();
+    expect(artifacts).toEqual([expect.objectContaining({
+      status: 'failed', content: 'Partial explanation',
+    })]);
+    expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
   });
 
   it('creates Close Reading only for the whole document', async () => {
