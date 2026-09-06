@@ -6,10 +6,8 @@ import {
   RemoteApiError,
   reportUnexpectedApiError,
 } from '@/client-api/api-error';
-import {
-  consumeSseBuffer,
-  type ParsedSseEvent,
-} from '@/utils/parse-sse';
+import type { ParsedSseEvent } from '@/utils/parse-sse';
+import { readSseStream } from './sse-stream';
 
 export interface AnchorStreamMetadata {
   requestId: string;
@@ -105,74 +103,85 @@ async function requestAnchorSkill(
     throw new Error('Streaming is not supported by the browser response');
   }
 
-  return readAnchorStream(response.body, callbacks);
+  return readAnchorStream(response.body, request.anchor.id, callbacks);
 }
 
-export function runAnchorExplain(
-  request: RunAnchorExplainRequest,
+interface AnchorStreamState {
+  metadata: AnchorStreamMetadata | null;
+  result: string | null;
+}
+
+function requireMetadata(
+  payload: AnchorSsePayload,
+  expectedAnchorId: string,
+  previous: AnchorStreamMetadata | null,
+): AnchorStreamMetadata {
+  const metadata = toMetadata(payload);
+  if (typeof metadata.requestId !== 'string' || !metadata.requestId
+    || typeof metadata.traceId !== 'string' || !metadata.traceId
+    || metadata.anchorId !== expectedAnchorId) {
+    throw new Error('Invalid anchored stream identity');
+  }
+  if (previous && (previous.requestId !== metadata.requestId
+    || previous.traceId !== metadata.traceId)) {
+    throw new Error('Anchored stream identity changed before completion');
+  }
+  return metadata;
+}
+
+function handleAnchorEvent(
+  event: ParsedSseEvent,
+  state: AnchorStreamState,
+  anchorId: string,
   callbacks: AnchorExplainCallbacks,
-): Promise<AnchorExplainResult> {
-  return runAnchorSkill({ ...request, skill: 'explain' }, callbacks);
+): void {
+  if (!['stage', 'chunk', 'done', 'error'].includes(event.event)) return;
+  const payload = JSON.parse(event.data) as AnchorSsePayload;
+  const metadata = requireMetadata(payload, anchorId, state.metadata);
+  if (event.event === 'error') {
+    throw new RemoteApiError(payload.message || 'Anchored explain failed');
+  }
+  if (state.result !== null) {
+    throw new Error('Anchored stream received an event after completion');
+  }
+  if (!state.metadata) callbacks.onMetadata(metadata);
+  state.metadata = metadata;
+
+  dispatchAnchorPayload(event.event, payload, metadata, state, callbacks);
+}
+
+function dispatchAnchorPayload(
+  eventName: string,
+  payload: AnchorSsePayload,
+  metadata: AnchorStreamMetadata,
+  state: AnchorStreamState,
+  callbacks: AnchorExplainCallbacks,
+): void {
+  switch (eventName) {
+    case 'stage':
+      if (payload.stage) callbacks.onStage(payload.stage, metadata);
+      break;
+    case 'chunk':
+      if (payload.delta) callbacks.onChunk(payload.delta, metadata);
+      break;
+    case 'done':
+      if (typeof payload.result !== 'string' || !payload.result.trim()) {
+        throw new Error('Anchored stream completed without a result');
+      }
+      state.result = payload.result;
+      break;
+  }
 }
 
 async function readAnchorStream(
   body: ReadableStream<Uint8Array>,
+  anchorId: string,
   callbacks: AnchorExplainCallbacks,
 ): Promise<AnchorExplainResult> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let finalResult = '';
-  const finalMetadataRef: { current: AnchorStreamMetadata | null } = { current: null };
-
-  const handleEvent = (event: ParsedSseEvent) => {
-    const payload = JSON.parse(event.data) as AnchorSsePayload;
-    const metadata = toMetadata(payload);
-    finalMetadataRef.current = metadata;
-    callbacks.onMetadata(metadata);
-
-    if (event.event === 'stage' && payload.stage) {
-      callbacks.onStage(payload.stage, metadata);
-      return;
-    }
-
-    if (event.event === 'chunk' && payload.delta) {
-      callbacks.onChunk(payload.delta, metadata);
-      return;
-    }
-
-    if (event.event === 'done' && payload.result !== undefined) {
-      finalResult = payload.result;
-      return;
-    }
-
-    if (event.event === 'error') {
-      throw new RemoteApiError(payload.message || 'Anchored explain failed');
-    }
-  };
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) {
-      break;
-    }
-
-    buffer += decoder.decode(value, { stream: true }).replace(/\r/g, '');
-    buffer = consumeSseBuffer(buffer, handleEvent);
+  const state: AnchorStreamState = { metadata: null, result: null };
+  await readSseStream(body, (event) => handleAnchorEvent(event, state, anchorId, callbacks));
+  if (!state.metadata || state.result === null) {
+    throw new Error('Stream ended unexpectedly before completion');
   }
-
-  buffer += decoder.decode().replace(/\r/g, '');
-  consumeSseBuffer(buffer, handleEvent);
-
-  const metadata = finalMetadataRef.current;
-  if (!metadata) {
-    throw new Error('Stream ended before anchored metadata was received');
-  }
-
-  return {
-    requestId: metadata.requestId,
-    traceId: metadata.traceId,
-    anchorId: metadata.anchorId,
-    result: finalResult,
-  };
+  return { ...state.metadata, result: state.result };
 }
