@@ -19,18 +19,14 @@ class AnalysisState(TypedDict):
     text: str
     text_language: str
     user_language: str
-    genre: str
     needs_correction: bool
-    corrected_text: str | None
 
 
 def create_initial_state(text: str, user_language: str) -> AnalysisState:
     return {
         "text": text,
         "text_language": "",
-        "genre": "",
         "needs_correction": False,
-        "corrected_text": None,
         "user_language": user_language.upper(),
     }
 
