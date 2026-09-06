@@ -1,198 +1,93 @@
 # LogosAI Roadmap
 
-- 状态：Active，唯一有效的实施顺序
-- 更新日期：2026-08-09
-- 当前阶段：`Discover 0`、`Delivery 1` 与已交付的 Cloud Foundation
-- 当前事实与架构：[project.md](project.md)
+- 状态：Active，产品研究与工程交付的唯一实施顺序
+- 更新：2026-09-05，依据文档审阅校准；本次没有实施产品代码
+- 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
 
-## 文档规则
+## 当前目标与状态
 
-旧路线图把正确的工程风险组织成大型串行 P0，并在没有用户证据时提前决定了用户、Reader 形态、storage 和 agent infrastructure。本路线图改为产品发现与工程交付双轨，并用 evidence gate 控制扩张。
+可靠完成“导入 → 阅读 → 选段求助 → 继续阅读 → 保存后返回”，并弄清用户为什么回来。
+工程可靠性与用户研究并行，不等待基础设施扩展才接触用户。
 
-后续工作遵守四条规则：
+分别记录 **代码已实现 / 端到端已验证 / 用户价值已验证**。
+Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。路线图不代表本轮已执行。
 
-1. 区分 `Fact`、`Hypothesis` 和 `Decision`，不把产品假设写成事实。
-2. 产品发现和工程交付并行，不等待基础设施完成后才接触用户。
-3. 工程使用可独立验证的纵切，不按 anchor、storage、skill 等技术层横向建设平台。
-4. 当前 gate 未通过时，不启动下一阶段。
+## 已实现，退出待建清单
 
-状态词：`Now` 可以主动推进；`Next` 等待已写明的启动条件；`Later` 等待 evidence gate；`Deferred` 当前没有实施授权。
-
-## 产品命题与证据
-
-LogosAI 探索的是 source-grounded AI reading assistance。候选核心任务是：
-
-> 不离开当前文本理解一个困难片段，然后继续阅读；需要时，保存可重新找到的解释或个人笔记。
-
-### 已确认事实
-
-| ID | Fact | 影响 |
+| 能力 | 代码与测试证据 | 剩余验证 |
 | --- | --- | --- |
-| F1 | Workspace Alpha 已支持 import、Reader、selection toolbar、note、AI artifact 和本地恢复。 | 已有可做用户测试的原型，不再重建 workspace shell。 |
-| F2 | Selection 只把 selected text 交给 anchor core，再匹配首个 normalized quote。 | 重复文本可能绑定错误位置。 |
-| F3 | Explain、Translate、Vocab 共用 `detect → correct → interpret` workflow。 | 三个名称尚未代表经过验证的独立语义。 |
-| F4 | Anchor skill 默认把全文传入后端。 | 成本、延迟、隐私和最小上下文都没有基线。 |
-| F5 | Workspace 已支持多个 reading sessions，并能恢复各自 anchors 与 artifacts。 | 可以开始观察 session 重开和跨设备使用，但尚无 repeat-use 证据。 |
-| F6 | 自动测试覆盖主要 contract；eval 命令只校验 dataset 结构。 | 尚无真实模型质量证据。 |
-| F7 | 仓库没有访谈、留存、行为分析或可用性测试结果。 | 用户、入口和产品形态仍是假设。 |
-| F8 | Better Auth + D1 已建立账号、per-user settings 和 durable reading sessions；email/password 可用，Google/GitHub 等待 OAuth credentials。 | Cloud capability 是明确产品决策，不代表 Gate 2 的用户需求已被验证。 |
+| 精确选区与 note 基础 | DOM Range、重复 quote、歧义、跨段及 Unicode 测试 | 真实浏览器选区、note 刷新定位；前后文 selector 未独立实现 |
+| Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 真实注册到恢复链路、断网及多标签页覆盖行为 |
+| 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 响应式、缩放、滚动与返回状态 |
+| 重载恢复 | Persisted running → stopped，可重试 | 与真实断流、云同步组合检查 |
+| LLM monitoring | Spans、首 token 延迟、usage 采集代码 | 生产采集完整性与健康状态 |
 
-### 2026-08-09 产品方向决策
+旧 Delivery 1 的核心定位能力已实现，不将其全部设计要求或用户验收自动标为完成。
+Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经验证的证据。
 
-产品负责人明确要求 Cloudflare user data、email/Google/GitHub login、per-user API key 与多 reading-session 管理。该明确授权覆盖了旧 roadmap 对 cloud auth 的 deferred 限制，因此交付了一个保持现有 Reader 与 FastAPI 的独立纵切；架构依据见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。Discover 结论仍未被替代，不能把实现本身当作用户价值证据。
+## Now
 
-### 待验证假设
+### N1：Explain 流终态可靠性（工程第一项）
 
-| ID | Hypothesis | 最小验证 |
-| --- | --- | --- |
-| H1 | 非母语困难长文读者是最强首发用户。 | 观察 5-8 名候选用户的真实阅读过程，获得至少 3 个独立 pain evidence。 |
-| H2 | 用户愿意把真实文本带入 LogosAI。 | 用参与者自己的文档测试 import、BYOK 和开始阅读的流失点。 |
-| H3 | Source-linked Explain 能解决高频阅读阻力。 | 交付可靠 Explain 后观察用户是否恢复阅读。 |
-| H4 | 保存 artifact/note 和重开文档会带来重复使用。 | 运行 1-2 周、5-10 人的 diary beta。 |
-| H5 | 主动 PreRead 比按需帮助创造更多价值。 | 先做 concierge prototype，不建设 agent infrastructure。 |
-| H6 | Gemini BYOK 对目标用户可接受。 | 记录 key 获取、理解、放弃和安全顾虑。 |
-| H7 | Close Read 比普通聊天或翻译更有差异化。 | 对比 Explain、Close Read 和参与者现有工具。 |
+- 问题：Anchor 客户端收到 metadata 后 EOF 可正常返回；上层可能标为 complete，并用空结果覆盖部分输出。来自静态审阅，尚未运行复现。
+- 范围：必须收到匹配 done；校验 identity；截断保留 partial output 并允许重试；协议扩展保持旧调用兼容。
+- 验收：正常 done 完成；缺 done、错 identity、error、主动 stop 有明确终态；切换选区不改变原 task 归属。
+- 验证：transport 回归测试、相关前后端检查及真实 stream。沿用 stopped/failed；若增加 interrupted，先明确数据兼容方案。
 
-## 用户旅程与测量
+### N2：云端数据恢复验收
 
-待验证的最小旅程：
+- 问题：已有持久化和 mock 测试，缺少当前完整真实服务验收记录。
+- 范围：注册/登录、导入、note、刷新、登出再登录；断网编辑后恢复；debounce 前刷新；删除后刷新；多标签页修改。
+- 验收：内容可恢复；本地保存与云同步状态准确；失败可见且可重试；记录并发覆盖行为。
+- 约束：复用 journal 与重试；复现覆盖后再决定 revision 检查/冲突副本，不先引入协作框架。数据丢失问题优先修复。
 
-```text
-带入真实文本并完成 BYOK
-  → 开始阅读
-  → 遇到理解阻力
-  → 选择 passage 并获得帮助
-  → 判断回答是否可信、有用
-  → 继续阅读
-  → 可选：保存并在之后返回
-```
+### N3：解释质量基线
 
-候选 north-star outcome 是 `resolved reading friction`：用户获得 source-grounded help 后能够继续阅读。它是测量框架，不是已经验证的业务指标。
+- 问题：eval 只校验 JSONL 结构，没有真实模型质量基线。
+- 范围：复用数据集，补真实任务；保存模型、prompt 版本、上下文策略、输出及耗时，记录人工评分和失败原因。
+- 评价：grounding、选段聚焦、目标语言、帮助程度、上下文不足、过度推断、prompt injection。
+- 验收：至少一组可重复运行的真实输出经人工 review；结构校验 PASS 与质量结论分开呈现。
+- 顺序：可与 N1 并行准备样本；端到端质量判断使用可靠终态路径。
 
-需要建立的基线：import/BYOK 完成率、time to first useful artifact、helpful/inaccurate/insufficient-context 反馈、source passage 可定位率、action 后继续阅读、第二篇文档/第二次 session、anchor/stream/storage failure、first-token/total latency 和每次 action 成本。
+### R1：解释回访原因（与工程并行）
 
-Telemetry 必须经过用户同意，默认不上传完整原文、完整 prompt、API key 或私人 note。
-
-## Now：并行双轨
-
-### Discover 0：Problem Discovery
-
-目标：确认谁在什么场景中遇到最频繁、最昂贵的阅读阻力。
-
-任务：
-
-- 招募 5-8 名候选用户，覆盖进阶语言学习、非母语论文和高频困难长文等场景。
-- 参与者携带最近真实阅读过的文本；观察现有 workflow，不只询问功能偏好。
-- 记录 source type、文本长度、设备、语言组合、频率、替代工具和切换成本。
-- 单独测试 paste/file import 与 Gemini BYOK。
-- 为 H1、H2、H3、H6、H7 同时收集支持和反对证据。
-
-退出条件：能具体描述首发用户、阅读场景、发生频率和替代方案，并判断内置 Reader、text import 与 BYOK 是否适合作为首发入口。若 H1 不成立，先调整用户和场景。
-
-### Delivery 1：Exact Selection To Note
-
-目标：先证明 source link 可靠，不依赖模型质量。
-
-范围：
-
-- 从 DOM `Range` 得到真实 document position，不再通过 selected text 查找首个匹配。
-- Alpha 可以先限制单段 selection；数据形状保留未来跨段 range。
-- Anchor 保存 exact quote、position 和少量前后文，检测 missing 或 ambiguous。
-- Anchored note 在 selection 清除和 refresh 后仍回到正确 passage。
-- 显式测试重复 quote、Unicode、空 selection 和无法恢复。
-
-非目标：多文档 library、document revision platform、IndexedDB migration、同时改写所有 AI skill。
-
-验收：
-
-- 选择第二个相同句子时不会绑定到第一个。
-- Note reload 后仍指向原 passage。
-- 无法唯一解析时显示失效状态，不静默猜测。
-- Frontend lint、test、build 通过。
+- 来源：2026-08-08 创始人记录称 5 人使用、3 人回访；原因、时间窗与独立证据仍缺失。
+- 任务：先了解 3 位回访用户的具体阅读任务、回来时间、替代工具与不可替代环节，再观察至少 5 位非朋友候选读者。
+- 方法：用真实文本还原原流程；记录 import/BYOK 阻碍、首次有效解释耗时、得到帮助后能否继续阅读。
+- 验收：至少 3 条非朋友用户独立痛点证据，指出最强的“读者 + 文本 + 场景”；同时记录反对证据。
+- 可选比较：同文本同任务匿名输出对比，保留模型/设置及理由；不泛化为优于通用产品。
 
 ## Next
 
-### Discover 1：Core Workflow Test
-
-启动条件：Delivery 1 可用于测试。
-
-用 5-8 名参与者及其真实文本测试 `import → read → select → help → resume`。记录任务完成率、time on task、错误、协助点和 critical issue severity；至少覆盖 missing key、低质量回答或中断 stream 中的一种失败；比较 Explain、Close Read 与现有工具。
-
-输出：core journey usability report、action 价值排序、Reader/companion 形态证据，以及 Delivery 2 的 prompt、context 和 UX 要求。
-
-### Delivery 2：Reliable Explain Vertical Slice
-
-启动条件：Discover 0 确认用户与场景，Delivery 1 建立可靠 source link。
-
-目标：让一个 Explain action 在语义、transport、provenance 和失败状态上端到端可信。
-
-范围：
-
-- 建立 Explain 专用 runner/prompt，不再作为通用 Close Read 的浅包装。
-- 用真实任务验证 explanation language setting。
-- 比较 quote、paragraph、neighborhood、document brief 等 context policy，选择满足质量的最小上下文。
-- 默认不把全文作为 selection action 的无边界 payload。
-- 客户端生成 `client_request_id`；SSE 保持 client/server request、trace、anchor identity 一致。
-- 只有匹配的 `done` 才将 artifact 标为 complete；截断流成为 interrupted。
-- Artifact 保存 source selector、context policy、model、prompt version 和 trace ID。
-- 建立 grounding、focus、目标语言、帮助程度、context sufficiency 和 prompt injection eval。
-
-验收：网络截断不产生 false complete；selection 切换不改变运行任务的 source；回答能回到唯一 passage；至少一组真实模型输出经过人工 review。
-
-### Delivery 3：Alpha Reliability
-
-启动条件：Delivery 2 达到可用于研究的质量。
-
-只修复会污染用户验证的数据完整性问题：
-
-- Reload 后把无 controller 的 `running` task 恢复为 `interrupted`。
-- Storage 写入失败可见，不显示 false saved state。
-- 为 request size、timeout、concurrency 和 stable error type 建立边界。
-- 持续验证已实施的 API-key threat model、gateway isolation 与恢复流程。
-- 在真实 desktop/mobile viewport 验证 selection、sheet/dialog、focus 和 interrupted stream。
-- Observability 配置失败不能静默伪装成健康采集。
-
-不建设 queue、RAG、agent kernel、collaboration，也不提前决定 IndexedDB 或 OPFS。
-
-## Evidence Gates
-
-| Gate | 必需证据 | 通过后才讨论 |
+| 任务 | 启动条件 | 交付与验收 |
 | --- | --- | --- |
-| 1. Core Value | 首发用户/场景至少 3 个独立证据；core workflow 无 critical issue；Reliable Explain 通过 source、终态和人工质量 review；BYOK/import 不阻断核心用户。 | Narrow Beta。未通过时调整 persona、入口或核心 action。 |
-| 2. Repeat Use | 1-2 周 beta 中自然出现第二篇文档、第二次 session、重开 artifact/note，并得到真实容量、离线和多设备需求。 | Local library、document revision、storage 选型、export/delete/migration/retention。 |
-| 3. Learning Loop | 至少一种跨 session 行为比一次性 Explain 增加价值。 | Provenance inspector、feedback、review item、session summary；Translate/Vocab 是否进入主流程。 |
-| 4. Proactive Assistance | Concierge difficulty preview 的打开、接受、dismiss、错误、帮助和成本数据。 | 自动触发、intervention budget、PreRead 与可检查 memory。 |
-| 5. Durable Agent Infrastructure | durable background work 的明确需求。 | Queue、durable retry/cancellation、memory schema 或新的 agent orchestration。基础 auth/cloud persistence 已由明确产品决策提前交付。 |
+| Explain 专用 prompt/runner 与上下文策略 | N1、N3 建立基线，R1 提供任务 | 比较 quote / paragraph / neighborhood / 全文；选择足够上下文；记录 provenance；质量不退化，耗时和输入规模可比较 |
+| 首次使用改进 | R1 找到阻断点 | 解决导入、key 或首次回答的具体问题，以任务完成与有效帮助验收 |
+| UI 连续阅读修复 | QA 复现返回、选区、焦点或窄屏问题 | 小切片修复并更新旅程契约，不重建双栏 |
+| Narrow beta | Core Value 满足 | 观察 1–2 周自然回访、第二篇文档和成果重开 |
 
-## Deferred
+## 扩展条件
 
-对应 gate 通过前不做：
+| Gate | 所需证据 | 可以讨论 |
+| --- | --- | --- |
+| Core Value | 首发场景至少 3 个独立证据；旅程无 critical issue；Explain 可靠且经人工质量 review；import/BYOK 不阻断用户 | Narrow beta、收窄用户与价值表述 |
+| Repeat Use | 1–2 周自然第二次 session/第二篇文档/成果重开及其原因 | 按真实容量与离线需求扩展 storage、revision、导出；现有恢复/删除问题不等待此 gate |
+| Learning Loop | 一种跨 session 行为比一次性解释增加价值 | Review、summary、provenance inspector、Translate/Vocab 投入排序 |
+| Proactive Assistance | 人工 preview 的接受、忽略、错误、帮助与成本证据 | PreRead、干预频率与可检查/删除 memory |
+| Durable Jobs | 明确需要离开页面后持续执行 | Queue、后台重试/取消或新 orchestration |
 
-- Skill recommendation 或自动重排 selection toolbar。
-- 自动 PreRead margin feed、persona engine、personal memory 或 planner。
-- RAG、vector database、跨文档 knowledge graph。
-- Multi-user collaboration、sharing permissions 和 organization accounts。
-- Public sharing、public feed、rich-text note editor、WebSocket chat、E2E note encryption。
-- PDF、EPUB、web-page ingestion 的生产实现；Discover 可以用低成本 prototype 验证入口。
-- 为未来 agent 预先建设 LangGraph kernel。
+## Later / 暂缓
 
-## Just-In-Time Decisions
+- PDF、EPUB、网页导入：先确认哪一种阻断真实任务，允许低成本原型。
+- RAG、向量库、知识图谱、自动推荐、planner、agent kernel、协作、public feed：等待需求证据。
+- UI reducer、完整 AnalysisRoute、per-session scroll snapshot、session URL、History 分组：旧提案未整体获准实施，仅按具体问题或需求拆分。
+- 短 Translation/Vocab 展示方式、Close Reading revisions 分组仍是产品选择，不把归档提案当作现状。
+- 首页表述等待用户原话与定位；定价等待持续使用/付费证据；扩大流量等待核心路径稳定。
+- 不混合框架替换、依赖扩张和功能开发。重大数据/API 决策在切片启动时写 ADR。
 
-只在对应纵切启动时创建 ADR：
+## 完成标准
 
-1. Delivery 1：anchor selector、offset encoding、context quote 和 ambiguity policy。
-2. Delivery 2：Explain runner、context policy 和 SSE lifecycle。
-3. Gate 2 后：local storage requirements 与 document revision。
-4. Gate 4 后：proactive intervention policy。
-5. Cloud persistence/auth：已完成 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)；Gate 5 后再决定 durable jobs。
-
-## 每个纵切的 Definition of Done
-
-- 用户 happy path 能端到端完成。
-- 至少一个明显 failure path 可见且可恢复。
-- 触及的 API contract 有自动测试。
-- AI 行为有与风险相称的 model eval 或人工 review。
-- 前端保持 typed、readable，并遵守 page、component、client-api 边界。
-- 不混入无关重构、依赖升级或未来基础设施。
-- 文档记录本切片验证了哪个 hypothesis，以及产生了什么 evidence。
-- 相关验证命令通过；命令见项目 [README](../README.md#verification)。
+每项记录代码证据、验证环境/日期、结果、失败路径与未验证项。
+AI 改动需相称的真实模型 review；行为变化同步旅程契约并执行
+[相关检查](../README.md#verify-changes)。私人原文与笔记不进入公开证据或默认 telemetry。
+历史方案仅保存在本地 `docs/archive/`，不随仓库分发，不另维护第二套执行顺序。

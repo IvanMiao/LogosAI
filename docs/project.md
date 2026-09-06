@@ -1,188 +1,104 @@
 # LogosAI Project Reference
 
-- 状态：Active，当前产品与工程事实的唯一参考
-- 更新日期：2026-08-09
-- 实施顺序：[roadmap.md](roadmap.md)
-
-本文档记录 LogosAI 现在是什么、代码如何工作，以及跨版本保持稳定的产品和工程边界。它不承诺未来功能，也不定义优先级。
+- 状态：Active，当前产品与工程参考
+- 核对日期：2026-09-05（代码与测试静态核对，不代表生产验收）
+- 下一步：[路线图](roadmap.md)；用户与价值假设：[用户证据](user-evidence.md)
 
 ## 产品边界
 
-LogosAI 正在探索 source-grounded AI reading assistance：读者在困难文本中遇到理解阻力时，应能在原文上下文内获得帮助，并能回到帮助所依据的 passage。
+LogosAI 帮助读者在原文上下文中理解困难片段，并保存可回到原文的解释和笔记。
+文本是核心对象；AI 输出关联原文；AI 不覆盖用户笔记。当前版本以用户主动触发帮助为主，
+personal memory、主动推荐与自动 agent 工作流暂不纳入本阶段实现，属于后续演进方向。
+具体范围与启动时机根据需求和验证结果确定，见[路线图](roadmap.md)。
 
-候选核心任务是：
+## 当前能力与限制
 
-> 不离开当前文本理解一个困难片段，然后继续阅读；需要时，保存可重新找到的解释或个人笔记。
-
-已经接受的原则：
-
-1. 文本是核心领域对象，不是 prompt box 的附件。
-2. AI 输出必须能追溯到 selection、paragraph 或 document。
-3. 用户笔记是第一等内容，不是 AI history 的附属品。
-4. Assistant 默认保持安静；用户表达意图后再出现工具和结果。
-
-以下仍是假设，不是产品事实：首发用户是谁、用户是否愿意导入全文、BYOK 是否可接受、内置 Reader 是否是最佳载体、保存行为是否带来复用、PreRead 是否比按需帮助更有价值。
-
-## 当前能力
-
-| 能力 | 当前状态 | 已知边界 |
+| 能力 | 已实现 | 尚未验证或已知限制 |
 | --- | --- | --- |
-| 文本入口 | 支持 paste、`.txt`、`.md` 和 legacy history；多篇文本作为 Reading sessions 管理。 | 一个 session 同时只有一个 active document。 |
-| Reader | 支持桌面/移动布局和字体、字号、行距偏好。 | 尚未经过正式可用性测试。 |
-| Selection actions | 支持 Explain、Translate、Vocab、Note；普通拖选只显示操作菜单，确认动作后才保存 selection。 | source offset 来自真实 DOM range；无法唯一恢复的旧 anchor 不会静默猜测。 |
-| Close Read | 支持 document 和 paragraph scope。 | 继续走 legacy `/api/analyze/stream`。 |
-| Artifact | 支持 explanation、translation、vocabulary、close reading 和 note，并随 session 同步至 D1。 | 当前同步为 aggregate replacement，尚无冲突 UI。 |
-| Streaming | 支持 stage、chunk、done、error，以及 stop、retry、partial output。 | Anchor flow 还没有 client request ID 和严格的截断恢复。 |
-| 恢复 | D1 是 durable source of truth；user-scoped `localStorage` 是即时缓存与离线 fallback。 | 多设备并发修改目前 last-writer-wins。 |
-| 登录 | Better Auth 支持 email/password；Google/GitHub 在配置 OAuth 凭据后启用。 | 尚未接入邮件验证与密码重置邮件服务。 |
-| API key | 每用户在 Settings 中配置 Gemini key；Worker 以 AES-GCM 加密后写入 D1。 | 不提供端到端加密；AI 请求期间 Worker 需要短暂解密。 |
-| Observability | Sentry 记录前端、Cloudflare Worker 与 FastAPI 经过脱敏的错误事件。 | 尚未接入模型 trace、token usage 或 sink health。 |
-| Eval | 有 Workspace Alpha JSONL dataset 和结构校验命令。 | 尚无真实模型评分或人工质量基线。 |
-| Cloudflare | Worker 是 canonical app/API origin；D1 保存 auth、settings、preferences 与 reading sessions。 | Google/GitHub 仍需外部 OAuth app credentials。 |
+| 文本入口 | Paste、`.txt`、`.md`、legacy history 导入；多个 reading sessions | 每个 session 对应一份原文；首发人群和最佳导入方式待验证 |
+| Reader | 桌面默认双栏；source / split / analysis 布局与 History 分离；阅读偏好可调 | 移动端、缩放、滚动与返回路径需真实浏览器验收 |
+| Selection | Explain、Translate、Vocab、Note；确认动作后保存选区 | DOM Range 提供真实 offset；旧 anchor 无法唯一恢复时不猜测；前后文 selector 尚未独立建模 |
+| Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
+| Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
+| Streaming | Stage/chunk/done/error、stop/retry；重载后 running 恢复为 stopped | Anchor 客户端缺少必须收到 done 与严格 identity 校验；本地 request ID 尚未作为 client_request_id 贯穿协议 |
+| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、删除 tombstone、失败重试 | Aggregate replacement、last-writer-wins；无冲突 UI；真实多设备恢复待验收 |
+| 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 本轮未核实生产 OAuth 配置；尚无邮件验证/密码重置邮件服务 |
+| 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
+| 评估 | Workspace Alpha JSONL 与结构校验程序 | 不运行真实模型，不证明生成质量 |
+
+精确选区已有[实现](../frontend/features/anchors/selection-offsets.ts)、
+[重复文本/歧义测试](../frontend/tests/anchors/anchor-core.test.ts)及
+[跨段/Unicode 测试](../frontend/tests/anchors/selection-offsets.test.ts)。
+交互以[旅程契约](ux/workspace-journey-contract.md)为准，不再使用旧三模式设计。
 
 ## 领域语言
 
-后续代码、测试和文档统一使用以下概念：
-
 | 概念 | 含义 |
 | --- | --- |
-| `Document` | 一份原始文本及其本地 identity、title、source type。 |
-| `Reading session` | 一份 Document 及其 anchors、notes、AI artifacts 的 durable aggregate。 |
-| `Anchor` | 指向 source range 的内部坐标；用户界面不显示 “anchor” 一词。 |
-| `Artifact` | 挂在 source object 上的 AI output 或 user note。 |
-| `Task` | 一次 streaming action 的运行状态与 request identity。 |
-| `Close Read` | 保留连续 lecture-style 质量的深度讲解。 |
-| `Skill` | Explain、Translate、Vocab 等用户触发的 AI 动作。 |
-| `Context Panel` | 当前 document/anchor 和 active artifact 的对象视图。 |
-| `Legacy analysis` | 旧的一次性全文分析记录，不等于 document 或 artifact。 |
+| Document | 一份原始文本、identity、title 和 source type |
+| Reading session | 一份 Document 及其 anchors、notes、AI artifacts 的持久化集合 |
+| Anchor | 内部原文坐标，含 scope、quote、normalized quote/hash、start/end offset；不作为 UI 术语 |
+| Artifact | 关联原文的 AI output 或用户 note |
+| Task | 一次 streaming action 的运行状态和 request identity |
+| Close Reading | 整篇文本的连续 Markdown 深度讲解 |
+| History | 当前 session 内已保存工作的显式查询入口 |
+| Legacy analysis | 旧的一次性分析记录，经兼容入口导入，不等同于当前 session |
 
-Anchor 是用户意图、原文和 artifact 的共享坐标系。当前形状包括 `documentId`、`scope`、`quote`、normalized quote/hash、start/end offset。Offset 应来自真实 DOM range；quote 与少量上下文用于恢复和检测 ambiguity，不能在重复文本中静默猜测。
+Offset 使用 JavaScript 字符串坐标（UTF-16 code units）。恢复先核对原位置，
+再尝试唯一 quote 匹配；歧义不静默绑定到首个位置。
 
-Artifact 统一处理 AI 和用户产物，但 ownership 不同：AI 可以新建 explanation，不能覆盖用户 note。未来如加入 provenance，应至少记录 source selector、skill、model、prompt version、context policy 和 trace identity。
-
-## 交互与视觉不变量
-
-以下结论来自 Workspace Alpha 设计，并继续有效：
-
-1. Reader 是默认表面；import/editor 是进入 Reader 前的状态，不与 Reader 长期并列。
-2. Selection toolbar 立即显示 Explain、Translate、Vocab、Note，不等待模型 recommendation。
-3. Close Read 是较重的 document、paragraph 或 passage action，不占据默认短选区 toolbar。
-4. Context Panel 显示一个 active artifact 和紧凑的 past outputs，不成为大型工具启动器。
-5. Selection 改变时，后台 task 仍绑定原 anchor；note draft 不能因切换而丢失。
-6. Loading、stop、error、retry 和 missing-key 状态局部显示，不能阻塞阅读。
-7. Close Read 接受自然 Markdown，不为 UI 强制固定 JSON 或固定章节。
-8. 桌面以 Reader + 可调整结果区为主；移动端保持单列 Reader，以 dialog/sheet 显示 action 和 artifact。
-9. Neo-brutalist identity 集中在 chrome、control 和 active object；长文区保持安静。
-10. Mono 用于品牌、控制和系统状态；source text 与长输出使用阅读字体。
-11. 状态不能只靠颜色；icon control 必须有 accessible name，hover action 也必须可 focus。
-
-## 当前架构
+## 架构与请求归属
 
 ```text
-Browser (React)
-├── /login, /register           Better Auth client
-├── /app                        Workspace + user-scoped local cache
-├── /app/settings               Cloud model/key settings
-└── /api/*                      same-origin requests
-      │
-      ▼
-Cloudflare Worker (Hono)
-├── static React assets          served from Worker Assets
-├── /api/auth/*                 Better Auth → D1
-├── /api/account|workspace|reading-sessions → D1
-├── allowlisted AI routes       decrypt user key → FastAPI on Fly
-
-FastAPI AI request
-  → TextAnalysisLangchain.analyze_stream
-  → detect → correct? → interpret
-  → SSE stage/chunk/done/error
-  → Artifact state → local cache → debounced D1 session sync
+Browser: React + Vite + TypeScript
+  /login, /register, /app, /app/settings → same-origin /api/*
+Cloudflare Worker: Hono
+  ├─ Worker Assets → React SPA
+  ├─ Better Auth → D1 identity
+  ├─ account / workspace / reading-sessions → D1
+  └─ allowlisted AI routes → FastAPI on Fly.io → Gemini
 ```
 
-前端组件不直接调用后端；请求集中在 `frontend/client-api/`。页面 hook 编排用户流程，`features/reading`、`features/anchors` 和 `features/artifacts` 保存领域逻辑，presentational components 只接收 typed props。
+请求集中于 `frontend/client-api/`；页面 hook 编排流程，`features/` 保存领域逻辑，
+展示组件接收 typed props。开发时 Vite 代理到本地 Worker。
+决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)，
+运行与部署见 [Cloudflare Operations](../cloudflare/README.md)。
 
-FastAPI 只提供受 Cloudflare gateway 保护的 AI `/api/*` 路由。生产浏览器入口与静态 React assets 都由 Cloudflare Worker 提供；开发时 Vite 将 `/api/*` 代理到本地 Worker，再由 Worker 只把 allowlisted AI routes 转发到 FastAPI。详细决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)。
+## AI API 与契约
 
-## API 与模型契约
+| 路径 | 用途 |
+| --- | --- |
+| `POST /api/anchors/run` | Explain / Translate / Vocab |
+| `POST /api/anchors/explain` | Explain-only 兼容入口 |
+| `POST /api/analyze/stream` | 整篇 Close Reading 和 legacy 流式分析 |
+| `POST /api/analyze` | 同步兼容入口 |
 
-浏览器不再发送 `X-Gemini-Key`。Worker 根据 authenticated user 解密其 key，向 FastAPI 添加该 header；生产 FastAPI 同时校验 `X-LogosAI-Gateway`。允许的主模型为 `gemini-2.5-flash` 和 `gemini-2.5-pro`。FastAPI 不保存 key。
+Anchor 请求见 [Pydantic schema](../backend/schemas/anchors.py)：document、anchor、skill、
+user_language、model。Scope 为 document / paragraph / selection；产品入口范围不等同于
+schema 允许的全部范围。主模型为 `gemini-2.5-flash` 或 `gemini-2.5-pro`。
 
-### Anchor skill
+Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
+**要求**：identity 一致、只有匹配 done 能完成、error 后不再完成。
+**缺口**：[anchor-api](../frontend/client-api/anchor-api.ts) 在 EOF 时仅要求 metadata；
+[analysis-api](../frontend/client-api/analysis-api.ts) 已检查缺失 done，但 legacy SSE 不带上述 identity。
 
-`POST /api/anchors/run` 接收：
+`TextAnalysisLangchain` 共享 detect → correct? → interpret：Flash Lite 检测及纠错，
+配置的 Flash/Pro 生成讲解。Explain、Translate、Vocab 仍拼入技能指令和全文，
+复用通用 workflow；独立 prompt/context policy 尚无质量基线。
 
-```json
-{
-  "document": { "id": "...", "title": "...", "text": "..." },
-  "anchor": {
-    "id": "...",
-    "quote": "...",
-    "start_offset": 0,
-    "end_offset": 10,
-    "scope": "selection"
-  },
-  "skill": "explain",
-  "user_language": "EN",
-  "model": "gemini-2.5-flash"
-}
-```
+## 数据与隐私边界
 
-`scope` 为 `document | paragraph | selection`，`skill` 为 `explain | translate | vocab`。`POST /api/anchors/explain` 是 explain-only 兼容入口。
+- Worker 按用户解密 key，向 FastAPI 添加 `X-Gemini-Key`；FastAPI 不持久化 key。
+- 生产 FastAPI 应配置 `LOGOSAI_GATEWAY_SECRET`，校验 `X-LogosAI-Gateway`。
+- D1 保存用户隔离的数据；key 用 AES-GCM、随机 IV、user ID associated data 加密；读取仅返回存在标志和末四位 hint。
+- Source 与 note 依赖平台存储加密，不是 E2E encryption；OAuth token 使用 Better Auth token encryption。
+- LocalStorage 为用户隔离缓存；旧数据首次认领保持兼容，不可跨账号继承。
+- Journal 保存未同步修改及删除意图；删除 session 级联 anchors 与 artifacts。
+- 默认不上传完整原文、prompt、note、key 或身份。LLM 内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
+- Source 为不可信数据；当前无 tool execution，仍需检查 prompt injection 对 grounding 的影响。
 
-Anchor SSE 的 `stage`、`chunk`、`done`、`error` payload 都必须保持同一 `request_id`、`trace_id`、`anchor_id`。`chunk.delta` 是增量；只有匹配的 `done` 才能完成 artifact；`error` 后不能再有 `done`。
+## 验证边界
 
-### Close Read 与 legacy analysis
-
-- `POST /api/analyze/stream`：流式 Close Read 和旧分析路径。
-- `POST /api/analyze`：同步兼容路径。
-
-该路径使用 `stage | chunk | done | error`，但目前没有 anchor、request 和 trace identity。
-
-### LLM workflow
-
-`TextAnalysisLangchain` 使用 Flash Lite 检测语言、genre 和 correction need，必要时纠错，再由配置的 Flash/Pro 生成连续讲解。同步与 streaming 入口复用相同的 detect、correct 和 interpret 阶段实现；streaming 只额外负责逐块输出。
-
-当前 Explain、Translate、Vocab 只是给同一通用 workflow 增加不同 task instruction，并默认把全文作为上下文。它们尚不是经过独立 prompt、context policy 和 eval 验证的稳定 skill semantics。
-
-## 数据、安全与可观测性
-
-- Better Auth identity、user settings、reader preferences、document、anchor 与 artifact 以 user ID 隔离后存入 Cloudflare D1。
-- Browser `localStorage` 只保留 user-scoped 工作缓存；首次登录用户可认领旧版未分 scope 的本地数据，其他账号不能继承。
-- Gemini key 使用 AES-256-GCM、随机 IV 和 user ID associated data 加密；读取设置只返回是否存在及末四位 hint。
-- OAuth token 使用 Better Auth token encryption。Source text 与 note 依赖 Cloudflare platform encryption at rest，不是 E2E encryption。
-- 一个用户可保留多个 reading sessions；删除 session 会级联其 anchors 与 artifacts。
-- 默认不应向第三方 telemetry 上传 API key、完整原文、完整 prompt 或私人 note。
-- Source text 是不可信数据，必须与 system instruction 分隔。当前没有 tool execution，因此 prompt injection 主要是 grounding 和输出质量风险。
-- Memory 如果未来实现，必须可检查、可删除，并记录 evidence、confidence 和 freshness；当前不实现隐形 personal memory。
-
-每个成熟的 AI action 最终应记录：client/server request ID、trace ID、document/anchor identity、skill、model、prompt version、context policy、first-token/total latency、token usage 或 `unknown`、稳定终态与 error type。
-
-FastAPI 的 Sentry LLM spans 记录 pipeline、detect/correct/interpret stage、模型、
-总耗时、streaming first-token latency、token usage 与异常。完整 prompt 和回答只有在
-`SENTRY_CAPTURE_LLM_CONTENT=true` 时才记录，并受
-`SENTRY_LLM_CONTENT_MAX_CHARS` 限制；API key、cookie、身份和普通 HTTP body 始终过滤。
-
-评估分三层，不能互相替代：
-
-1. Contract tests：anchor identity、SSE ordering、done/error exclusivity、storage、stop 和 retry。
-2. Model eval：grounding、selection focus、目标语言、帮助程度、context sufficiency 和禁止行为。
-3. Human review：使用真实阅读文本判断帮助是否解决阅读阻力。
-
-Workspace 已被测试保护的交互旅程以
-[Workspace Journey UX Contract](ux/workspace-journey-contract.md) 为评审参考。该文档与
-`frontend/tests/workspace/workspace-journey.test.tsx` 必须在同一次变更中同步更新。
-
-## 已废止的旧结论
-
-以下旧方案不再具有实施授权：
-
-- 预先确定中高级语言学习者、内置 Reader 或 BYOK 一定是首发方案。
-- 先建设 Assistant Kernel、PostgreSQL/pgvector/Redis、R2/Vectorize、RAG、queue 或 collaboration platform。
-- 在真实文档分布出现前固定长文阈值、chunking、digest 或 storage 技术。
-- 立即建设 persona、memory、skill marketplace、auto recommendation、PreReadAgent 或 planner。
-- 在真实分享需求出现前承诺 E2E note encryption、public feed 或 collaboration schema。
-- 为实现未来能力而提前改写所有目录、API 或 LLM orchestration。
-
-2026-08-09 产品负责人明确要求登录与 Cloudflare durable sessions，因此这一纵切取代了旧文档中“Gate 5 前不做 cloud auth”的限制；它是产品方向决策，不被错误记录成已经获得 repeat-use evidence。
-
-这些能力可以作为 hypothesis 重新进入 [roadmap.md](roadmap.md)，但必须先满足相应 evidence gate，并在启动纵切时做 just-in-time ADR。
+Contract tests、真实服务端到端检查、模型评估与用户观察分别记录，不能互相替代。
+命令统一见 [README](../README.md#verify-changes)。历史报告不证明当前部署通过，
+历史材料仅保存在本地 `docs/archive/`，不随仓库分发。

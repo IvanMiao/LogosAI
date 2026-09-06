@@ -20,3 +20,6 @@ backend/history.db
 .agents/
 skills-lock.json
 docs/gtm-cofounder
+
+# Local documentation archives
+docs/archive/
