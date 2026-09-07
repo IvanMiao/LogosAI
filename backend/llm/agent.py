@@ -77,7 +77,6 @@ class TextAnalysisLangchain:
             telemetry.record_response(directives.model_dump_json())
 
         state["text_language"] = directives.language
-        state["genre"] = directives.genre
         state["needs_correction"] = directives.correction_needed
 
     async def _correct(self, state: AnalysisState) -> None:
@@ -92,7 +91,6 @@ class TextAnalysisLangchain:
             telemetry.record_response(corrected_text)
 
         if corrected_text:
-            state["corrected_text"] = corrected_text
             state["text"] = corrected_text
 
     async def _interpret(self, messages: list[BaseMessage]) -> str:

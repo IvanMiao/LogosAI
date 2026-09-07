@@ -1,120 +1,28 @@
 import { useState, type ReactElement } from 'react';
-import { ScanText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
-import type {
-  AnalysisLanguage,
-  ReaderPreferences,
-  WorkspaceDocument,
-} from '@/features/reading';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
-import type {
-  AnchorMarkStatus,
-  PendingSelection,
-  SelectionToolbarPlacement,
-  WorkspaceSessionArtifact,
-} from '../workspace-types';
+import type { WorkspaceSessionArtifact } from '../workspace-types';
 import { useWorkspaceViewState, type ExplainOrigin } from '../useWorkspaceViewState';
-import { CloseReadingPane, type CloseReadingPaneMode } from './CloseReadingPane';
 import { CloseReadingSplitLayout } from './CloseReadingSplitLayout';
-import { CurrentExplainPanel } from './CurrentExplainPanel';
 import { HistoryWorkspace } from './HistoryWorkspace';
 import { ReaderToolbar } from './ReaderToolbar';
 import { ReadingSurface } from './ReadingSurface';
 import { ReaderWorkspaceLayout } from './ReaderWorkspaceLayout';
-import type { WorkspaceAppChromeProps } from './WorkspaceHeader';
 import {
   WorkspaceDeleteDialog,
   type WorkspaceDeletionTarget,
 } from './WorkspaceDeleteDialog';
+import type { ReaderWorkspaceProps } from './reader-workspace-types';
+import { ReaderAnalysisPanel } from './ReaderAnalysisPanel';
 
-interface ReaderWorkspaceState {
-  activeDocument: WorkspaceDocument;
-  activeAnchor: TextAnchor | null;
-  anchors: TextAnchor[];
-  activeArtifacts: Artifact[];
-  activeArtifact: Artifact | null;
-  sessionArtifacts: WorkspaceSessionArtifact[];
-  artifactCountByAnchorId: Record<string, number>;
-  noteDraftContent: string;
-  anchorMarkStatusById: Record<string, AnchorMarkStatus>;
-  readerPreferences: ReaderPreferences;
-  analysisLanguage: AnalysisLanguage;
-  selectionToolbarPlacement: SelectionToolbarPlacement | null;
-}
-
-interface ReaderWorkspaceActions {
-  setActiveAnchorId: (anchorId: string) => void;
-  selectArtifact: (artifactId: string) => void;
-  openSessionArtifact: (artifactId: string) => void;
-  deleteArtifact: (artifactId: string) => void;
-  deleteAnchor: (anchorId: string) => void;
-  updateNoteDraft: (content: string) => void;
-  runCloseReadDocument: () => Promise<void>;
-  runExplainParagraph: (paragraph: DocumentParagraph) => Promise<void>;
-  stopArtifact: (artifact: Artifact) => void;
-  showSelectionActions: (
-    selection: PendingSelection,
-    placement: SelectionToolbarPlacement,
-  ) => void;
-  dismissSelectionToolbar: () => void;
-  updateReaderPreference: <Key extends keyof ReaderPreferences>(
-    key: Key,
-    value: ReaderPreferences[Key],
-  ) => void;
-  updateAnalysisLanguage: (language: AnalysisLanguage) => void;
-  clearDocument: () => void;
-  renameDocument: (documentId: string, title: string) => void;
-}
-
-interface ReaderWorkspaceProps {
-  appChrome: WorkspaceAppChromeProps;
-  reading: ReaderWorkspaceState;
-  actions: ReaderWorkspaceActions;
-  isDesktopViewport: boolean;
-  isSessionsNavigationPinned: boolean;
-  noteEditorAnchorId: string | null;
-  onRunSkill: (skill: AnchorSkill) => void;
-  onStartNote: () => void;
-  onRunPendingSelectionSkill: (skill: AnchorSkill) => void;
-  onStartPendingSelectionNote: () => void;
-  onClearActiveAnchor: () => void;
-  onRetryArtifact: (artifact: Artifact) => void;
-  onOpenLibrary: () => void;
-}
-
-function CloseReadingEmptyState({ onStart }: { onStart: () => void }): ReactElement {
-  return (
-    <section className="flex h-full min-h-0 flex-col bg-[#fbfbf8]">
-      <header className="flex min-h-10 items-center border-b-2 border-border bg-card px-4 py-1 font-mono">
-        <h2 className="text-xs font-black uppercase tracking-[0.1em] sm:text-sm">
-          Close Reading
-        </h2>
-      </header>
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-6 sm:p-10">
-        <div className="max-w-md border-2 border-border bg-card p-6 text-center shadow-[4px_4px_0px_0px_var(--border)]">
-          <ScanText className="mx-auto h-7 w-7" aria-hidden="true" />
-          <h3 className="mt-3 text-xl font-black">Read the whole text closely</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Close Reading builds a structured, in-depth interpretation of the entire document.
-          </p>
-          <Button type="button" className="mt-5" onClick={onStart}>
-            Start Close Reading
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function getExplainArtifacts(reading: ReaderWorkspaceState): Artifact[] {
-  return reading.activeArtifacts.filter((artifact) => artifact.type !== 'close_read');
-}
-
-function getActiveExplainArtifact(reading: ReaderWorkspaceState): Artifact | null {
-  if (reading.activeArtifact?.type !== 'close_read') return reading.activeArtifact;
-  return getExplainArtifacts(reading)[0] ?? null;
+function selectCloseReadings(entries: WorkspaceSessionArtifact[], selectedId: string | null) {
+  const closeReadingEntries = entries.filter(({ artifact }) => artifact.type === 'close_read');
+  const defaultEntry = closeReadingEntries.find(({ anchor }) => anchor.scope === 'document') ?? null;
+  const activeCloseReadingEntry = closeReadingEntries.find(
+    ({ artifact }) => artifact.id === selectedId,
+  ) ?? defaultEntry;
+  return { closeReadingEntries, activeCloseReadingEntry };
 }
 
 export function ReaderWorkspace({
@@ -137,18 +45,10 @@ export function ReaderWorkspace({
     ? 'source'
     : view.readerLayout;
   const [deletionTarget, setDeletionTarget] = useState<WorkspaceDeletionTarget | null>(null);
-  const closeReadingEntries = reading.sessionArtifacts.filter(
-    ({ artifact }) => artifact.type === 'close_read',
+  const { closeReadingEntries, activeCloseReadingEntry } = selectCloseReadings(
+    reading.sessionArtifacts, view.selectedCloseReadingId,
   );
-  const defaultCloseReadingEntry = closeReadingEntries.find(
-    ({ anchor }) => anchor.scope === 'document',
-  ) ?? null;
-  const activeCloseReadingEntry = closeReadingEntries.find(
-    ({ artifact }) => artifact.id === view.selectedCloseReadingId,
-  ) ?? defaultCloseReadingEntry;
   const closeReadings = closeReadingEntries.map(({ artifact }) => artifact);
-  const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
-    || reading.noteDraftContent.length > 0;
 
   const requestDeleteAnchor = (anchor: TextAnchor) => {
     setDeletionTarget({
@@ -228,65 +128,24 @@ export function ReaderWorkspace({
     />
   );
 
-  const currentExplainPanel = reading.activeAnchor ? (
-    <CurrentExplainPanel
-      activeAnchor={reading.activeAnchor}
-      artifacts={getExplainArtifacts(reading)}
-      activeArtifact={getActiveExplainArtifact(reading)}
-      readingPreferences={reading.readerPreferences}
-      noteDraftContent={reading.noteDraftContent}
-      isNoteEditorOpen={isNoteEditorOpen}
-      backLabel={view.explainOrigin === 'analysis' ? 'Back to Close Reading' : undefined}
-      onBack={view.explainOrigin === 'analysis' ? view.closeExplain : undefined}
-      onClose={() => {
-        view.closeExplain();
-        onClearActiveAnchor();
-      }}
-      onSelectArtifact={actions.selectArtifact}
-      onRequestDeleteAnchor={requestDeleteAnchor}
-      onRequestDeleteArtifact={requestDeleteArtifact}
-      onNoteDraftChange={actions.updateNoteDraft}
-      onOpenNoteEditor={onStartNote}
+  const analysisDetail = (
+    <ReaderAnalysisPanel
+      reading={reading}
+      actions={actions}
+      isDesktopViewport={isDesktopViewport}
+      noteEditorAnchorId={noteEditorAnchorId}
       onRunSkill={onRunSkill}
-      onStopArtifact={actions.stopArtifact}
+      onStartNote={onStartNote}
+      onClearActiveAnchor={onClearActiveAnchor}
       onRetryArtifact={onRetryArtifact}
+      view={view}
+      visibleReaderLayout={visibleReaderLayout}
+      activeCloseReadingEntry={activeCloseReadingEntry}
+      closeReadings={closeReadings}
+      selectCloseReading={selectCloseReading}
+      requestDeleteAnchor={requestDeleteAnchor}
+      requestDeleteArtifact={requestDeleteArtifact}
     />
-  ) : null;
-
-  const renderCloseReadingPane = (mode: CloseReadingPaneMode): ReactElement | null => {
-    if (!activeCloseReadingEntry) return null;
-    const { artifact, anchor } = activeCloseReadingEntry;
-    return (
-      <CloseReadingPane
-        artifact={artifact}
-        closeReadings={closeReadings}
-        activeAnchor={anchor}
-        readingPreferences={reading.readerPreferences}
-        mode={mode}
-        onShowSource={() => {
-          view.openReaderLayout('source');
-          view.revealSource();
-        }}
-        onSelectArtifact={selectCloseReading}
-        onRequestDeleteArtifact={requestDeleteArtifact}
-        onStopArtifact={actions.stopArtifact}
-        onRetryArtifact={onRetryArtifact}
-      />
-    );
-  };
-
-  const startCloseReading = () => {
-    void actions.runCloseReadDocument();
-  };
-  const closeReadingDetail = view.isExplainOpen && currentExplainPanel
-    ? currentExplainPanel
-    : renderCloseReadingPane(
-      isDesktopViewport
-        ? (visibleReaderLayout === 'analysis' ? 'focus' : 'split')
-        : 'mobile',
-    );
-  const analysisDetail = closeReadingDetail ?? (
-    <CloseReadingEmptyState onStart={startCloseReading} />
   );
 
   let workspaceContent: ReactElement;
@@ -317,7 +176,6 @@ export function ReaderWorkspace({
     workspaceContent = (
       <ReaderWorkspaceLayout
         readingSurface={renderReadingSurface('source')}
-        detailPanel={null}
       />
     );
   }

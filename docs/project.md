@@ -20,7 +20,7 @@ personal memory、主动推荐与自动 agent 工作流暂不纳入本阶段实�
 | Selection | Explain、Translate、Vocab、Note；确认动作后保存选区 | DOM Range 提供真实 offset；旧 anchor 无法唯一恢复时不猜测；前后文 selector 尚未独立建模 |
 | Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
 | Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
-| Streaming | Stage/chunk/done/error、stop/retry；重载后 running 恢复为 stopped | Anchor 客户端缺少必须收到 done 与严格 identity 校验；本地 request ID 尚未作为 client_request_id 贯穿协议 |
+| Streaming | Stage/chunk/done/error、stop/retry；重载后 running 恢复为 stopped | Anchor 客户端要求有效 done 并校验 anchor/request/trace identity；本地 request ID 尚未作为 client_request_id 贯穿协议 |
 | 数据恢复 | D1、用户隔离的 localStorage、同步 journal、删除 tombstone、失败重试 | Aggregate replacement、last-writer-wins；无冲突 UI；真实多设备恢复待验收 |
 | 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 本轮未核实生产 OAuth 配置；尚无邮件验证/密码重置邮件服务 |
 | 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
@@ -79,8 +79,10 @@ schema 允许的全部范围。主模型为 `gemini-2.5-flash` 或 `gemini-2.5-p
 
 Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 **要求**：identity 一致、只有匹配 done 能完成、error 后不再完成。
-**缺口**：[anchor-api](../frontend/client-api/anchor-api.ts) 在 EOF 时仅要求 metadata；
-[analysis-api](../frontend/client-api/analysis-api.ts) 已检查缺失 done，但 legacy SSE 不带上述 identity。
+[anchor-api](../frontend/client-api/anchor-api.ts) 要求非空 done.result、请求中的 anchor ID，
+以及流内一致的 request/trace ID；提前 EOF、身份不一致或 error 均失败。
+两个客户端共用 SSE 读取与解码；[analysis-api](../frontend/client-api/analysis-api.ts)
+同样检查缺失 done，但 legacy SSE 不带上述 identity。
 
 `TextAnalysisLangchain` 共享 detect → correct? → interpret：Flash Lite 检测及纠错，
 配置的 Flash/Pro 生成讲解。Explain、Translate、Vocab 仍拼入技能指令和全文，

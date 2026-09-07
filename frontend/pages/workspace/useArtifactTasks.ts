@@ -37,14 +37,6 @@ interface RunArtifactTaskInput {
   execute: (context: ArtifactTaskContext) => Promise<ArtifactTaskResult>;
 }
 
-interface CreateFailedArtifactInput {
-  documentId: string;
-  anchorId: string;
-  title: string;
-  message: string;
-  type?: Artifact['type'];
-}
-
 type ArtifactStorageUpdater = (
   updater: (current: ArtifactStorageState) => ArtifactStorageState,
 ) => void;
@@ -56,7 +48,6 @@ interface UseArtifactTasksInput {
 
 interface ArtifactTasks {
   runArtifactTask: (input: RunArtifactTaskInput) => Promise<void>;
-  createFailedArtifact: (input: CreateFailedArtifactInput) => void;
   stopArtifact: (artifact: Artifact) => void;
   abortTasksFor: (
     matchesTask: (artifactId: string, anchorId: string) => boolean,
@@ -83,27 +74,6 @@ export function useArtifactTasks({
   updateArtifacts,
 }: UseArtifactTasksInput): ArtifactTasks {
   const runningTasksRef = useRef<Record<string, AbortController>>({});
-
-  const createFailedArtifact = useCallback(({
-    documentId,
-    anchorId,
-    title,
-    message,
-    type = 'close_read',
-  }: CreateFailedArtifactInput) => {
-    const artifact = {
-      ...createStreamingArtifact({
-        documentId,
-        anchorId,
-        title,
-        requestId: createClientId('request'),
-        type,
-      }),
-      status: 'failed' as const,
-      errorMessage: message,
-    };
-    updateArtifacts((current) => prependArtifact(current, artifact));
-  }, [updateArtifacts]);
 
   const runArtifactTask = useCallback(async ({
     documentId,
@@ -210,7 +180,6 @@ export function useArtifactTasks({
 
   return {
     runArtifactTask,
-    createFailedArtifact,
     stopArtifact,
     abortTasksFor,
   };

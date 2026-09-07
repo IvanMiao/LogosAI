@@ -428,10 +428,6 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     }
   };
 
-  const renameDocument = (documentId: string, title: string) => {
-    renameLibraryDocument(documentId, title);
-  };
-
   const deleteDocument = (documentId: string) => {
     if (!documentLibrary.documentsById[documentId]) {
       return;
@@ -497,7 +493,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     stopArtifact,
     retryArtifact,
     openDocument,
-    renameDocument,
+    renameDocument: renameLibraryDocument,
     deleteDocument,
     startNewDocument,
     openHistoryAsDocument,

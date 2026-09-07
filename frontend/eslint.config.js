@@ -57,6 +57,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['pages/workspace/**/*.{ts,tsx}', 'client-api/**/*.{ts,tsx}'],
+    rules: { complexity: ['error', 10] },
+  },
+  {
     files: ['client-api/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
