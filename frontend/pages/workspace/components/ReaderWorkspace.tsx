@@ -1,4 +1,6 @@
 import { useState, type ReactElement } from 'react';
+import { Button } from '@/components/ui/button';
+import { useReaderNavigation } from '../useReaderNavigation';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
@@ -41,6 +43,7 @@ export function ReaderWorkspace({
   onOpenLibrary,
 }: ReaderWorkspaceProps): ReactElement {
   const view = useWorkspaceViewState(isDesktopViewport ? 'split' : 'source');
+  const navigation = useReaderNavigation({ reading, actions, view, isDesktop: isDesktopViewport });
   const visibleReaderLayout = !isDesktopViewport && view.readerLayout === 'split'
     ? 'source'
     : view.readerLayout;
@@ -76,14 +79,8 @@ export function ReaderWorkspace({
       ? closeReadingEntries.find(({ artifact }) => artifact.id === artifactId)
       : activeCloseReadingEntry;
     if (entry) {
-      view.selectCloseReading(entry.artifact.id);
-      actions.openSessionArtifact(entry.artifact.id);
+      navigation.openArtifact(entry.artifact.id, 'analysis', false);
     }
-  };
-
-  const openCloseReading = (artifactId?: string) => {
-    selectCloseReading(artifactId);
-    view.openReaderLayout(isDesktopViewport ? 'split' : 'analysis');
   };
 
   const openExplainForAnchor = (anchorId: string, origin: ExplainOrigin) => {
@@ -131,14 +128,14 @@ export function ReaderWorkspace({
   const analysisDetail = (
     <ReaderAnalysisPanel
       reading={reading}
-      actions={actions}
+      actions={{ ...actions, selectArtifact: (id) => navigation.openArtifact(id, view.explainOrigin, false) }}
       isDesktopViewport={isDesktopViewport}
       noteEditorAnchorId={noteEditorAnchorId}
       onRunSkill={onRunSkill}
       onStartNote={onStartNote}
       onClearActiveAnchor={onClearActiveAnchor}
       onRetryArtifact={onRetryArtifact}
-      view={view}
+      view={{ ...view, closeExplain: navigation.closeExplain }}
       visibleReaderLayout={visibleReaderLayout}
       activeCloseReadingEntry={activeCloseReadingEntry}
       closeReadings={closeReadings}
@@ -154,11 +151,7 @@ export function ReaderWorkspace({
       <HistoryWorkspace
         entries={reading.sessionArtifacts}
         readingPreferences={reading.readerPreferences}
-        onOpenEntry={(entry) => {
-          actions.openSessionArtifact(entry.artifact.id);
-          if (entry.artifact.type === 'close_read') openCloseReading(entry.artifact.id);
-          else view.openExplain('source', isDesktopViewport ? 'split' : 'analysis');
-        }}
+        onOpenEntry={(entry) => navigation.openArtifact(entry.artifact.id)}
         onRequestDeleteArtifact={requestDeleteArtifact}
       />
     );
@@ -196,16 +189,24 @@ export function ReaderWorkspace({
         onAnalysisLanguageChange={actions.updateAnalysisLanguage}
         onReaderLayoutChange={(layout) => {
           actions.dismissSelectionToolbar();
-          view.openReaderLayout(layout);
+          navigation.openLayout(layout);
         }}
         onOpenHistory={() => {
           actions.dismissSelectionToolbar();
-          view.openHistory();
+          navigation.openHistory();
         }}
         onClearDocument={actions.clearDocument}
         onOpenLibrary={onOpenLibrary}
         onRenameDocument={(title) => actions.renameDocument(reading.activeDocument.id, title)}
       />
+      {navigation.missingArtifact ? (
+        <p role="status" className="px-4 py-2 text-sm">This saved result is no longer available. You can continue reading or open History.</p>
+      ) : null}
+      {showHistoryReturn(view) ? (
+        <div className="border-b border-border px-4 py-1">
+          <Button type="button" size="sm" variant="ghost" onClick={navigation.openHistory}>Back to History</Button>
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1">
         {workspaceContent}
       </div>
@@ -216,4 +217,8 @@ export function ReaderWorkspace({
       />
     </div>
   );
+}
+
+function showHistoryReturn(view: ReturnType<typeof useWorkspaceViewState>): boolean {
+  return view.returnToHistory && view.destination !== 'history';
 }

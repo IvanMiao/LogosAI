@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useReadingScroll } from '../useReadingScroll';
 import { Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -180,6 +181,7 @@ export function ReadingSurface({
   onSelectAnchor,
   onExplainParagraph,
 }: ReadingSurfaceProps): ReactElement {
+  const paneRef = useReadingScroll('source');
   const articleRef = useRef<HTMLElement | null>(null);
   const [revealedAnchorId, setRevealedAnchorId] = useState<string | null>(null);
   const paragraphs = splitDocumentParagraphsWithOffsets(activeDocument.text);
@@ -216,6 +218,7 @@ export function ReadingSurface({
       return undefined;
     }
 
+    paneRef.current?.dispatchEvent(new Event('reading-reveal'));
     const anchorId = activeAnchor.id;
     setRevealedAnchorId(anchorId);
     const scrollTimer = window.setTimeout(() => {
@@ -240,7 +243,7 @@ export function ReadingSurface({
       window.clearTimeout(scrollTimer);
       window.clearTimeout(highlightTimer);
     };
-  }, [activeAnchor, sourceRevealRequest]);
+  }, [activeAnchor, paneRef, sourceRevealRequest]);
 
   const handleSelection = () => {
     const selection = window.getSelection();
@@ -271,6 +274,7 @@ export function ReadingSurface({
 
   return (
     <section
+      ref={paneRef}
       aria-label="Reading surface"
       className={cn(
         'reader-surface bg-[#fbfbf8] px-5 py-8 sm:px-7 sm:py-10 lg:px-9',
@@ -328,6 +332,7 @@ export function ReadingSurface({
                 ))}
               </div>
               <p
+                data-reading-block
                 data-paragraph-start={paragraph.startOffset}
                 className="mb-[1em] whitespace-pre-wrap"
               >

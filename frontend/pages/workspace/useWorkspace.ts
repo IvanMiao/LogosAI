@@ -189,8 +189,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
 
   const resetTransientDocumentState = useCallback(() => {
     resetSelectionState();
-    resetSelectedArtifact();
-  }, [resetSelectedArtifact, resetSelectionState]);
+  }, [resetSelectionState]);
 
   const importPastedText = () => {
     if (importPastedTextIntoLibrary()) {

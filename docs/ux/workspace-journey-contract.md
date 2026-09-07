@@ -33,6 +33,23 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 | WJ-11 | 重载带 running artifact 的 session | 恢复为 stopped；可 Retry，不再显示 Stop |
 | WJ-12 | 选择旧 Close Reading 版本，切换布局再返回 | 恢复仍有效的所选版本，不强制跳到最新版本 |
 
+## 阅读现场与导航（E1，2026-09-07）
+
+- session 切换写入 `/app/readings/:documentId`；`/app` 恢复最近阅读，`/app/new` 打开导入。
+- History 打开结果使用 `?artifact=`；History 自身使用 `?view=history`。打开旧成果不请求 AI。
+- `Back to History` 与浏览器后退可返回原查询、筛选、排序、选中条目及滚动位置。
+- 每个用户、每篇原文独立保存布局、比例、详情选择与阅读位置；切换和刷新恢复有效现场。
+- 原文与各成果分别保存段落签名、段内比例及像素回退；字体、宽度重排尽量恢复同一段落。
+  无法唯一匹配变化后的内容时回到顶部，不猜测另一段。显式定位原文覆盖旧位置。
+- 恢复等待布局和字体就绪；用户开始滚动或选择后停止延迟回拉。
+- History 返回时在原控件仍存在且没有其他焦点目标时恢复焦点；不恢复浏览器原生文本选区。
+- 云端加载中不显示错误的缓存 session；无效/其他账号地址提示不可用；失败可以重试。
+  成果缺失不妨碍继续阅读对应原文。损坏的视图快照使用默认值，存储满时明确提示。
+- 笔记与任务保持既有保存路径；现场快照只保存编辑器状态，不复制正文或启动任务。
+
+默认桌面双栏、窄屏单栏未改变；讨论模型、常驻 agent 和跨设备视图同步不属于 E1。
+自动化与本地浏览器证据见[阅读导航验收](reading-navigation-verification.md)。
+
 ## 测试与未验证范围
 
 旅程测试使用 React Testing Library、localStorage fixture、mock SSE 和模拟 1280px 桌面。

@@ -104,3 +104,17 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 Contract tests、真实服务端到端检查、模型评估与用户观察分别记录，不能互相替代。
 命令统一见 [README](../README.md#verify-changes)。历史报告不证明当前部署通过，
 历史材料仅保存在本地 `docs/archive/`，不随仓库分发。
+
+## 阅读现场与地址（2026-09-07）
+
+`/app/readings/:documentId` 定位阅读对象；`?artifact=:artifactId` 打开已保存成果，
+`?view=history` 打开该 session 的 History；`/app/new` 为导入入口。
+`/app` 恢复当前用户最近打开的 session。地址只提供定位，不授予其他账号访问权限。
+云数据加载完成前不展示另一篇缓存原文；缺失对象显示提示和导航/重试入口。
+
+阅读现场使用版本化、按用户与 document 隔离的本地快照：布局、分栏比例、已选成果、
+History 查询/筛选/排序/选择、笔记编辑器开关，以及各阅读面板的滚动位置。
+段落内容签名和段内比例用于重排后定位；内容变化且无法唯一匹配时回到顶部。
+快照写入失败时保留本次页面生命周期内的内存状态，并提示刷新可能丢失位置。
+这些视图快照不进入云 API；内容、草稿与运行任务继续使用既有存储和生命周期。
+行为约束见[旅程契约](ux/workspace-journey-contract.md)，验证边界见[验收记录](ux/reading-navigation-verification.md)。
