@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import type { TextAnchor } from '@/features/anchors';
 import {
   getActiveArtifact,
@@ -15,6 +15,8 @@ import {
 } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
 import { getAnchorMarkStatusById } from './workspace-selectors';
+import type { ReadingViewStore } from './reading-view-storage';
+import { ReadingViewContext } from './reading-view-context';
 import type { AnchorMarkStatus } from './workspace-types';
 
 interface UseArtifactCollectionInput {
@@ -54,7 +56,14 @@ export function useArtifactCollection({
   const [artifactStorage, setArtifactStorage] = useState<ArtifactStorageState>(
     () => readStoredArtifacts(userId),
   );
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
+  const viewStore = useContext(ReadingViewContext)?.store;
+  const [selectedIds, setSelectedIds] = useState<Record<string, string | null>>({});
+  const documentId = activeDocument?.id ?? '';
+  const selectedArtifactId = getSelectedId(selectedIds, documentId, viewStore);
+  const setSelectedArtifactId = useCallback((id: string | null) => {
+    setSelectedIds((current) => ({ ...current, [documentId]: id }));
+    viewStore?.write(documentId, 'selectedArtifactId', id);
+  }, [documentId, viewStore]);
   const activeArtifacts = getArtifactsForAnchor(artifactStorage, activeAnchor?.id ?? null);
   const selectedArtifact = activeArtifacts.find(
     (artifact) => artifact.id === selectedArtifactId,
@@ -94,16 +103,16 @@ export function useArtifactCollection({
     if (artifactExists) {
       setSelectedArtifactId(artifactId);
     }
-  }, [artifactStorage.artifactsByAnchorId]);
+  }, [artifactStorage.artifactsByAnchorId, setSelectedArtifactId]);
 
   const resetSelectedArtifact = useCallback(() => {
     setSelectedArtifactId(null);
-  }, []);
+  }, [setSelectedArtifactId]);
 
   const deleteArtifact = useCallback((artifactId: string) => {
     updateArtifacts((current) => removeArtifact(current, artifactId));
-    setSelectedArtifactId((currentId) => currentId === artifactId ? null : currentId);
-  }, [updateArtifacts]);
+    if (selectedArtifactId === artifactId) setSelectedArtifactId(null);
+  }, [selectedArtifactId, setSelectedArtifactId, updateArtifacts]);
 
   const clearArtifactsForAnchor = useCallback((anchorId: string) => {
     updateArtifacts((current) => removeArtifactsForAnchor(current, anchorId));
@@ -142,4 +151,10 @@ export function useArtifactCollection({
     updateArtifacts,
     hydrateArtifactStorage,
   };
+}
+
+function getSelectedId(ids: Record<string, string | null>, documentId: string, store?: ReadingViewStore): unknown {
+  return Object.prototype.hasOwnProperty.call(ids, documentId)
+    ? ids[documentId]
+    : store?.read(documentId).selectedArtifactId;
 }

@@ -1,3 +1,4 @@
+import { useReadingScroll } from '../useReadingScroll';
 import type { ReactElement } from 'react';
 import {
   ArrowLeft,
@@ -66,6 +67,7 @@ export function CloseReadingPane({
   onStopArtifact,
   onRetryArtifact,
 }: CloseReadingPaneProps): ReactElement {
+  const paneRef = useReadingScroll(`artifact:${artifact.id}`);
   const sourceScopeLabel = getSourceScopeLabel(activeAnchor);
   const showTaskControls = artifact.status !== 'complete';
   const paneClassName = cn(
@@ -74,8 +76,8 @@ export function CloseReadingPane({
   );
 
   return (
-    <aside aria-label="Close reading" className={paneClassName}>
-      <header className="sticky top-0 z-10 flex min-h-10 items-center border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
+    <aside ref={paneRef} aria-label="Close reading" className={paneClassName}>
+      <header data-reading-sticky className="sticky top-0 z-10 flex min-h-10 items-center border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <ArtifactStatusIcon artifact={artifact} />
@@ -109,7 +111,7 @@ export function CloseReadingPane({
         </div>
       </header>
 
-      <div className="mx-auto max-w-[68ch] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+      <div data-reading-content className="mx-auto max-w-[68ch] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
         <ArtifactBody
           artifact={artifact}
           variant="reading"

@@ -150,7 +150,7 @@ export function useWorkspaceCloudSync({
     return () => {
       active = false;
     };
-  }, [enabled, onHydrate, userId]);
+  }, [enabled, onHydrate, retryVersion, userId]);
 
   const syncCurrentState = useCallback(async () => {
     const pending = getPendingSync(

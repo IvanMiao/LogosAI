@@ -9,10 +9,10 @@ import { WorkspacePage } from '@/pages/workspace';
 import { CloseReadingSplitLayout } from '@/pages/workspace/components/CloseReadingSplitLayout';
 import {
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
-  readStoredCloseReadingSourceWidth,
   writeStoredCloseReadingSourceWidth,
   writeStoredDocument,
 } from '@/features/reading/reading-storage';
+import { readingViewKey } from '@/pages/workspace/reading-view-storage';
 import { writeHistory } from '@/utils/history-storage';
 
 const workspaceDocument = {
@@ -153,6 +153,7 @@ describe('workspace hardening', () => {
     const widths = [390, 1280];
 
     for (const width of widths) {
+      localStorage.clear(); // Each viewport checks a first visit, not a restored session.
       window.innerWidth = width;
       writeStoredDocument(workspaceDocument, TEST_USER_ID);
       const { unmount } = renderWorkspace();
@@ -285,7 +286,8 @@ describe('workspace hardening', () => {
     expect(separator).toHaveAttribute('aria-valuenow', String(DEFAULT_CLOSE_READING_SOURCE_WIDTH));
     fireEvent.keyDown(separator, { key: 'ArrowRight' });
     expect(separator).toHaveAttribute('aria-valuenow', '44');
-    expect(readStoredCloseReadingSourceWidth(workspaceDocument.id)).toBe(44);
+    const snapshot = JSON.parse(localStorage.getItem(readingViewKey(TEST_USER_ID, workspaceDocument.id))!);
+    expect(snapshot.values.sourceWidth).toBe(44);
 
     fireEvent.keyDown(separator, { key: 'Home' });
     expect(separator).toHaveAttribute('aria-valuenow', '32');

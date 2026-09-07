@@ -1,9 +1,11 @@
-import { useMemo, useState, type ReactElement } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import { ArrowUpRight, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
 import type { WorkspaceSessionArtifact } from '../workspace-types';
+import { useReadingScroll } from '../useReadingScroll';
+import { useReadingViewState } from '../useReadingViewState';
 import { ArtifactBody, ArtifactStatusIcon } from './ArtifactDisplay';
 import {
   formatArtifactTimestamp,
@@ -73,9 +75,10 @@ function HistoryList({
       {entries.map(({ artifact, anchor }) => {
         const isActive = artifact.id === activeArtifactId;
         return (
-          <li key={artifact.id} className={isActive ? 'bg-secondary/30' : ''}>
+          <li data-reading-block key={artifact.id} className={isActive ? 'bg-secondary/30' : ''}>
             <button
               type="button"
+              data-reading-focus={`history:${artifact.id}`}
               aria-current={isActive ? 'true' : undefined}
               className="min-h-20 w-full px-4 py-3 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               onClick={() => onSelect(artifact.id)}
@@ -104,10 +107,11 @@ export function HistoryWorkspace({
   onOpenEntry,
   onRequestDeleteArtifact,
 }: HistoryWorkspaceProps): ReactElement {
-  const [query, setQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<ArtifactFilter>('all');
-  const [sort, setSort] = useState<HistorySort>('recent');
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
+  const paneRef = useReadingScroll('history');
+  const [query, setQuery] = useReadingViewState('historyQuery', '', (value) => typeof value === 'string' ? value : '');
+  const [typeFilter, setTypeFilter] = useReadingViewState<ArtifactFilter>('historyType', 'all', parseFilter);
+  const [sort, setSort] = useReadingViewState<HistorySort>('historySort', 'recent', (value) => value === 'source' ? 'source' : 'recent');
+  const [selectedArtifactId, setSelectedArtifactId] = useReadingViewState<string | null>('historySelection', null, (value) => typeof value === 'string' ? value : null);
   const visibleEntries = useMemo(
     () => getFilteredEntries(entries, query, typeFilter, sort),
     [entries, query, sort, typeFilter],
@@ -117,7 +121,7 @@ export function HistoryWorkspace({
   ) ?? visibleEntries[0] ?? null;
 
   return (
-    <section aria-labelledby="history-heading" className="mx-auto h-full w-full max-w-[1500px] overflow-y-auto px-4 py-6 sm:px-6">
+    <section ref={paneRef} aria-labelledby="history-heading" className="mx-auto h-full w-full max-w-[1500px] overflow-y-auto px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">
@@ -139,6 +143,7 @@ export function HistoryWorkspace({
           <span className="sr-only">Search session history</span>
           <input
             type="search"
+            data-reading-focus="history-search"
             value={query}
             placeholder="Search source or result…"
             onChange={(event) => setQuery(event.target.value)}
@@ -193,7 +198,7 @@ export function HistoryWorkspace({
                 </blockquote>
               </div>
               <div className="flex shrink-0 gap-1">
-                <Button type="button" size="sm" variant="outline" onClick={() => onOpenEntry(selectedEntry)}>
+                <Button data-reading-focus="history-open" type="button" size="sm" variant="outline" onClick={() => onOpenEntry(selectedEntry)}>
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                   {selectedEntry.artifact.type === 'close_read' ? 'Open Close Reading' : 'Open in Text'}
                 </Button>
@@ -209,7 +214,7 @@ export function HistoryWorkspace({
                 </Button>
               </div>
             </header>
-            <div className="mx-auto max-w-[68ch] px-5 py-6 sm:px-8">
+            <div data-reading-content className="mx-auto max-w-[68ch] px-5 py-6 sm:px-8">
               <ArtifactBody
                 artifact={selectedEntry.artifact}
                 variant="reading"
@@ -228,4 +233,9 @@ export function HistoryWorkspace({
       </div>
     </section>
   );
+}
+
+function parseFilter(value: unknown): ArtifactFilter {
+  const filters: ArtifactFilter[] = ['all', 'explanation', 'translation', 'vocabulary', 'note', 'close_read'];
+  return filters.find((filter) => filter === value) ?? 'all';
 }
