@@ -70,6 +70,7 @@ export function ReaderAnalysisPanel({
     || reading.noteDraftContent.length > 0;
   const currentExplainPanel = reading.activeAnchor ? (
     <CurrentExplainPanel
+      key={getExplainKey(reading)}
       activeAnchor={reading.activeAnchor}
       artifacts={getExplainArtifacts(reading)}
       activeArtifact={getActiveExplainArtifact(reading)}
@@ -98,6 +99,7 @@ export function ReaderAnalysisPanel({
     const { artifact, anchor } = activeCloseReadingEntry;
     return (
       <CloseReadingPane
+        key={artifact.id}
         artifact={artifact}
         closeReadings={closeReadings}
         activeAnchor={anchor}
@@ -126,4 +128,8 @@ export function ReaderAnalysisPanel({
   return closeReadingDetail ?? (
     <CloseReadingEmptyState onStart={startCloseReading} />
   );
+}
+
+function getExplainKey(reading: ReaderWorkspaceState): string | undefined {
+  return reading.activeArtifact?.id ?? reading.activeAnchor?.id;
 }

@@ -1,9 +1,11 @@
-import { useState, type ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import type { Artifact } from '@/features/artifacts';
 import type { AnchorSkill } from '@/features/anchors';
 import type { WorkspaceDocument } from '@/features/reading';
 import type { WorkspaceController } from '../workspace-types';
 import type { WorkspaceAppChromeProps } from './WorkspaceHeader';
+import { useReadingViewState } from '../useReadingViewState';
+import { ReadingSessionContext } from '../reading-view-context';
 import { ReaderWorkspace } from './ReaderWorkspace';
 
 interface WorkspaceReadingProps {
@@ -15,11 +17,21 @@ interface WorkspaceReadingProps {
   onOpenLibrary: () => void;
 }
 
-export function WorkspaceReading({
+export function WorkspaceReading(props: WorkspaceReadingProps): ReactElement {
+  return (
+    <ReadingSessionContext.Provider value={props.activeDocument.id}>
+      <WorkspaceReadingContent {...props} />
+    </ReadingSessionContext.Provider>
+  );
+}
+
+function WorkspaceReadingContent({
   workspace, activeDocument, appChrome, isDesktopViewport,
   isSessionsNavigationPinned, onOpenLibrary,
 }: WorkspaceReadingProps): ReactElement {
-  const [noteEditorAnchorId, setNoteEditorAnchorId] = useState<string | null>(null);
+  const [noteEditorAnchorId, setNoteEditorAnchorId] = useReadingViewState<string | null>(
+    'noteEditor', null, (value) => typeof value === 'string' ? value : null,
+  );
   const handleRunSkill = (skill: AnchorSkill) => {
     void workspace.runAnchorSkillForActiveAnchor(skill);
   };

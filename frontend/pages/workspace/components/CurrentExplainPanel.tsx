@@ -1,3 +1,4 @@
+import { useReadingScroll } from '../useReadingScroll';
 import type { ReactElement } from 'react';
 import {
   ArrowLeft,
@@ -159,12 +160,14 @@ export function CurrentExplainPanel({
   onStopArtifact,
   onRetryArtifact,
 }: CurrentExplainPanelProps): ReactElement {
+  const paneRef = useReadingScroll(`artifact:${activeArtifact?.id ?? activeAnchor.id}`);
   return (
     <aside
+      ref={paneRef}
       aria-label="Current explanation"
       className="h-full min-h-0 overflow-y-auto border-border bg-[#fbfbf8]"
     >
-      <header className="sticky top-0 z-10 flex min-h-10 items-center justify-between gap-2 border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
+      <header data-reading-sticky className="sticky top-0 z-10 flex min-h-10 items-center justify-between gap-2 border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           {onBack ? (
             <Button
@@ -212,6 +215,7 @@ export function CurrentExplainPanel({
             Note
             <textarea
               autoFocus
+              data-reading-focus="note-editor"
               value={noteDraftContent}
               onChange={(event) => onNoteDraftChange(event.target.value)}
               placeholder="Write a note attached to this source…"
@@ -222,7 +226,7 @@ export function CurrentExplainPanel({
         ) : null}
 
         {activeArtifact ? (
-          <section aria-label="Active output">
+          <section data-reading-content aria-label="Active output">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
               <div className="flex min-w-0 items-center gap-2">
                 <ArtifactStatusIcon artifact={activeArtifact} />

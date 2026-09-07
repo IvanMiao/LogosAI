@@ -62,6 +62,8 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<AuthenticatedWorkspacePage />} />
+              <Route path="readings/:documentId" element={<AuthenticatedWorkspacePage />} />
+              <Route path="new" element={<AuthenticatedWorkspacePage />} />
               <Route
                 path="analysis"
                 element={(

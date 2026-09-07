@@ -1,8 +1,11 @@
 # LogosAI Roadmap
 
 - 状态：Active，产品研究与工程交付的唯一实施顺序
-- 更新：2026-09-05，依据文档审阅校准；本次没有实施产品代码
+- 更新：2026-09-07，阅读现场与导航 E1 已实现，补充本地浏览器验收
 - 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
+
+阅读工作台的目标交互、实施切片与验收见[阅读工作台与常驻 Agent 实施设计](ux/reading-workspace-evolution.md)。
+该文档描述目标状态；当前行为仍以旅程契约为准。实施优先级由本路线图维护，N1/N2/N3 不因 UI 演进而跳过。
 
 ## 当前目标与状态
 
@@ -18,7 +21,8 @@ Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。�
 | --- | --- | --- |
 | 精确选区与 note 基础 | DOM Range、重复 quote、歧义、跨段及 Unicode 测试 | 真实浏览器选区、note 刷新定位；前后文 selector 未独立实现 |
 | Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 真实注册到恢复链路、断网及多标签页覆盖行为 |
-| 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 响应式、缩放、滚动与返回状态 |
+| 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 200% 缩放与真实服务验收 |
+| 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[验收记录](ux/reading-navigation-verification.md) | 真实登录、云恢复、多标签页；用户价值观察 |
 | 重载恢复 | Persisted running → stopped，可重试 | 与真实断流、云同步组合检查 |
 | LLM monitoring | Spans、首 token 延迟、usage 采集代码 | 生产采集完整性与健康状态 |
 
@@ -63,7 +67,8 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 | --- | --- | --- |
 | Explain 专用 prompt/runner 与上下文策略 | N1、N3 建立基线，R1 提供任务 | 比较 quote / paragraph / neighborhood / 全文；选择足够上下文；记录 provenance；质量不退化，耗时和输入规模可比较 |
 | 首次使用改进 | R1 找到阻断点 | 解决导入、key 或首次回答的具体问题，以任务完成与有效帮助验收 |
-| UI 连续阅读修复 | QA 复现返回、选区、焦点或窄屏问题 | 小切片修复并更新旅程契约，不重建双栏 |
+| 默认阅读布局原型（E0） | E1 已实现；结合 R1 观察 | 比较原文优先与默认双栏；在用户验证前保持当前默认布局 |
+| 连续讨论与成果组织（E2–E5） | E1、N1/N2 相关验证通过；N3 支持追问质量评估 | 按实施设计依赖推进选区讨论、History、引用预览与辅助区；默认布局通过原型验证 |
 | Narrow beta | Core Value 满足 | 观察 1–2 周自然回访、第二篇文档和成果重开 |
 
 ## 扩展条件
@@ -80,8 +85,9 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 
 - PDF、EPUB、网页导入：先确认哪一种阻断真实任务，允许低成本原型。
 - RAG、向量库、知识图谱、自动推荐、planner、agent kernel、协作、public feed：等待需求证据。
-- UI reducer、完整 AnalysisRoute、per-session scroll snapshot、session URL、History 分组：旧提案未整体获准实施，仅按具体问题或需求拆分。
-- 短 Translation/Vocab 展示方式、Close Reading revisions 分组仍是产品选择，不把归档提案当作现状。
+- 旧 UI 提案不整体恢复实施；session URL、现场恢复与 History 组织以新实施设计 E0–E5 为准，不预设 UI reducer 或完整 AnalysisRoute 重建。
+- 用户级 agent 与记忆（E6）、服务端持久任务（E7）按实施设计保留边界，分别等待讨论价值与 Durable Jobs 等相关证据；不因文档存在直接启动平台重构。
+- 短 Translation/Vocab 展示方式、默认阅读布局和 Close Reading 修订呈现仍需原型验证，不把目标设计当作现状。
 - 首页表述等待用户原话与定位；定价等待持续使用/付费证据；扩大流量等待核心路径稳定。
 - 不混合框架替换、依赖扩张和功能开发。重大数据/API 决策在切片启动时写 ADR。
 

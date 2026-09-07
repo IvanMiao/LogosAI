@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useContext,
   useRef,
   useState,
   type CSSProperties,
@@ -7,6 +8,8 @@ import {
   type PointerEvent,
   type RefObject,
 } from 'react';
+import { ReadingViewContext } from './reading-view-context';
+import type { ReadingViewStore } from './reading-view-storage';
 import {
   DEFAULT_CLOSE_READING_SOURCE_WIDTH,
   MAX_CLOSE_READING_SOURCE_WIDTH,
@@ -62,8 +65,9 @@ function getRatioLabel(sourceWidth: number): string {
 }
 
 export function useCloseReadingResize(storageScope: string): CloseReadingResizeController {
+  const store = useContext(ReadingViewContext)?.store;
   const [sourceWidth, setSourceWidth] = useState(
-    () => readStoredCloseReadingSourceWidth(storageScope),
+    () => readSourceWidth(store, storageScope),
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const separatorRef = useRef<HTMLDivElement | null>(null);
@@ -71,13 +75,13 @@ export function useCloseReadingResize(storageScope: string): CloseReadingResizeC
   const transientSourceWidthRef = useRef(sourceWidth);
 
   useEffect(() => {
-    const storedWidth = readStoredCloseReadingSourceWidth(storageScope);
+    const storedWidth = readSourceWidth(store, storageScope);
     transientSourceWidthRef.current = storedWidth;
     setSourceWidth(storedWidth);
     containerRef.current?.style.setProperty('--reader-source-width', `${storedWidth}%`);
     separatorRef.current?.setAttribute('aria-valuenow', String(Math.round(storedWidth)));
     separatorRef.current?.setAttribute('aria-valuetext', getRatioLabel(storedWidth));
-  }, [storageScope]);
+  }, [storageScope, store]);
 
   const applyTransientWidth = (nextWidth: number) => {
     const normalizedWidth = normalizeSourceWidth(nextWidth);
@@ -94,7 +98,8 @@ export function useCloseReadingResize(storageScope: string): CloseReadingResizeC
     const normalizedWidth = normalizeSourceWidth(nextWidth);
     transientSourceWidthRef.current = normalizedWidth;
     setSourceWidth(normalizedWidth);
-    writeStoredCloseReadingSourceWidth(normalizedWidth, storageScope);
+    if (store) store.write(storageScope, 'sourceWidth', normalizedWidth);
+    else writeStoredCloseReadingSourceWidth(normalizedWidth, storageScope);
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -140,4 +145,11 @@ export function useCloseReadingResize(storageScope: string): CloseReadingResizeC
     onKeyDown,
     resetSourceWidth: () => commitWidth(DEFAULT_CLOSE_READING_SOURCE_WIDTH),
   };
+}
+
+function readSourceWidth(store: ReadingViewStore | undefined, documentId: string): number {
+  if (!store) return readStoredCloseReadingSourceWidth(documentId);
+  const saved = store.read(documentId).sourceWidth;
+  return typeof saved === 'number' && Number.isFinite(saved)
+    ? normalizeSourceWidth(saved) : DEFAULT_CLOSE_READING_SOURCE_WIDTH;
 }
