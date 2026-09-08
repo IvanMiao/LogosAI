@@ -36,7 +36,6 @@ export function useReaderNavigation({ reading, actions, view, isDesktop }: Reade
   }, [actions, artifactId, entry, isDesktop, location.key, location.search, location.state, reading, store, view]);
 
   const openArtifact = (id: string, origin: ExplainOrigin = 'source', revealSource = true) => {
-    view.setReturnToHistory(view.destination === 'history');
     navigate({ search: `?artifact=${encodeURIComponent(id)}` }, { state: { origin, revealSource } });
   };
   const openHistory = () => {

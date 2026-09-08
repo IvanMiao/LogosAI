@@ -4,6 +4,7 @@ import {
   Check,
   Copy,
   History,
+  RefreshCw,
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,15 +15,28 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Artifact } from '@/features/artifacts';
+import type { AnalysisLanguage } from '@/features/reading';
 import { cn } from '@/utils/class-name';
 import { formatArtifactTimestamp } from './artifact-display-helpers';
 
 interface CloseReadingActionsProps {
   artifact: Artifact;
   closeReadings: Artifact[];
+  analysisLanguage: AnalysisLanguage;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
+  onRunAgain: () => void;
 }
+
+const LANGUAGE_LABELS: Record<AnalysisLanguage, string> = {
+  zh: '中文',
+  en: 'English',
+  fr: 'Français',
+  de: 'Deutsch',
+  es: 'Español',
+  it: 'Italiano',
+  ja: '日本語',
+};
 
 type CopyStatus = 'idle' | 'copied' | 'failed';
 
@@ -51,12 +65,16 @@ function getCopyButtonLabel(status: CopyStatus): string {
 export function CloseReadingActions({
   artifact,
   closeReadings,
+  analysisLanguage,
   onSelectArtifact,
   onRequestDeleteArtifact,
+  onRunAgain,
 }: CloseReadingActionsProps): ReactElement {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
   const resetTimerRef = useRef<number | null>(null);
   const copyButtonLabel = getCopyButtonLabel(copyStatus);
+  const runAgainLabel = `Run Close Reading again in ${LANGUAGE_LABELS[analysisLanguage]}`;
+  const hasRunningOutput = closeReadings.some(({ status }) => status === 'running');
 
   useEffect(() => () => {
     if (resetTimerRef.current !== null) {
@@ -83,6 +101,18 @@ export function CloseReadingActions({
 
   return (
     <div className="flex items-center gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        aria-label={runAgainLabel}
+        title={runAgainLabel}
+        disabled={hasRunningOutput}
+        onClick={onRunAgain}
+      >
+        <RefreshCw className="h-4 w-4" />
+        <span className="hidden sm:inline">Run again</span>
+      </Button>
       {closeReadings.length > 1 ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

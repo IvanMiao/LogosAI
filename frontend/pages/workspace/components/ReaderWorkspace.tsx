@@ -1,5 +1,4 @@
 import { useState, type ReactElement } from 'react';
-import { Button } from '@/components/ui/button';
 import { useReaderNavigation } from '../useReaderNavigation';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
@@ -202,11 +201,6 @@ export function ReaderWorkspace({
       {navigation.missingArtifact ? (
         <p role="status" className="px-4 py-2 text-sm">This saved result is no longer available. You can continue reading or open History.</p>
       ) : null}
-      {showHistoryReturn(view) ? (
-        <div className="border-b border-border px-4 py-1">
-          <Button type="button" size="sm" variant="ghost" onClick={navigation.openHistory}>Back to History</Button>
-        </div>
-      ) : null}
       <div className="min-h-0 flex-1">
         {workspaceContent}
       </div>
@@ -217,8 +211,4 @@ export function ReaderWorkspace({
       />
     </div>
   );
-}
-
-function showHistoryReturn(view: ReturnType<typeof useWorkspaceViewState>): boolean {
-  return view.returnToHistory && view.destination !== 'history';
 }

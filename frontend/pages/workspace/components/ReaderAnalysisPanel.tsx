@@ -104,6 +104,7 @@ export function ReaderAnalysisPanel({
         closeReadings={closeReadings}
         activeAnchor={anchor}
         readingPreferences={reading.readerPreferences}
+        analysisLanguage={reading.analysisLanguage}
         mode={mode}
         onShowSource={() => {
           view.openReaderLayout('source');
@@ -111,6 +112,7 @@ export function ReaderAnalysisPanel({
         }}
         onSelectArtifact={selectCloseReading}
         onRequestDeleteArtifact={requestDeleteArtifact}
+        onRunAgain={startCloseReading}
         onStopArtifact={actions.stopArtifact}
         onRetryArtifact={onRetryArtifact}
       />
@@ -118,6 +120,8 @@ export function ReaderAnalysisPanel({
   };
 
   const startCloseReading = () => {
+    view.closeExplain();
+    view.selectCloseReading(null);
     void actions.runCloseReadDocument();
   };
   const closeReadingDetail = view.isExplainOpen && currentExplainPanel

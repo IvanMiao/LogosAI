@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
+import type { AnalysisLanguage } from '@/features/reading';
 import { cn } from '@/utils/class-name';
 import {
   ArtifactBody,
@@ -22,10 +23,12 @@ interface CloseReadingPaneProps {
   closeReadings: Artifact[];
   activeAnchor: TextAnchor;
   readingPreferences: ReaderPreferences;
+  analysisLanguage: AnalysisLanguage;
   mode: CloseReadingPaneMode;
   onShowSource: () => void;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
+  onRunAgain: () => void;
   onStopArtifact: (artifact: Artifact) => void;
   onRetryArtifact: (artifact: Artifact) => void;
 }
@@ -60,10 +63,12 @@ export function CloseReadingPane({
   closeReadings,
   activeAnchor,
   readingPreferences,
+  analysisLanguage,
   mode,
   onShowSource,
   onSelectArtifact,
   onRequestDeleteArtifact,
+  onRunAgain,
   onStopArtifact,
   onRetryArtifact,
 }: CloseReadingPaneProps): ReactElement {
@@ -97,8 +102,10 @@ export function CloseReadingPane({
               key={artifact.id}
               artifact={artifact}
               closeReadings={closeReadings}
+              analysisLanguage={analysisLanguage}
               onSelectArtifact={onSelectArtifact}
               onRequestDeleteArtifact={onRequestDeleteArtifact}
+              onRunAgain={onRunAgain}
             />
             {showTaskControls ? (
               <ArtifactTaskControls
