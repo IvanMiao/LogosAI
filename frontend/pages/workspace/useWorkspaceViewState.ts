@@ -12,12 +12,10 @@ interface WorkspaceViewState {
   explainOrigin: ExplainOrigin;
   isExplainOpen: boolean;
   selectedCloseReadingId: string | null;
-  returnToHistory: boolean;
 }
 
 interface WorkspaceViewController extends WorkspaceViewState {
   sourceRevealRequest: number;
-  setReturnToHistory: (value: boolean) => void;
   openReaderLayout: (layout: ReaderLayout) => void;
   openHistory: () => void;
   openExplain: (origin: ExplainOrigin, layout: ReaderLayout) => void;
@@ -36,7 +34,6 @@ export function useWorkspaceViewState(
     explainOrigin: 'source',
     isExplainOpen: false,
     selectedCloseReadingId: null,
-    returnToHistory: false,
   };
   const [view, setView] = useReadingViewState<WorkspaceViewState>('view', initialView, (value) => {
     if (!isRecord(value)) return initialView;
@@ -47,7 +44,6 @@ export function useWorkspaceViewState(
       explainOrigin: value.explainOrigin === 'analysis' ? 'analysis' : 'source',
       isExplainOpen: value.isExplainOpen === true,
       selectedCloseReadingId: typeof value.selectedCloseReadingId === 'string' ? value.selectedCloseReadingId : null,
-      returnToHistory: value.returnToHistory === true,
     };
   });
 
@@ -68,7 +64,6 @@ export function useWorkspaceViewState(
   return {
     ...view,
     sourceRevealRequest,
-    setReturnToHistory: (value) => setView((current) => ({ ...current, returnToHistory: value })),
     openReaderLayout,
     openHistory: () => {
       setView((current) => ({ ...current, destination: 'history' }));

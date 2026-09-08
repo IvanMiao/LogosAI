@@ -67,7 +67,7 @@ describe('reading addresses and scene restoration', () => {
     await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
   });
 
-  it('restores History filters, selected result and list position after opening text and returning', async () => {
+  it('opens History results without adding a persistent return bar', async () => {
     const user = userEvent.setup();
     mount('/app/readings/reading-a');
     await user.click(screen.getByRole('button', { name: 'History' }));
@@ -78,7 +78,8 @@ describe('reading addresses and scene restoration', () => {
     fireEvent.scroll(history);
     await user.click(screen.getByRole('button', { name: 'Open in Text' }));
     expect(await screen.findByRole('complementary', { name: 'Current explanation' })).toHaveTextContent(oldResult.content);
-    await user.click(screen.getByRole('button', { name: 'Back to History' }));
+    expect(screen.queryByRole('button', { name: 'Back to History' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'History' }));
     expect(screen.getByRole('searchbox')).toHaveValue('earlier');
     expect(screen.getByRole('combobox', { name: 'Sort session history' })).toHaveValue('source');
     expect(screen.getByRole('region', { name: 'History' }).scrollTop).toBe(340);

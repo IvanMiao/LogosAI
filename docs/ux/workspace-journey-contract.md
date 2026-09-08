@@ -1,8 +1,8 @@
 # Workspace Journey UX Contract
 
-- 状态：Active；同步：2026-09-05
+- 状态：Active；同步：2026-09-08
 - 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
-- 本次为文档追赶现有代码和测试；没有改变产品行为或运行测试
+- 本次同步 History 返回、Close Reading 再次运行入口及对应可执行测试
 
 ## 当前界面模型
 
@@ -22,10 +22,10 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 | --- | --- | --- |
 | WJ-01 | 打开 session、切换布局、打开 History | 默认 Show source and analysis；布局按钮 aria-pressed 表达选中；空分析有 Start Close Reading；History 显式打开，默认 recent |
 | WJ-02 | Explain paragraph，等待完成 | 创建 paragraph anchor 与 explanation；自动保存；不创建 paragraph close_read |
-| WJ-03 | Start Close Reading | 请求整个 document，创建 document anchor 与 close_read，显示并保存结果 |
+| WJ-03 | Start Close Reading；已有结果时切换语言并 Run again | 请求整个 document，按新选语言创建新的 close_read，保留并可切换旧结果 |
 | WJ-04 | 从 Close Reading 原文打开 saved Explain，再返回 | Explain 替换分析正文；Back to Close Reading 恢复同一分析，不重新请求 |
 | WJ-05 | 打开 History，切换 Source order | 默认 updatedAt 倒序；原文顺序按 source offset；使用 session 内 list-detail |
-| WJ-06 | History 条目 → Open in Text | 当前桌面测试恢复双栏及对应解释，精确 range 使用 mark；不发起新请求 |
+| WJ-06 | History 条目 → Open in Text | 当前桌面测试恢复双栏及对应解释，精确 range 使用 mark；不发起新请求，也不增加常驻返回条 |
 | WJ-07 | 调整阅读设置，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
 | WJ-08 | Sessions drawer → Pin → Collapse | 平坦导航；pin 偏好持久化；收起后可重新打开 |
 | WJ-09 | 启动 Close Reading，先 stage 后正文 | 显示真实 interpret 阶段文案；完成后由正文替代 |
@@ -37,7 +37,7 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 
 - session 切换写入 `/app/readings/:documentId`；`/app` 恢复最近阅读，`/app/new` 打开导入。
 - History 打开结果使用 `?artifact=`；History 自身使用 `?view=history`。打开旧成果不请求 AI。
-- `Back to History` 与浏览器后退可返回原查询、筛选、排序、选中条目及滚动位置。
+- 顶栏 History 与浏览器后退可返回原查询、筛选、排序、选中条目及滚动位置；从 History 打开成果后不增加 `Back to History` 返回条。
 - 每个用户、每篇原文独立保存布局、比例、详情选择与阅读位置；切换和刷新恢复有效现场。
 - 原文与各成果分别保存段落签名、段内比例及像素回退；字体、宽度重排尽量恢复同一段落。
   无法唯一匹配变化后的内容时回到顶部，不猜测另一段。显式定位原文覆盖旧位置。

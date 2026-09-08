@@ -128,6 +128,18 @@ describe('workspace journey contract', () => {
       configurable: true,
       value: vi.fn(),
     });
+    Object.defineProperty(Element.prototype, 'hasPointerCapture', {
+      configurable: true,
+      value: () => false,
+    });
+    Object.defineProperty(Element.prototype, 'setPointerCapture', {
+      configurable: true,
+      value: () => undefined,
+    });
+    Object.defineProperty(Element.prototype, 'releasePointerCapture', {
+      configurable: true,
+      value: () => undefined,
+    });
     writeStoredDocument(journeyDocument, TEST_USER_ID);
   });
 
@@ -210,6 +222,33 @@ describe('workspace journey contract', () => {
     const artifacts = Object.values(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId).flat();
     expect(anchors).toEqual(expect.arrayContaining([expect.objectContaining({ scope: 'document' })]));
     expect(artifacts).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'close_read' })]));
+  });
+
+  it('runs another Close Reading after changing the analysis language', async () => {
+    const user = userEvent.setup();
+    const previousReading = createArtifact(
+      'english-close-reading',
+      documentAnchor.id,
+      'close_read',
+      'Existing English reading.',
+      '2026-07-21T12:00:00.000Z',
+    );
+    seedReadingWork([documentAnchor], { [documentAnchor.id]: [previousReading] });
+    const fetchMock = vi.fn().mockResolvedValue(createAnalysisResponse('Nouvelle lecture en français.'));
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+
+    await user.click(screen.getByRole('combobox', { name: 'Analysis language' }));
+    await user.click(await screen.findByRole('option', { name: 'Français' }));
+    await user.click(screen.getByRole('button', {
+      name: 'Run Close Reading again in Français',
+    }));
+
+    expect(await screen.findByText('Nouvelle lecture en français.')).toBeInTheDocument();
+    const request = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
+    expect(request.user_language).toBe('fr');
+    const artifacts = Object.values(readStoredArtifacts(TEST_USER_ID).artifactsByAnchorId).flat();
+    expect(artifacts.filter(({ type }) => type === 'close_read')).toHaveLength(2);
   });
 
   it('opens Explain inside Close Reading and returns to the same analysis', async () => {
