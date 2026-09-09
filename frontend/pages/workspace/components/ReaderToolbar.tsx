@@ -36,15 +36,7 @@ import {
   type WorkspaceAppChromeProps,
 } from './WorkspaceHeader';
 
-const ANALYSIS_LANGUAGE_OPTIONS: Array<{ label: string; value: AnalysisLanguage }> = [
-  { label: '中文', value: 'zh' },
-  { label: 'English', value: 'en' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Deutsch', value: 'de' },
-  { label: 'Español', value: 'es' },
-  { label: 'Italiano', value: 'it' },
-  { label: '日本語', value: 'ja' },
-];
+import { ANALYSIS_LANGUAGE_LABELS } from '../analysis-language';
 
 interface ReaderToolbarProps {
   appChrome: WorkspaceAppChromeProps;
@@ -199,9 +191,9 @@ function AnalysisLanguageSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {ANALYSIS_LANGUAGE_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
+          {Object.entries(ANALYSIS_LANGUAGE_LABELS).map(([value, label]) => (
+            <SelectItem key={value} value={value}>
+              {label}
             </SelectItem>
           ))}
         </SelectContent>

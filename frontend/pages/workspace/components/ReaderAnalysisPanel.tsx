@@ -17,6 +17,8 @@ interface ReaderAnalysisPanelProps extends Pick<ReaderWorkspaceProps,
   visibleReaderLayout: ReaderLayout;
   activeCloseReadingEntry: WorkspaceSessionArtifact | null;
   closeReadings: Artifact[];
+  onStartCloseReading: () => void;
+  onCloseExplain: () => void;
   selectCloseReading: (artifactId?: string) => void;
   requestDeleteAnchor: (anchor: TextAnchor) => void;
   requestDeleteArtifact: (artifact: Artifact) => void;
@@ -64,7 +66,7 @@ export function ReaderAnalysisPanel({
   reading, actions, isDesktopViewport, noteEditorAnchorId, onRunSkill, onStartNote,
   onClearActiveAnchor, onRetryArtifact, view, visibleReaderLayout,
   activeCloseReadingEntry, closeReadings, selectCloseReading,
-  requestDeleteAnchor, requestDeleteArtifact,
+  requestDeleteAnchor, requestDeleteArtifact, onStartCloseReading, onCloseExplain,
 }: ReaderAnalysisPanelProps): ReactElement {
   const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
     || reading.noteDraftContent.length > 0;
@@ -78,9 +80,9 @@ export function ReaderAnalysisPanel({
       noteDraftContent={reading.noteDraftContent}
       isNoteEditorOpen={isNoteEditorOpen}
       backLabel={view.explainOrigin === 'analysis' ? 'Back to Close Reading' : undefined}
-      onBack={view.explainOrigin === 'analysis' ? view.closeExplain : undefined}
+      onBack={view.explainOrigin === 'analysis' ? onCloseExplain : undefined}
       onClose={() => {
-        view.closeExplain();
+        onCloseExplain();
         onClearActiveAnchor();
       }}
       onSelectArtifact={actions.selectArtifact}
@@ -104,6 +106,7 @@ export function ReaderAnalysisPanel({
         closeReadings={closeReadings}
         activeAnchor={anchor}
         readingPreferences={reading.readerPreferences}
+        analysisLanguage={reading.analysisLanguage}
         mode={mode}
         onShowSource={() => {
           view.openReaderLayout('source');
@@ -111,22 +114,20 @@ export function ReaderAnalysisPanel({
         }}
         onSelectArtifact={selectCloseReading}
         onRequestDeleteArtifact={requestDeleteArtifact}
+        onRunAgain={onStartCloseReading}
         onStopArtifact={actions.stopArtifact}
         onRetryArtifact={onRetryArtifact}
       />
     );
   };
 
-  const startCloseReading = () => {
-    void actions.runCloseReadDocument();
-  };
   const closeReadingDetail = view.isExplainOpen && currentExplainPanel
     ? currentExplainPanel
     : renderCloseReadingPane(
       getPaneMode(isDesktopViewport, visibleReaderLayout),
     );
   return closeReadingDetail ?? (
-    <CloseReadingEmptyState onStart={startCloseReading} />
+    <CloseReadingEmptyState onStart={onStartCloseReading} />
   );
 }
 

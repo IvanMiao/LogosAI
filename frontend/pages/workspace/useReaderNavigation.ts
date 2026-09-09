@@ -36,7 +36,6 @@ export function useReaderNavigation({ reading, actions, view, isDesktop }: Reade
   }, [actions, artifactId, entry, isDesktop, location.key, location.search, location.state, reading, store, view]);
 
   const openArtifact = (id: string, origin: ExplainOrigin = 'source', revealSource = true) => {
-    view.setReturnToHistory(view.destination === 'history');
     navigate({ search: `?artifact=${encodeURIComponent(id)}` }, { state: { origin, revealSource } });
   };
   const openHistory = () => {
@@ -47,11 +46,14 @@ export function useReaderNavigation({ reading, actions, view, isDesktop }: Reade
     view.openReaderLayout(layout);
     if (params.has('view')) navigate({ search: '' }, { replace: true });
   };
-  const closeExplain = () => {
-    view.closeExplain();
+  const clearArtifactAddress = () => {
     if (artifactId) navigate({ search: '' }, { replace: true });
   };
-  return { openArtifact, openHistory, openLayout, closeExplain, missingArtifact };
+  const closeExplain = () => {
+    view.closeExplain();
+    clearArtifactAddress();
+  };
+  return { openArtifact, openHistory, openLayout, closeExplain, clearArtifactAddress, missingArtifact };
 }
 
 function applyArtifact(

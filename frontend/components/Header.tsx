@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,15 +39,13 @@ export function Header({ mounted }: HeaderProps) {
               <span className="block truncate font-brand text-xl font-bold tracking-tight text-foreground sm:text-3xl">
                 LogosAI
               </span>
-              <p className="mt-0.5 hidden font-mono text-sm text-muted-foreground sm:block">DEEP_TEXT_ANALYSIS</p>
+              <p className="mt-0.5 hidden font-mono text-sm text-muted-foreground sm:block">
+                DEEP_TEXT_ANALYSIS
+              </p>
             </div>
           </button>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <Badge variant="outline" className="hidden border-2 border-border bg-accent px-3 py-1 text-xs font-bold text-foreground sm:inline-flex">
-              v1.0
-            </Badge>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" aria-label="Open menu" className="flex h-9 w-9 items-center justify-center border-2 border-border bg-secondary shadow-[2px_2px_0px_0px_var(--border)] transition-colors hover:bg-secondary/80 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">

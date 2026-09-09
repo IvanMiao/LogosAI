@@ -99,7 +99,7 @@ function RangePreference({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 h-11 w-full accent-primary"
+        className="mt-1 h-11 w-full accent-primary"
       />
     </label>
   );
@@ -151,33 +151,40 @@ export function ReadingAppearanceDialog({
               onChange={(font) => onPreferenceChange('closeReadingFontFamily', font)}
             />
           ) : null}
-          <RangePreference
-            label="Text size"
-            min={15}
-            max={24}
-            step={1}
-            value={preferences.fontSize}
-            valueLabel={`${preferences.fontSize}px`}
-            onChange={(value) => onPreferenceChange('fontSize', value)}
-          />
-          <RangePreference
-            label="Line spacing"
-            min={1.4}
-            max={2.1}
-            step={0.05}
-            value={preferences.lineSpacing}
-            valueLabel={preferences.lineSpacing.toFixed(2)}
-            onChange={(value) => onPreferenceChange('lineSpacing', value)}
-          />
-          <RangePreference
-            label="Line width"
-            min={540}
-            max={900}
-            step={20}
-            value={preferences.lineWidth}
-            valueLabel={`${preferences.lineWidth}px`}
-            onChange={(value) => onPreferenceChange('lineWidth', value)}
-          />
+          <fieldset>
+            <legend className="text-xs font-black uppercase tracking-wide text-muted-foreground">
+              Text layout
+            </legend>
+            <div className="mt-1 space-y-1">
+              <RangePreference
+                label="Text size"
+                min={15}
+                max={24}
+                step={1}
+                value={preferences.fontSize}
+                valueLabel={`${preferences.fontSize}px`}
+                onChange={(value) => onPreferenceChange('fontSize', value)}
+              />
+              <RangePreference
+                label="Line spacing"
+                min={1.4}
+                max={2.1}
+                step={0.05}
+                value={preferences.lineSpacing}
+                valueLabel={preferences.lineSpacing.toFixed(2)}
+                onChange={(value) => onPreferenceChange('lineSpacing', value)}
+              />
+              <RangePreference
+                label="Line width"
+                min={540}
+                max={900}
+                step={20}
+                value={preferences.lineWidth}
+                valueLabel={`${preferences.lineWidth}px`}
+                onChange={(value) => onPreferenceChange('lineWidth', value)}
+              />
+            </div>
+          </fieldset>
           <Button type="button" variant="outline" onClick={resetPreferences}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Reset appearance
