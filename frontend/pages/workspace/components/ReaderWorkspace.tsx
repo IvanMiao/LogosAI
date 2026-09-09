@@ -124,6 +124,13 @@ export function ReaderWorkspace({
     />
   );
 
+  const startCloseReading = () => {
+    navigation.clearArtifactAddress();
+    view.closeExplain();
+    view.selectCloseReading(null);
+    void actions.runCloseReadDocument();
+  };
+
   const analysisDetail = (
     <ReaderAnalysisPanel
       reading={reading}
@@ -134,7 +141,9 @@ export function ReaderWorkspace({
       onStartNote={onStartNote}
       onClearActiveAnchor={onClearActiveAnchor}
       onRetryArtifact={onRetryArtifact}
-      view={{ ...view, closeExplain: navigation.closeExplain }}
+      view={view}
+      onCloseExplain={navigation.closeExplain}
+      onStartCloseReading={startCloseReading}
       visibleReaderLayout={visibleReaderLayout}
       activeCloseReadingEntry={activeCloseReadingEntry}
       closeReadings={closeReadings}

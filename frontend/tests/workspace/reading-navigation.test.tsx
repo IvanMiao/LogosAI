@@ -59,6 +59,41 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('reading addresses and scene restoration', () => {
+  it('clears the old result address on rerun and restores the new reading after remount', async () => {
+    const user = userEvent.setup();
+    const documentAnchor = createAnchorFromRange({
+      documentId: documentA.id, documentText: documentA.text,
+      startOffset: 0, endOffset: documentA.text.length, scope: 'document',
+    })!;
+    const previous = { ...oldResult, anchorId: documentAnchor.id, type: 'close_read' as const };
+    writeStoredAnchors({ anchorsById: { [documentAnchor.id]: documentAnchor },
+      activeAnchorId: documentAnchor.id }, userId);
+    writeStoredArtifacts({ artifactsByAnchorId: { [documentAnchor.id]: [previous] },
+      tasksByRequestId: {} }, userId);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      'event: done\ndata: {"result":"New whole-document reading."}\n\n',
+      { headers: { 'Content-Type': 'text/event-stream' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    const first = mount('/app/readings/reading-a?view=history');
+    await user.click(await screen.findByRole('button', { name: 'Open Close Reading' }));
+    expect(screen.getByLabelText('Address')).toHaveTextContent('?artifact=old-result');
+    await user.click(screen.getByRole('button', { name: 'Run Close Reading again in English' }));
+    expect(await screen.findByText('New whole-document reading.')).toBeInTheDocument();
+    const address = screen.getByLabelText('Address').textContent!;
+    expect(address).toBe('/app/readings/reading-a');
+    first.unmount();
+
+    mount(address);
+    expect(await screen.findByText('New whole-document reading.')).toBeInTheDocument();
+    expect(screen.queryByText(previous.content)).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Open Close Reading outputs' }));
+    await user.click(screen.getByRole('menuitem', { name: /Earlier explanation/ }));
+    expect(await screen.findByText(previous.content)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('opens a result deep link over a different cached document without asking AI', async () => {
     mount('/app/readings/reading-a?artifact=old-result');
     expect(await screen.findByText(oldResult.content)).toBeInTheDocument();

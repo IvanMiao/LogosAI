@@ -46,11 +46,14 @@ export function useReaderNavigation({ reading, actions, view, isDesktop }: Reade
     view.openReaderLayout(layout);
     if (params.has('view')) navigate({ search: '' }, { replace: true });
   };
-  const closeExplain = () => {
-    view.closeExplain();
+  const clearArtifactAddress = () => {
     if (artifactId) navigate({ search: '' }, { replace: true });
   };
-  return { openArtifact, openHistory, openLayout, closeExplain, missingArtifact };
+  const closeExplain = () => {
+    view.closeExplain();
+    clearArtifactAddress();
+  };
+  return { openArtifact, openHistory, openLayout, closeExplain, clearArtifactAddress, missingArtifact };
 }
 
 function applyArtifact(
