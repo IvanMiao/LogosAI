@@ -40,11 +40,11 @@ export function AuthPage({ mode }: AuthPageProps): ReactElement {
           <div className="mt-12 max-w-md">
             <p className="text-xs font-black uppercase tracking-[0.18em]">Your reading workspace</p>
             <h1 className="mt-3 break-words font-brand text-4xl font-black leading-tight sm:text-5xl">
-              Keep every difficult passage within reach.
+              Your next close reading starts here.
             </h1>
             <ul className="mt-8 space-y-4 font-sans text-sm leading-6">
               <li className="flex gap-3"><Cloud className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Sessions stay available across devices.</li>
-              <li className="flex gap-3"><BookOpen className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Selections, notes, and close reads stay tied to their source.</li>
+              <li className="flex gap-3"><BookOpen className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Selections, notes, and Close Readings stay tied to their source.</li>
               <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Your Gemini key is encrypted before storage.</li>
             </ul>
           </div>

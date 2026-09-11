@@ -495,7 +495,7 @@ describe('workspace journey contract', () => {
     seedReadingWork([documentAnchor], { [documentAnchor.id]: [interrupted] });
     renderWorkspace();
 
-    const pane = screen.getByRole('complementary', { name: 'Close reading' });
+    const pane = screen.getByRole('complementary', { name: 'Close Reading' });
     expect(within(pane).getByText('stopped')).toBeInTheDocument();
     expect(within(pane).getByRole('button', { name: 'Retry artifact' })).toBeEnabled();
     expect(within(pane).queryByRole('button', { name: 'Stop artifact' })).not.toBeInTheDocument();

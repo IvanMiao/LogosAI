@@ -56,7 +56,7 @@ function getDialogCopy(target: WorkspaceDeletionTarget): {
     };
   }
 
-  const sourceLabel = target.scope === 'selection' ? 'selection' : 'Close Read source';
+  const sourceLabel = target.scope === 'selection' ? 'selection' : 'Close Reading source';
   if (target.outputCount === 0) {
     return {
       title: `Delete ${sourceLabel}?`,

@@ -92,9 +92,8 @@ export function AboutPage(): ReactElement {
           >
             <div className="space-y-3">
               <p className="max-w-[72ch] text-sm leading-6 text-muted-foreground">
-                LogosAI is a source-grounded reading workspace for difficult texts. Import a
-                text, explain or translate a passage, explore vocabulary, write notes, and run
-                a Close Reading of the whole document. Saved work stays connected to its source.
+                Take the text apart. See how it works. LogosAI explores language, structure,
+                and context—with AI to support your reading and room for your own interpretation.
               </p>
               <p className="max-w-[72ch] text-sm leading-6 text-muted-foreground">
                 Your Gemini API key is encrypted before storage and decrypted by the app gateway
@@ -108,7 +107,7 @@ export function AboutPage(): ReactElement {
             icon={Layers}
             iconClassName="bg-accent"
             iconColorClassName="text-accent-foreground"
-            title="Tech Stack"
+            title="TECH_STACK"
           >
             <StackBadges />
           </AboutSection>
@@ -117,11 +116,11 @@ export function AboutPage(): ReactElement {
             icon={Code}
             iconClassName="bg-green-400"
             iconColorClassName="text-black"
-            title="Open Source"
+            title="OPEN_SOURCE"
           >
             <div>
               <p className="mb-3 max-w-[72ch] text-sm leading-6 text-muted-foreground">
-                LogosAI is open source and under active development.
+                Open source. Open to inspection.
               </p>
               <a
                 href="https://github.com/IvanMiao/LogosAI"
@@ -130,7 +129,7 @@ export function AboutPage(): ReactElement {
                 className="inline-flex items-center gap-2 border-2 border-transparent bg-foreground px-4 py-2 text-sm font-bold text-background shadow-[2px_2px_0px_0px_var(--border)] transition-colors hover:bg-foreground/90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
               >
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                View source on GitHub
+                View on GitHub
               </a>
             </div>
           </AboutSection>
