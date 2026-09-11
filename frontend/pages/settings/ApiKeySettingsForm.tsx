@@ -87,7 +87,7 @@ export function ApiKeySettingsForm({
       {settings.saveSuccess ? (
         <div role="status" aria-live="polite" className="flex items-center gap-2 border-2 border-border bg-secondary p-3 text-secondary-foreground shadow-hard-sm">
           <CheckCircle className="h-4 w-4" aria-hidden="true" />
-          <p className="font-mono text-sm font-bold">Settings saved successfully.</p>
+          <p className="font-mono text-sm font-bold">Settings saved.</p>
         </div>
       ) : null}
 

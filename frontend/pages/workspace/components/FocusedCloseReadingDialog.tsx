@@ -30,7 +30,7 @@ export function FocusedCloseReadingDialog({
         }}
       >
         <DialogHeader className="sr-only">
-          <DialogTitle>Close reading focus</DialogTitle>
+          <DialogTitle>Close Reading focus</DialogTitle>
           <DialogDescription>
             Immersive Close Reading of the active source.
           </DialogDescription>

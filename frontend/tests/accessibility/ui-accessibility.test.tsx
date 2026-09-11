@@ -79,7 +79,7 @@ describe('UI accessibility', () => {
     await user.type(screen.getByLabelText('API key'), 'test-key-value');
     await user.click(screen.getByRole('button', { name: 'Save settings' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('Settings saved successfully.');
+    expect(screen.getByRole('status')).toHaveTextContent('Settings saved.');
   });
 
   it('removes the programmatically opened file input from the tab order', () => {

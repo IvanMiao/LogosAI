@@ -81,7 +81,7 @@ export function CloseReadingPane({
   );
 
   return (
-    <aside ref={paneRef} aria-label="Close reading" className={paneClassName}>
+    <aside ref={paneRef} aria-label="Close Reading" className={paneClassName}>
       <header data-reading-sticky className="sticky top-0 z-10 flex min-h-10 items-center border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">

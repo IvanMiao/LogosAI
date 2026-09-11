@@ -14,20 +14,20 @@ interface LandingFeature {
 
 const LANDING_FEATURES: LandingFeature[] = [
   {
-    title: 'Any language',
-    description: 'Read challenging material in its original language, with explanations and translation kept beside the source.',
+    title: 'Across languages',
+    description: 'Read the original. Get help in your language.',
     icon: Languages,
     iconSurface: 'bg-primary text-primary-foreground',
   },
   {
-    title: 'Source-linked help',
-    description: 'Select a difficult passage for an explanation, vocabulary help, a note, or a deeper close reading.',
+    title: 'Words, unpacked',
+    description: 'Select a passage. Explore its meaning, language, and context.',
     icon: BookOpen,
     iconSurface: 'bg-secondary text-black',
   },
   {
-    title: 'Cloud sessions',
-    description: 'Return to each text with its saved selections, notes, and reading entries still attached.',
+    title: 'Pick up the thread',
+    description: 'Return to your texts, notes, and explanations across devices.',
     icon: Cloud,
     iconSurface: 'bg-accent text-black',
   },
@@ -70,12 +70,12 @@ function LandingHero({
 
       <div className="mx-2 max-w-[calc(100vw-3rem)] rotate-1 border-4 border-border bg-accent px-3 py-2 shadow-[4px_4px_0px_0px_var(--border)] sm:px-6 md:rotate-2">
         <p className="text-balance font-brand text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground sm:text-2xl sm:tracking-widest">
-          Source-grounded reading workspace
+          Read between the lines.
         </p>
       </div>
 
       <p className="mt-8 max-w-2xl text-pretty px-1 font-mono text-base font-medium leading-relaxed text-muted-foreground sm:text-xl">
-        Import a difficult text, understand the passages that slow you down, and keep every useful note or close read tied to its source.
+        Unpack difficult passages with AI. Keep your notes beside the text.
       </p>
 
       <Link

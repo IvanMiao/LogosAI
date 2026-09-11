@@ -361,7 +361,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     });
 
     if (anchor) {
-      await runCloseRead(anchor, activeDocument.text, 'Close Read Document');
+      await runCloseRead(anchor, activeDocument.text, 'Close Reading');
     }
   };
 

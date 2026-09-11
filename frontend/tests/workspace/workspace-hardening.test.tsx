@@ -263,7 +263,7 @@ describe('workspace hardening', () => {
     await user.click(screen.getByRole('button', { name: 'Explain paragraph' }));
 
     expect(screen.getByRole('complementary', { name: 'Current explanation' })).toBeInTheDocument();
-    expect(screen.queryByRole('complementary', { name: 'Close reading' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Close Reading' })).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
     expect(within(screen.getByRole('status', { name: 'Gemini API key missing' })).getByRole('link', { name: 'Open Settings' }))
@@ -325,7 +325,7 @@ describe('workspace hardening', () => {
     writeCloseReadingArtifacts();
     renderWorkspace();
 
-    const closeReadingPane = screen.getByRole('complementary', { name: 'Close reading' });
+    const closeReadingPane = screen.getByRole('complementary', { name: 'Close Reading' });
     const closeReadingContent = within(closeReadingPane).getByText('Latest close reading content.');
     expect(within(closeReadingPane).getByText('Document')).toBeInTheDocument();
     expect(within(closeReadingPane).queryByText(workspaceDocument.text)).not.toBeInTheDocument();
@@ -354,7 +354,7 @@ describe('workspace hardening', () => {
 
     await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
 
-    expect(screen.getByRole('complementary', { name: 'Close reading' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Close Reading' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Back to source' }));
