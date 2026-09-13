@@ -187,6 +187,41 @@ describe('reading addresses and scene restoration', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('dismisses a missing result without keeping a stale address on reload', async () => {
+    const user = userEvent.setup();
+    const first = mount('/app/readings/reading-a?artifact=deleted');
+    await user.click(await screen.findByRole('button', { name: 'Dismiss unavailable result notice' }));
+    expect(screen.queryByText(/This saved result is no longer available/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Address')).toHaveTextContent('/app/readings/reading-a');
+    expect(screen.getByLabelText('Address')).not.toHaveTextContent('?artifact');
+    first.unmount();
+    mount('/app/readings/reading-a');
+    expect(screen.queryByText(/This saved result is no longer available/)).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
+  });
+
+  it('opens History from a missing result notice', async () => {
+    const user = userEvent.setup();
+    mount('/app/readings/reading-a?artifact=deleted');
+    await user.click(await screen.findByRole('button', { name: 'Open History' }));
+    expect(screen.getByRole('region', { name: 'History' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Address')).toHaveTextContent('?view=history');
+    expect(screen.queryByText(/This saved result is no longer available/)).not.toBeInTheDocument();
+  });
+
+  it('clears the requested result address when that output is deleted', async () => {
+    const user = userEvent.setup();
+    mount('/app/readings/reading-a?artifact=old-result');
+    await screen.findByText(oldResult.content);
+    await user.click(screen.getByRole('button', { name: 'Delete Explanation output' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Delete output?' }))
+      .getByRole('button', { name: 'Delete output' }));
+    expect(screen.getByLabelText('Address')).not.toHaveTextContent('?artifact');
+    expect(screen.queryByText(/This saved result is no longer available/)).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('uses memory for scene changes when local snapshot storage is full and reports the limitation', async () => {
     const setItem = Storage.prototype.setItem;
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key, value) {

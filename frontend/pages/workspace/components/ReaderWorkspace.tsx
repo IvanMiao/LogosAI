@@ -16,6 +16,7 @@ import {
 } from './WorkspaceDeleteDialog';
 import type { ReaderWorkspaceProps } from './reader-workspace-types';
 import { ReaderAnalysisPanel } from './ReaderAnalysisPanel';
+import { UnavailableResultNotice } from './UnavailableResultNotice';
 
 function selectCloseReadings(entries: WorkspaceSessionArtifact[], selectedId: string | null) {
   const closeReadingEntries = entries.filter(({ artifact }) => artifact.type === 'close_read');
@@ -67,6 +68,7 @@ export function ReaderWorkspace({
   };
 
   const confirmDeletion = () => {
+    if (deletionTarget) navigation.clearDeletedArtifactAddress(deletionTarget.kind, deletionTarget.id);
     if (deletionTarget?.kind === 'anchor') actions.deleteAnchor(deletionTarget.id);
     if (deletionTarget?.kind === 'artifact') actions.deleteArtifact(deletionTarget.id);
     view.selectCloseReading(null);
@@ -182,7 +184,7 @@ export function ReaderWorkspace({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
       <h1 className="sr-only">{reading.activeDocument.title}</h1>
       <ReaderToolbar
         appChrome={appChrome}
@@ -208,7 +210,10 @@ export function ReaderWorkspace({
         onRenameDocument={(title) => actions.renameDocument(reading.activeDocument.id, title)}
       />
       {navigation.missingArtifact ? (
-        <p role="status" className="px-4 py-2 text-sm">This saved result is no longer available. You can continue reading or open History.</p>
+        <UnavailableResultNotice
+          onDismiss={navigation.clearArtifactAddress}
+          onOpenHistory={navigation.openHistory}
+        />
       ) : null}
       <div className="min-h-0 flex-1">
         {workspaceContent}

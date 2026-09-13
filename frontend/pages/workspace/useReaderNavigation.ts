@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { ReaderWorkspaceActions, ReaderWorkspaceState } from './components/reader-workspace-types';
 import type { ExplainOrigin, ReaderLayout, useWorkspaceViewState } from './useWorkspaceViewState';
@@ -44,16 +44,23 @@ export function useReaderNavigation({ reading, actions, view, isDesktop }: Reade
   };
   const openLayout = (layout: ReaderLayout) => {
     view.openReaderLayout(layout);
-    if (params.has('view')) navigate({ search: '' }, { replace: true });
+    if (params.has('view') || missingArtifact) navigate({ search: '' }, { replace: true });
   };
-  const clearArtifactAddress = () => {
-    if (artifactId) navigate({ search: '' }, { replace: true });
+  const clearArtifactAddress = useCallback(() => {
+    if (!artifactId) return;
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete('artifact');
+    navigate({ search: nextParams.toString() }, { replace: true });
+  }, [artifactId, location.search, navigate]);
+  const clearDeletedArtifactAddress = (kind: 'artifact' | 'anchor' | 'document', id: string) => {
+    const requestedId = kind === 'anchor' ? entry?.anchor.id : artifactId;
+    if (id === requestedId) clearArtifactAddress();
   };
   const closeExplain = () => {
     view.closeExplain();
     clearArtifactAddress();
   };
-  return { openArtifact, openHistory, openLayout, closeExplain, clearArtifactAddress, missingArtifact };
+  return { openArtifact, openHistory, openLayout, closeExplain, clearArtifactAddress, clearDeletedArtifactAddress, missingArtifact };
 }
 
 function applyArtifact(
