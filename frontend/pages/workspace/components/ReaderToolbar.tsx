@@ -24,7 +24,6 @@ import type {
   WorkspaceDocument,
 } from '@/features/reading';
 import { cn } from '@/utils/class-name';
-import { formatDocumentMeta } from '@/features/reading/reading-core';
 import type {
   ReaderLayout,
   WorkspaceDestination,
@@ -272,10 +271,6 @@ export function ReaderToolbar({
             document={activeDocument}
             onRename={onRenameDocument}
           />
-          <span aria-hidden="true" className="hidden text-muted-foreground md:inline">·</span>
-          <p className="hidden shrink-0 text-xs tabular-nums text-muted-foreground 2xl:block">
-            {formatDocumentMeta(activeDocument)}
-          </p>
         </div>
         <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:ms-auto sm:w-auto sm:justify-end">
           <ReaderLayoutControl

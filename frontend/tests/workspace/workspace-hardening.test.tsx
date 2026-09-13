@@ -107,9 +107,12 @@ describe('workspace hardening', () => {
     const readingSurface = screen.getByRole('region', { name: 'Reading surface' });
     expect(readingSurface).toBeInTheDocument();
     expect(within(readingSurface).getByText('A legacy source paragraph.')).toBeInTheDocument();
-    expect(screen.getByText('History · 4 words')).toBeInTheDocument();
+    expect(screen.queryByText('History · 4 words')).not.toBeInTheDocument();
     expect(screen.queryByText(/chars/)).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    await user.click(screen.getByRole('button', { name: 'More options for A legacy source paragraph.' }));
+    expect(screen.getByText('History · 4 words')).toBeInTheDocument();
   });
 
   it('shows only the import surface before a document is open', () => {
