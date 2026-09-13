@@ -87,3 +87,14 @@ Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 行为变化时同次提交更新测试与对应场景；纯文档纠偏无需修改测试制造无关 diff。
 只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
+
+## 云写入冲突恢复（待部署）
+
+阅读保存和删除带基准 revision，旧版本不会覆盖云端新版。同步冲突显示失败和 Retry；
+重试后保留云端阅读，并把未同步本地内容保存为新的 `(conflict copy)` session，
+成果与 anchor 重新编号。旧删除与云端新修改冲突时保留云端阅读；
+远端已删除的本地改动保存为新副本，不复活原地址。
+
+2026-09-13 的生产复现、修复与本地验证见
+[真实服务验收](real-service-acceptance-2026-09-13.md)。
+本轮没有部署；发布后仍须复验真实多标签页和 200% 浏览器缩放。

@@ -20,7 +20,7 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 | Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
 | Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
 | Streaming | Anchor done/identity 校验；截断保留部分输出并标为 failed；stop/retry；重载后 running 恢复为 stopped | 真实服务断流仍待验收；本地 request ID 尚未作为 client_request_id 贯穿协议 |
-| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | 整包替换；revision 未用于条件写入；无冲突 UI；真实多设备恢复待验收 |
+| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | 本轮新增 revision 条件写入与冲突副本；尚未部署，生产多标签页覆盖已复现，见[验收记录](ux/real-service-acceptance-2026-09-13.md) |
 | 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 生产 OAuth 配置未核实；尚无邮件验证/密码重置邮件服务 |
 | 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
 | 评估 | Workspace Alpha JSONL 与结构校验程序 | 不运行真实模型，不证明生成质量 |
@@ -114,3 +114,12 @@ Contract tests、真实服务端到端检查、模型评估与用户观察分别
 阅读现场由版本化、按用户与 document 隔离的本地快照保存，不进入云 API。
 恢复、加载和失败回退规则见[旅程契约](ux/workspace-journey-contract.md#阅读现场与导航e1)，
 已执行的检查见[验收记录](ux/reading-navigation-verification.md)。
+
+### 云写入版本前提（2026-09-13，待部署）
+
+`PUT /api/reading-sessions/:id` 与 `DELETE /api/reading-sessions/:id` 要求
+`If-Match: "<revision>"`；新 session 使用 `"0"`。JSON snapshot 结构不变。
+缺少版本返回 428，旧版本返回 409。D1 的 revision 触发器使整包替换原子失败。
+前端冲突重试保留云端内容，并把未同步本地版本保存为独立冲突副本；旧删除不覆盖新修改。
+发布前应用 migration 0003，并同时发布 Worker 与前端。生产验收和边界见
+[2026-09-13 真实服务记录](ux/real-service-acceptance-2026-09-13.md)。

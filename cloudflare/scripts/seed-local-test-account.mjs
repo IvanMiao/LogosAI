@@ -126,17 +126,17 @@ async function resetWorkspace(fetchImpl, baseUrl, cookie, fixture) {
     headers: { Cookie: cookie },
   });
   const workspace = await workspaceResponse.json();
-  await Promise.all(workspace.sessions.map(({ document }) => requestJson(
+  await Promise.all(workspace.sessions.map(({ document, revision }) => requestJson(
     fetchImpl,
     `${baseUrl}/api/reading-sessions/${encodeURIComponent(document.id)}`,
-    { method: 'DELETE', headers: { Cookie: cookie } },
+    { method: 'DELETE', headers: { Cookie: cookie, 'If-Match': `"${revision}"` } },
   )));
   await requestJson(
     fetchImpl,
     `${baseUrl}/api/reading-sessions/${encodeURIComponent(fixture.session.document.id)}`,
     {
       method: 'PUT',
-      headers: { Cookie: cookie },
+      headers: { Cookie: cookie, 'If-Match': '"0"' },
       body: JSON.stringify(fixture.session),
     },
   );

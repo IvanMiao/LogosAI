@@ -116,6 +116,7 @@ describe('reading cloud state', () => {
     };
     const journal: WorkspaceSyncJournal = {
       knownSessionIds: ['document-1'],
+      revisions: { 'document-1': 2 },
       dirtySessionIds: ['document-1'],
       deletedSessionIds: [],
       preferencesDirty: false,
@@ -157,6 +158,7 @@ describe('reading cloud state', () => {
     }, {
       knownSessionIds: ['document-1'],
       dirtySessionIds: [],
+      revisions: { 'document-1': 1 },
       deletedSessionIds: ['document-1'],
       preferencesDirty: true,
     });
@@ -203,6 +205,43 @@ describe('reading cloud state', () => {
       preferencesDirty: false,
     });
 
+    expect(merged.documentLibrary.documentsById).not.toHaveProperty('document-1');
+    expect(Object.values(merged.documentLibrary.documentsById)[0].title).toContain('(conflict copy)');
+  });
+
+
+  it('preserves the newer cloud note and the stale tab rename as separate readings', () => {
+    const local = createLocalState();
+    const base = buildReadingSessions(local)[0];
+    local.documentLibrary.documentsById['document-1'].title = 'Stale tab rename';
+    const cloud = { preferences: { activeDocumentId: 'document-1',
+      readerPreferences: local.readerPreferences, analysisLanguage: 'en' as const },
+      sessions: [{ ...base, document: { ...base.document, title: 'Cloud title' },
+        artifacts: [{ ...base.artifacts[0], content: 'Newer saved cloud note' }], revision: 2, syncedAt: NOW }] };
+    const merged = mergeCloudWorkspace(local, cloud, {
+      knownSessionIds: ['document-1'], dirtySessionIds: ['document-1'],
+      deletedSessionIds: [], preferencesDirty: false, revisions: { 'document-1': 1 },
+    });
+    const sessions = buildReadingSessions(merged);
+    expect(sessions).toHaveLength(2);
+    expect(sessions.find((session) => session.document.id === 'document-1')?.artifacts[0].content)
+      .toBe('Newer saved cloud note');
+    const copy = sessions.find((session) => session.document.id !== 'document-1')!;
+    expect(copy.document.title).toBe('Stale tab rename (conflict copy)');
+    expect(copy.artifacts[0].content).toBe('Important image.');
+    expect(copy.artifacts[0].anchorId).toBe(copy.anchors[0].id);
+    expect(copy.artifacts[0].documentId).toBe(copy.document.id);
+    expect(copy.artifacts[0].id).not.toBe(base.artifacts[0].id);
+  });
+
+  it('does not replay a stale deletion over a newly changed cloud reading', () => {
+    const previous = createLocalState();
+    const preferences = { activeDocumentId: null, readerPreferences: previous.readerPreferences,
+      analysisLanguage: 'en' as const };
+    const merged = mergeCloudWorkspace(createLocalWorkspaceState([], preferences), {
+      preferences, sessions: [{ ...buildReadingSessions(previous)[0], revision: 2, syncedAt: NOW }],
+    }, { knownSessionIds: ['document-1'], dirtySessionIds: [], deletedSessionIds: ['document-1'],
+      preferencesDirty: true, revisions: { 'document-1': 1 } });
     expect(merged.documentLibrary.documentsById).toHaveProperty('document-1');
   });
 

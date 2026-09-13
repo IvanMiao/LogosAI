@@ -290,13 +290,15 @@ export async function saveReadingSession(
   database: D1Database,
   userId: string,
   snapshot: ReadingSessionSnapshot,
+  expectedRevision: number,
 ): Promise<{ revision: number; syncedAt: string }> {
   const currentRevision = await assertSessionOwnership(
     database,
     snapshot.document.id,
     userId,
   );
-  const revision = (currentRevision ?? 0) + 1;
+  if ((currentRevision ?? 0) !== expectedRevision) throw revisionConflict();
+  const revision = expectedRevision + 1;
   const syncedAt = Date.now();
   const sessionId = snapshot.document.id;
   const statements = [
@@ -321,18 +323,32 @@ export async function saveReadingSession(
     )),
   ];
 
-  await database.batch(statements);
+  try {
+    await database.batch(statements);
+  } catch (error) {
+    if (String(error).includes('READING_REVISION_CONFLICT')) throw revisionConflict();
+    throw error;
+  }
   return { revision, syncedAt: new Date(syncedAt).toISOString() };
+}
+
+function revisionConflict(): ApiError {
+  return new ApiError(409, 'READING_REVISION_CONFLICT',
+    'This reading changed elsewhere. Retry cloud sync to keep both versions.');
 }
 
 export async function deleteReadingSession(
   database: D1Database,
   userId: string,
   sessionId: string,
+  expectedRevision: number,
 ): Promise<boolean> {
   const result = await database
-    .prepare('DELETE FROM reading_session WHERE id = ? AND user_id = ?')
-    .bind(sessionId, userId)
+    .prepare('DELETE FROM reading_session WHERE id = ? AND user_id = ? AND revision = ?')
+    .bind(sessionId, userId, expectedRevision)
     .run();
+  if (!result.meta.changes && await assertSessionOwnership(database, sessionId, userId) !== null) {
+    throw revisionConflict();
+  }
   return result.meta.changes > 0;
 }

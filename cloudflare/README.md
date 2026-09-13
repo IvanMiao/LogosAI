@@ -140,3 +140,17 @@ For a local end-to-end smoke test, register through the UI, save an API key,
 create a reading session, reload, and confirm the session and its entries return.
 The account settings response must contain `hasApiKey` and `apiKeyHint`, never
 the plaintext key.
+
+## Reading revision preconditions
+
+Reading-session PUT and DELETE requests require `If-Match: "<revision>"` from the
+workspace response; creating a new session uses `If-Match: "0"`. Missing headers
+return 428, stale revisions return 409. The JSON snapshot format is unchanged.
+Migration `0003_reading_revision_guards.sql` makes a stale aggregate replacement
+roll back as one D1 transaction, including simultaneous writers. Apply it before
+publishing the Worker and frontend together. Older open pages must reload after
+receiving 428. On a conflict, Retry cloud sync preserves the cloud reading and
+saves local edits in a separate reading titled `(conflict copy)`.
+
+The D1 concurrency tests use Miniflare (already used by Wrangler), declared as an
+explicit development dependency. Worker CI uses Node 22 for that runtime.

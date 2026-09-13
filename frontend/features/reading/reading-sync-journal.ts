@@ -7,6 +7,7 @@ export interface WorkspaceSyncJournal {
   dirtySessionIds: string[];
   deletedSessionIds: string[];
   preferencesDirty: boolean;
+  revisions?: Record<string, number>;
 }
 
 const EMPTY_SYNC_JOURNAL: WorkspaceSyncJournal = {
@@ -33,7 +34,9 @@ function normalizeJournal(value: unknown): WorkspaceSyncJournal {
   ) {
     return EMPTY_SYNC_JOURNAL;
   }
-  return journal as WorkspaceSyncJournal;
+  const revisions = Object.fromEntries(Object.entries(journal.revisions ?? {})
+    .filter(([, revision]) => Number.isSafeInteger(revision) && revision >= 0));
+  return { ...journal, ...(journal.revisions ? { revisions } : {}) } as WorkspaceSyncJournal;
 }
 
 export function readWorkspaceSyncJournal(userId: string): WorkspaceSyncJournal {
