@@ -411,7 +411,7 @@ describe('workspace journey contract', () => {
     expect(analysisBody).toHaveClass('font-mono');
   });
 
-  it('pins and collapses a flat Sessions navigation', async () => {
+  it('keeps compact Sessions navigation on the left when pinned and unpinned', async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
@@ -421,17 +421,64 @@ describe('workspace journey contract', () => {
       .closest('button');
     const sessionCard = sessionButton?.closest('article');
     if (!sessionCard) throw new Error('Expected the reading session card to render');
-    expect(sessionsDialog).toHaveClass('min-w-0', 'overflow-x-hidden');
+    expect(sessionsDialog).toHaveClass('left-0', 'right-auto', 'w-80', 'min-w-0', 'overflow-x-hidden');
+    expect(sessionButton).toHaveAttribute('aria-current', 'page');
+    expect(within(sessionCard).queryByRole('button', { name: /Rename/ })).not.toBeInTheDocument();
     expect(sessionCard).toHaveClass('min-w-0', 'overflow-hidden');
-    await user.click(screen.getByRole('button', { name: 'Pin' }));
+    await user.type(within(sessionsDialog).getByRole('searchbox'), 'journey');
+    await user.click(screen.getByRole('button', { name: 'Pin sessions sidebar' }));
     const sessionsNavigation = screen.getByRole('navigation', { name: 'Reading sessions' });
     expect(within(sessionsNavigation).getByText('Two paragraph journey')).toBeInTheDocument();
+    expect(within(sessionsNavigation).getByRole('searchbox')).toHaveValue('journey');
+    expect(within(sessionsNavigation).getByRole('searchbox')).toHaveFocus();
     expect(localStorage.getItem(`logosai.workspace.sessionsPinned:v1:${TEST_USER_ID}`)).toBe('true');
 
-    await user.click(within(sessionsNavigation).getByRole('button', {
+    await user.click(within(sessionsNavigation).getByText('Two paragraph journey'));
+    expect(sessionsNavigation).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Reading sessions' })).not.toBeInTheDocument();
+    await user.click(within(sessionsNavigation).getByRole('button', { name: 'Unpin sessions sidebar' }));
+    expect(screen.getByRole('dialog', { name: 'Reading sessions' })).toHaveClass('left-0', 'w-80');
+    expect(screen.getByRole('searchbox')).toHaveValue('journey');
+    expect(localStorage.getItem(`logosai.workspace.sessionsPinned:v1:${TEST_USER_ID}`)).toBe('false');
+    await user.click(screen.getByRole('button', { name: 'Pin sessions sidebar' }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Reading sessions' })).getByRole('button', {
       name: 'Collapse sessions sidebar',
     }));
     expect(screen.queryByRole('navigation', { name: 'Reading sessions' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Reading sessions' })).getByText('Two paragraph journey'));
+    expect(screen.queryByRole('dialog', { name: 'Reading sessions' })).not.toBeInTheDocument();
+  });
+
+  it('renames from the session menu and restores the list after cancelling deletion', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    await user.click(screen.getByRole('button', { name: 'More options for Two paragraph journey' }));
+    expect(screen.getByText('0 selections · 0 reading entries')).toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
+    const titleInput = screen.getByRole('textbox', { name: 'New title for Two paragraph journey' });
+    expect(titleInput).toHaveFocus();
+    await user.clear(titleInput);
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await user.type(titleInput, 'A shorter title');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await user.click(screen.getByRole('button', { name: 'More options for A shorter title' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
+    const deleteDialog = screen.getByRole('dialog', { name: 'Delete reading session?' });
+    await user.click(within(deleteDialog).getByRole('button', { name: 'Cancel' }));
+    expect(within(screen.getByRole('dialog', { name: 'Reading sessions' })).getByText('A shorter title')).toBeInTheDocument();
+    await user.type(screen.getByRole('searchbox', { name: 'Search reading sessions' }), 'no matching session');
+    expect(screen.getByText('No sessions match this search.')).toBeInTheDocument();
+  });
+
+  it('opens the temporary sessions list on the left on narrow screens', async () => {
+    window.innerWidth = 390;
+    const user = userEvent.setup();
+    renderWorkspace();
+    await user.click(screen.getByRole('button', { name: 'Open reading sessions' }));
+    expect(screen.getByRole('dialog', { name: 'Reading sessions' })).toHaveClass('left-0', 'max-w-full');
+    expect(screen.queryByRole('button', { name: 'Pin sessions sidebar' })).not.toBeInTheDocument();
   });
 
   it('shows streaming stage progress before content arrives', async () => {

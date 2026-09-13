@@ -1,4 +1,4 @@
-import { useContext, useState, type ReactElement } from 'react';
+import { useContext, useRef, useState, type ReactElement } from 'react';
 import { SiteFooter } from '@/components/SiteFooter';
 import { useAuth } from '@/features/auth';
 import { useUserSettings } from '@/features/user-settings';
@@ -60,6 +60,8 @@ function WorkspacePageContent({
   const navigation = useWorkspaceNavigation(workspace, Boolean(workspaceProps.cloudSyncEnabled));
   const viewStorage = useContext(ReadingViewContext);
   const isDesktopViewport = useWorkspaceViewport();
+  const [sessionsQuery, setSessionsQuery] = useState('');
+  const sessionsSearchRef = useRef<HTMLInputElement>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const sessionsPinnedStorageKey = `logosai.workspace.sessionsPinned:v1:${workspaceProps.userId}`;
   const [isSessionsPinned, setIsSessionsPinned] = useState(() => (
@@ -80,7 +82,10 @@ function WorkspacePageContent({
     userName,
     userEmail,
     onSignOut,
-    onOpenLibrary: () => setIsLibraryOpen(true),
+    onOpenLibrary: () => {
+      if (isSessionsNavigationPinned) sessionsSearchRef.current?.focus();
+      else setIsLibraryOpen(true);
+    },
     onRetryCloudSync: workspace.retryCloudSync,
   };
 
@@ -93,8 +98,15 @@ function WorkspacePageContent({
       sidebar={isSessionsNavigationPinned ? (
         <PinnedSessionsSidebar
           documents={workspace.documents}
+          query={sessionsQuery}
+          onQueryChange={setSessionsQuery}
           sessionStatsByDocumentId={workspace.sessionStatsByDocumentId}
           activeDocumentId={activeDocumentId}
+          searchInputRef={sessionsSearchRef}
+          onUnpin={() => {
+            updateSessionsPinned(false);
+            setIsLibraryOpen(true);
+          }}
           onCollapse={() => updateSessionsPinned(false)}
           onOpenDocument={navigation.openDocument}
           onRenameDocument={workspace.renameDocument}
@@ -104,13 +116,20 @@ function WorkspacePageContent({
       ) : null}
       library={
         <DocumentLibraryDrawer
-          open={isLibraryOpen}
+          open={isLibraryOpen && !isSessionsNavigationPinned}
           documents={workspace.documents}
+          query={sessionsQuery}
+          onQueryChange={setSessionsQuery}
           sessionStatsByDocumentId={workspace.sessionStatsByDocumentId}
           activeDocumentId={activeDocumentId}
           history={workspace.history}
-          canPin={isDesktopViewport && !isSessionsPinned}
+          canPin={isDesktopViewport}
           onOpenChange={setIsLibraryOpen}
+          onCloseAutoFocus={(event) => {
+            if (!sessionsSearchRef.current) return;
+            event.preventDefault();
+            sessionsSearchRef.current.focus();
+          }}
           onPin={() => {
             updateSessionsPinned(true);
             setIsLibraryOpen(false);

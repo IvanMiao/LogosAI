@@ -9,7 +9,13 @@ Destination 是 reader / history；Reader layout 是 source / split / analysis�
 桌面默认双栏，窄屏默认单栏；三个布局按钮只改变阅读区域布局，History 是独立查询入口。
 Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 
-Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当前 session 已保存工作，
+Sessions 是始终位于左侧的跨 session 导航，不展开 artifact 子树。未固定时为临时抽屉，
+打开 session 后关闭；桌面固定后为常驻侧栏，切换 session 时保持可见。Unpin 在原侧
+恢复临时抽屉，Collapse 直接收起；两种模式共享搜索条件。窄屏只提供左侧抽屉，
+保留桌面的固定偏好。
+列表采用紧凑条目：标题、最近打开日期与当前项标记；搜索正文时按需显示命中摘要。
+文本信息、selection / reading entry 计数及重命名、删除收进每项的 More options 菜单。
+History 查询当前 session 已保存工作，
 打开条目不重新请求 AI。关闭详情不删除成果；笔记与 AI 输出均关联原文。
 阅读偏好默认统一作用于原文和分析，只有明确解除联动后分开调整。
 
@@ -26,7 +32,7 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 | WJ-05 | 打开 History，切换 Source order | 默认 updatedAt 倒序；原文顺序按 source offset；使用 session 内 list-detail |
 | WJ-06 | History 条目 → Open in Text | 当前桌面测试恢复双栏及对应解释，精确 range 使用 mark；不发起新请求，也不增加常驻返回条 |
 | WJ-07 | 调整阅读设置，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
-| WJ-08 | Sessions drawer → Pin → Collapse | 平坦导航；pin 偏好持久化；收起后可重新打开 |
+| WJ-08 | 左侧 Sessions drawer → Pin → Unpin / Collapse | 紧凑平坦导航；两种模式均在左侧；固定时切换保持侧栏；pin 偏好持久化；取消固定保留抽屉，收起后可重新打开 |
 | WJ-09 | 启动 Close Reading，先 stage 后正文 | 显示真实 interpret 阶段文案；完成后由正文替代 |
 | WJ-10 | 无 key 时 Explain，再打开 History | 顶部 Settings 黄条，不另出红色错误；不创建污染 History 的失败 artifact |
 | WJ-11 | 重载带 running artifact 的 session | 恢复为 stopped；可 Retry，不再显示 Stop |
@@ -58,6 +64,12 @@ WJ-11 覆盖重载恢复，WJ-13 覆盖 Anchor 截断后的界面与保存状态
 Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 和 UTF-8 分片由独立的 [SSE 客户端测试](../../frontend/tests/client-api/anchor-stream.test.ts)
 覆盖；真实服务断流与恢复仍需浏览器验收。
+
+2026-09-13 Sessions 局部浏览器验收：本地 Vite + Worker、测试账号，桌面 1280px
+及 390px / 320px 窄屏。已检查左侧抽屉、固定 / 取消固定、两个 session 切换、
+长标题截断及菜单完整标题、重命名输入焦点与 Escape 取消、取消删除后返回列表。
+固定后焦点进入侧栏搜索；窄屏无固定按钮，抽屉内容未横向溢出。
+本轮不包含真实 AI 请求、屏幕阅读器或 200% zoom 验收。
 
 浏览器验收应另记环境、日期、版本和结果：
 
