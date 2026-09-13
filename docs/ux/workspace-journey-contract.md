@@ -1,14 +1,13 @@
 # Workspace Journey UX Contract
 
-- 状态：Active；同步：2026-09-08
+- 状态：Active；文档核对：2026-09-12
 - 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
-- 本次同步 History 返回、Close Reading 再次运行入口及对应可执行测试
 
 ## 当前界面模型
 
 Destination 是 reader / history；Reader layout 是 source / split / analysis。
-桌面默认双栏，三个布局按钮只改变阅读区域布局，History 是独立查询入口。
-Explain 为关联原文的当前详情，Close Reading 为整篇分析，不是三个并列顶层模式。
+桌面默认双栏，窄屏默认单栏；三个布局按钮只改变阅读区域布局，History 是独立查询入口。
+Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 
 Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当前 session 已保存工作，
 打开条目不重新请求 AI。关闭详情不删除成果；笔记与 AI 输出均关联原文。
@@ -16,7 +15,7 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 
 ## 已有测试场景
 
-编号沿用旧契约；新增 WJ-12 对应现有版本恢复测试。测试顺序不等于编号顺序。
+编号保持稳定；WJ-13 补录现有截断回归。测试顺序不等于编号顺序。
 
 | ID | 动作 | 必须保持 |
 | --- | --- | --- |
@@ -32,8 +31,9 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
 | WJ-10 | 无 key 时 Explain，再打开 History | 顶部 Settings 黄条，不另出红色错误；不创建污染 History 的失败 artifact |
 | WJ-11 | 重载带 running artifact 的 session | 恢复为 stopped；可 Retry，不再显示 Stop |
 | WJ-12 | 选择旧 Close Reading 版本，切换布局再返回 | 恢复仍有效的所选版本，不强制跳到最新版本 |
+| WJ-13 | Explain paragraph 收到部分正文后提前 EOF | 保留部分输出，artifact 为 failed；显示错误和 Retry，不误标 complete |
 
-## 阅读现场与导航（E1，2026-09-07）
+## 阅读现场与导航（E1）
 
 - session 切换写入 `/app/readings/:documentId`；`/app` 恢复最近阅读，`/app/new` 打开导入。
 - History 打开结果使用 `?artifact=`；History 自身使用 `?view=history`。打开旧成果不请求 AI。
@@ -47,14 +47,15 @@ Sessions 是跨 session 导航，不展开 artifact 子树。History 查询当�
   成果缺失不妨碍继续阅读对应原文。损坏的视图快照使用默认值，存储满时明确提示。
 - 笔记与任务保持既有保存路径；现场快照只保存编辑器状态，不复制正文或启动任务。
 
-默认桌面双栏、窄屏单栏未改变；讨论模型、常驻 agent 和跨设备视图同步不属于 E1。
 自动化与本地浏览器证据见[阅读导航验收](reading-navigation-verification.md)。
+讨论模型、常驻 agent 和跨设备视图同步仍属目标设计。
 
 ## 测试与未验证范围
 
 旅程测试使用 React Testing Library、localStorage fixture、mock SSE 和模拟 1280px 桌面。
 它不调用真实 Gemini、后端或云同步，不替代真实浏览器及模型质量检查。
-WJ-11 仅覆盖重载恢复。Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
+WJ-11 覆盖重载恢复，WJ-13 覆盖 Anchor 截断后的界面与保存状态。
+Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 和 UTF-8 分片由独立的 [SSE 客户端测试](../../frontend/tests/client-api/anchor-stream.test.ts)
 覆盖；真实服务断流与恢复仍需浏览器验收。
 
@@ -74,5 +75,3 @@ WJ-11 仅覆盖重载恢复。Anchor 提前 EOF、缺失 done、身份不一致�
 行为变化时同次提交更新测试与对应场景；纯文档纠偏无需修改测试制造无关 diff。
 只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
-
-2026-08-23 的三模式设计与 QA 已移至本地 `docs/archive/`（Git 忽略），不再作为当前布局规范。

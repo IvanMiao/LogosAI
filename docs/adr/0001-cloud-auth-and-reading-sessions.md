@@ -3,6 +3,7 @@
 - 状态：Accepted
 - 日期：2026-08-09
 - 决策者：Product owner + engineering
+- 文档核对：2026-09-12；保留原决策，修正实现与部署描述
 
 ## Context
 
@@ -12,7 +13,7 @@ per-user Gemini key. The product owner explicitly requested account login via
 email/password, Google, or GitHub; Cloudflare-hosted user data; convenient
 reading-session management; and very clear code ownership.
 
-The existing FastAPI analysis service is working and should not be
+The existing FastAPI analysis service was working and should not be
 rewritten merely to add identity and storage.
 
 ## Decision
@@ -34,21 +35,24 @@ Cloudflare Worker (Hono)
 
 Better Auth owns users, accounts, sessions, verification records, password
 hashes, and Google/GitHub OAuth. Email/password registration is always enabled;
-each social provider is enabled only when both of its production credentials
+each social provider is enabled only when both of its configured credentials
 exist. Session cookies are HTTP-only and secure in production.
 
 ### User credentials
 
-The Worker encrypts each Gemini key using AES-256-GCM with a unique 96-bit IV.
+The Worker encrypts each Gemini key using AES-256-GCM with a random 96-bit IV.
 The user ID is authenticated associated data, so a ciphertext copied to another
 account cannot be decrypted there. D1 stores ciphertext, IV, and a display-only
-last-four hint. The plaintext exists only while forwarding an authenticated AI
-request and is never returned to the browser.
+last-four hint. The Worker receives plaintext when the user saves the key and
+decrypts it for AI requests. Neither the Worker nor FastAPI persists plaintext;
+settings reads return only key presence and the hint.
 
 FastAPI accepts `X-Gemini-Key` from the Worker. When
 `LOGOSAI_GATEWAY_SECRET` is configured, every `/api` route also requires the
-shared `X-LogosAI-Gateway` header. This retains a simple local-development path
-while closing the direct Fly API path in production.
+shared `X-LogosAI-Gateway` header. Production must set matching values for FastAPI's
+`LOGOSAI_GATEWAY_SECRET` and the Worker's `GATEWAY_SHARED_SECRET`.
+If the FastAPI secret is absent, it skips the check regardless of environment;
+the code does not automatically enforce the production configuration.
 
 ### Reading data
 
@@ -57,21 +61,19 @@ while closing the direct Fly API path in production.
 - the imported source text and user-visible title;
 - document, paragraph, and selection anchors;
 - notes, explanations, translations, vocabulary entries, and close reads;
-- active source identity and a server revision.
+- active anchor identity and a server revision.
 
 The API validates and replaces one full aggregate in a D1 batch. Ownership is
 checked before every write or delete. Workspace preferences are stored
 separately per user.
 
-The frontend keeps the established `WorkspaceDocument`, `TextAnchor`, and
-`Artifact` domain types to avoid a broad refactor. `ReadingSessionSnapshot` is
-the explicit cloud boundary that groups them. Browser storage remains a
-user-scoped immediate cache. After login the client merges the initial cloud
-snapshot, then debounces changed session aggregates back to D1. Failed sync is
-visible and retryable; local work remains available. A small per-user sync
-journal persists dirty session IDs and deletion tombstones immediately, so a
-reload during the debounce window prefers unsynced local intent instead of
-resurrecting older cloud state.
+`ReadingSessionSnapshot` groups the existing document, anchor, and artifact
+types at the cloud boundary. The browser merges cloud data with a user-scoped
+cache and debounces aggregate writes. A local sync journal records dirty IDs
+and deletion tombstones before the debounce window; failed sync is visible and
+retryable. This journal preserves local intent across reloads, not cross-device
+conflict resolution. Reading view snapshots remain device-local; see the
+[journey contract](../ux/workspace-journey-contract.md).
 
 ## Consequences
 
@@ -81,18 +83,19 @@ Positive:
 - Static React assets are globally cached and deploy with the Worker, rather
   than taking an extra request through Fly.io.
 - The AI service remains focused on model orchestration.
-- Each directory has one reason to change and route ownership is inspectable
-  from `cloudflare/src/app.ts`.
+- Route ownership is explicit in `cloudflare/src/app.ts`.
 - An unavailable Cloudflare sync does not immediately destroy in-browser work.
 - OAuth providers can be added operationally without changing the UI contract.
 
 Costs and limits:
 
-- Production must use the Worker URL or a future Worker custom domain; Fly only
-  exposes the protected AI origin and is not a browser entry point.
+- The configured browser origin is `https://logosai.ymiao.dev`; `workers.dev`
+  is disabled. Fly is the AI origin and requires the gateway configuration above.
 - The current sync is aggregate replacement with debounced, last-writer-wins
-  behavior. Revision-aware conflict UI is deferred until concurrent editing is
-  observed.
+  behavior. Revision is returned but not checked against the client's version;
+  server-side deletion tombstones and conflict UI are absent. Concurrent writes
+  can overwrite work or recreate deleted sessions. Validation and follow-up
+  decisions belong to [roadmap N2](../roadmap.md#n2云端数据恢复验收).
 - Source text and notes rely on Cloudflare's platform encryption at rest; only
   the Gemini credential has additional application-level encryption. This is
   not end-to-end encryption.
@@ -101,9 +104,9 @@ Costs and limits:
 
 ## Rejected alternatives
 
-- **Direct D1 REST calls from FastAPI:** D1's REST API is an administrative
-  control-plane interface and would put Cloudflare credentials on Fly. A Worker
-  binding is the intended application data path.
+- **Direct D1 REST calls from FastAPI:** this would require Cloudflare API
+  credentials on Fly and split data access across services. The Worker binding
+  keeps application data access inside the chosen auth boundary.
 - **Move model orchestration into the Worker:** this would duplicate the tested
   FastAPI workflow and mix identity, persistence, and AI execution.
 - **Keep API keys only in localStorage:** this prevents safe cross-device use and
@@ -113,13 +116,9 @@ Costs and limits:
 
 ## Operational checks
 
-The production path is ready only when:
-
-1. remote D1 migrations are applied;
-2. Better Auth, credential-encryption, and gateway secrets are set by CLI;
-3. the same gateway secret is set on Fly;
-4. OAuth callbacks use the canonical Worker origin;
-5. the React build is attached as Worker Assets during Worker deployment;
-6. Worker, frontend, and backend checks pass;
-7. email registration, login, key settings, session reload, and sign-out are
-   smoke-tested against the deployed Worker.
+Deployment prerequisites and commands are maintained in
+[Cloudflare Operations](../../cloudflare/README.md); verification commands are in
+[README](../../README.md#verify-changes). Production readiness also requires a
+recorded smoke test of registration/login, enabled OAuth providers, key settings,
+session reload, and sign-out against the deployed origin. This ADR records the
+architecture decision, not completion of those checks.

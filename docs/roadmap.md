@@ -1,11 +1,11 @@
 # LogosAI Roadmap
 
 - 状态：Active，产品研究与工程交付的唯一实施顺序
-- 更新：2026-09-07，阅读现场与导航 E1 已实现，补充本地浏览器验收
+- 更新：2026-09-12，核对 SSE 与 E1 实现状态，保留真实服务验收待办
 - 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
 
 阅读工作台的目标交互、实施切片与验收见[阅读工作台与常驻 Agent 实施设计](ux/reading-workspace-evolution.md)。
-该文档描述目标状态；当前行为仍以旅程契约为准。实施优先级由本路线图维护，N1/N2/N3 不因 UI 演进而跳过。
+该文档定义目标与依赖，当前行为见[旅程契约](ux/workspace-journey-contract.md)。
 
 ## 当前目标与状态
 
@@ -13,7 +13,7 @@
 工程可靠性与用户研究并行，不等待基础设施扩展才接触用户。
 
 分别记录 **代码已实现 / 端到端已验证 / 用户价值已验证**。
-Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。路线图不代表本轮已执行。
+Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。
 
 ## 已实现，退出待建清单
 
@@ -23,24 +23,24 @@ Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。�
 | Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 真实注册到恢复链路、断网及多标签页覆盖行为 |
 | 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 200% 缩放与真实服务验收 |
 | 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[验收记录](ux/reading-navigation-verification.md) | 真实登录、云恢复、多标签页；用户价值观察 |
+| Anchor 流终态校验 | 匹配 done、identity 校验；截断保留部分输出、failed 与 Retry；transport 和旅程回归测试 | 真实服务 stop/retry、断流及云同步组合验收 |
 | 重载恢复 | Persisted running → stopped，可重试 | 与真实断流、云同步组合检查 |
 | LLM monitoring | Spans、首 token 延迟、usage 采集代码 | 生产采集完整性与健康状态 |
 
-旧 Delivery 1 的核心定位能力已实现，不将其全部设计要求或用户验收自动标为完成。
 Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经验证的证据。
 
 ## Now
 
-### N1：Explain 流终态可靠性（工程第一项）
+### N1：Explain 流终态可靠性验收（工程第一项）
 
-- 问题：Anchor 客户端收到 metadata 后 EOF 可正常返回；上层可能标为 complete，并用空结果覆盖部分输出。来自静态审阅，尚未运行复现。
-- 范围：必须收到匹配 done；校验 identity；截断保留 partial output 并允许重试；协议扩展保持旧调用兼容。
+- 现状：缺失 done 和 identity 校验已实现；旅程回归覆盖截断后的部分输出保留、failed 和 Retry。代码与测试入口见[旅程契约](ux/workspace-journey-contract.md#测试与未验证范围)。
+- 剩余：真实服务 stop/retry、截断及云同步组合验证；记录环境、结果和失败路径。
 - 验收：正常 done 完成；缺 done、错 identity、error、主动 stop 有明确终态；切换选区不改变原 task 归属。
-- 验证：transport 回归测试、相关前后端检查及真实 stream。沿用 stopped/failed；若增加 interrupted，先明确数据兼容方案。
+- 验证：沿用现有 transport/旅程回归与 stopped/failed 状态，补真实 stream 记录；发现问题后修复并执行相关检查。
 
 ### N2：云端数据恢复验收
 
-- 问题：已有持久化和 mock 测试，缺少当前完整真实服务验收记录。
+- 问题：已有持久化实现和模拟云同步测试，缺少完整真实服务验收记录；服务端仍为无版本条件的整包替换，本地 journal 不解决跨设备冲突。
 - 范围：注册/登录、导入、note、刷新、登出再登录；断网编辑后恢复；debounce 前刷新；删除后刷新；多标签页修改。
 - 验收：内容可恢复；本地保存与云同步状态准确；失败可见且可重试；记录并发覆盖行为。
 - 约束：复用 journal 与重试；复现覆盖后再决定 revision 检查/冲突副本，不先引入协作框架。数据丢失问题优先修复。
@@ -85,7 +85,6 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 
 - PDF、EPUB、网页导入：先确认哪一种阻断真实任务，允许低成本原型。
 - RAG、向量库、知识图谱、自动推荐、planner、agent kernel、协作、public feed：等待需求证据。
-- 旧 UI 提案不整体恢复实施；session URL、现场恢复与 History 组织以新实施设计 E0–E5 为准，不预设 UI reducer 或完整 AnalysisRoute 重建。
 - 用户级 agent 与记忆（E6）、服务端持久任务（E7）按实施设计保留边界，分别等待讨论价值与 Durable Jobs 等相关证据；不因文档存在直接启动平台重构。
 - 短 Translation/Vocab 展示方式、默认阅读布局和 Close Reading 修订呈现仍需原型验证，不把目标设计当作现状。
 - 首页表述等待用户原话与定位；定价等待持续使用/付费证据；扩大流量等待核心路径稳定。
@@ -96,4 +95,3 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 每项记录代码证据、验证环境/日期、结果、失败路径与未验证项。
 AI 改动需相称的真实模型 review；行为变化同步旅程契约并执行
 [相关检查](../README.md#verify-changes)。私人原文与笔记不进入公开证据或默认 telemetry。
-历史方案仅保存在本地 `docs/archive/`，不随仓库分发，不另维护第二套执行顺序。

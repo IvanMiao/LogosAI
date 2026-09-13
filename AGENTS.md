@@ -48,6 +48,15 @@ then takes precedence.
 - Keep ecosystem-defined names unchanged, including `README.md`, `AGENTS.md`,
   `Dockerfile`, `Makefile`, `package.json`, `index.*`, and `*.config.*`.
 
+## Frontend Architecture
+
+- Keep requests in `frontend/client-api/`; transport modules may depend on domain
+  types, but must not depend on `app/`, `components/`, or `pages/`.
+- Page hooks orchestrate workflows; `frontend/features/` owns domain logic and
+  must not depend on `app/` or `pages/`.
+- Page presentation components receive typed props and callbacks; they must not
+  import `frontend/client-api/` directly.
+
 ## Frontend Verification
 
 For frontend changes, run from `frontend/`:
@@ -59,27 +68,24 @@ For frontend changes, run from `frontend/`:
 
 ## Backend (`backend/`)
 
-**Entry Point**: `app.py` - FastAPI application with CORS + GZip middleware.
+**Entry Point**: `app.py` — FastAPI application.
 
 **Structure**:
-- `routers/` — API routes (`routes.py`) and SSE streaming (`sse.py`)
+- `routers/routes.py` — Anchor actions (`/api/anchors/run`), Explain compatibility
+  (`/api/anchors/explain`), Close Reading streaming (`/api/analyze/stream`), and
+  synchronous analysis compatibility (`/api/analyze`)
+- `routers/sse.py` — SSE event encoding
 - `llm/` — `agent.py` (`TextAnalysisLangchain` class), `state.py`, `prompts.py`
-- `schemas/` — Pydantic models (`analyze.py`)
+- `schemas/` — Pydantic contracts for analysis (`analyze.py`) and Anchor actions
+  (`anchors.py`)
 
 **Auth**: The Worker decrypts the authenticated user’s stored Gemini key and passes
 it via `X-Gemini-Key`. FastAPI does not persist keys; production also requires
 the shared `X-LogosAI-Gateway` header.
 
-**Analysis Workflow** (in `llm/agent.py`, class `TextAnalysisLangchain`):
-```
-START → detect → [needs_correction?] → correct → interpret → END
-                         ↓
-                    interpret → END
-```
-- `detect`: Uses `gemini-2.5-flash-lite` with structured output to identify language, genre, and if correction is needed
-- `correct`: Fixes OCR/typo errors using lite model
-- `interpret`: Main analysis using `gemini-2.5-flash` (configurable)
-- `analyze()` and `analyze_stream()` share the same detect, correct, and interpret stage implementations
+Keep `analyze()` and `analyze_stream()` on shared detect, correct, and interpret
+stage implementations. Model choices and workflow details belong in
+[Project Reference](docs/project.md#ai-api-与契约).
 
 Legacy analysis and history import remain supported compatibility paths. Do not
 remove them without an explicit product and data-migration decision.

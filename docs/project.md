@@ -1,35 +1,34 @@
 # LogosAI Project Reference
 
 - 状态：Active，当前产品与工程参考
-- 核对日期：2026-09-05（代码与测试静态核对，不代表生产验收）
+- 核对日期：2026-09-12（代码与测试静态核对，不代表生产验收）
 - 下一步：[路线图](roadmap.md)；用户与价值假设：[用户证据](user-evidence.md)
 
 ## 产品边界
 
 LogosAI 帮助读者在原文上下文中理解困难片段，并保存可回到原文的解释和笔记。
 文本是核心对象；AI 输出关联原文；AI 不覆盖用户笔记。当前版本以用户主动触发帮助为主，
-personal memory、主动推荐与自动 agent 工作流暂不纳入本阶段实现，属于后续演进方向。
-具体范围与启动时机根据需求和验证结果确定，见[路线图](roadmap.md)。
+personal memory、主动推荐与自动 agent 工作流的启动条件见[路线图](roadmap.md)。
 
 ## 当前能力与限制
 
 | 能力 | 已实现 | 尚未验证或已知限制 |
 | --- | --- | --- |
 | 文本入口 | Paste、`.txt`、`.md`、legacy history 导入；多个 reading sessions | 每个 session 对应一份原文；首发人群和最佳导入方式待验证 |
-| Reader | 桌面默认双栏；source / split / analysis 布局与 History 分离；阅读偏好可调 | 移动端、缩放、滚动与返回路径需真实浏览器验收 |
+| Reader | 桌面默认双栏；source / split / analysis 布局与 History 分离；阅读偏好可调 | 已有部分桌面/窄屏本地浏览器记录；200% 缩放与真实服务组合仍待验收 |
 | Selection | Explain、Translate、Vocab、Note；确认动作后保存选区 | DOM Range 提供真实 offset；旧 anchor 无法唯一恢复时不猜测；前后文 selector 尚未独立建模 |
 | Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
 | Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
-| Streaming | Stage/chunk/done/error、stop/retry；重载后 running 恢复为 stopped | Anchor 客户端要求有效 done 并校验 anchor/request/trace identity；本地 request ID 尚未作为 client_request_id 贯穿协议 |
-| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、删除 tombstone、失败重试 | Aggregate replacement、last-writer-wins；无冲突 UI；真实多设备恢复待验收 |
-| 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 本轮未核实生产 OAuth 配置；尚无邮件验证/密码重置邮件服务 |
+| Streaming | Anchor done/identity 校验；截断保留部分输出并标为 failed；stop/retry；重载后 running 恢复为 stopped | 真实服务断流仍待验收；本地 request ID 尚未作为 client_request_id 贯穿协议 |
+| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | 整包替换；revision 未用于条件写入；无冲突 UI；真实多设备恢复待验收 |
+| 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 生产 OAuth 配置未核实；尚无邮件验证/密码重置邮件服务 |
 | 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
 | 评估 | Workspace Alpha JSONL 与结构校验程序 | 不运行真实模型，不证明生成质量 |
 
 精确选区已有[实现](../frontend/features/anchors/selection-offsets.ts)、
 [重复文本/歧义测试](../frontend/tests/anchors/anchor-core.test.ts)及
 [跨段/Unicode 测试](../frontend/tests/anchors/selection-offsets.test.ts)。
-交互以[旅程契约](ux/workspace-journey-contract.md)为准，不再使用旧三模式设计。
+交互以[旅程契约](ux/workspace-journey-contract.md)为准。
 
 ## 领域语言
 
@@ -51,7 +50,7 @@ Offset 使用 JavaScript 字符串坐标（UTF-16 code units）。恢复先核�
 
 ```text
 Browser: React + Vite + TypeScript
-  /login, /register, /app, /app/settings → same-origin /api/*
+  认证页与 /app/* → same-origin /api/*
 Cloudflare Worker: Hono
   ├─ Worker Assets → React SPA
   ├─ Better Auth → D1 identity
@@ -91,12 +90,12 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 ## 数据与隐私边界
 
 - Worker 按用户解密 key，向 FastAPI 添加 `X-Gemini-Key`；FastAPI 不持久化 key。
-- 生产 FastAPI 应配置 `LOGOSAI_GATEWAY_SECRET`，校验 `X-LogosAI-Gateway`。
+- 生产 FastAPI 必须配置 `LOGOSAI_GATEWAY_SECRET`，校验 `X-LogosAI-Gateway`；当前代码在未配置时跳过校验，不会自动区分生产与本地。
 - D1 保存用户隔离的数据；key 用 AES-GCM、随机 IV、user ID associated data 加密；读取仅返回存在标志和末四位 hint。
 - Source 与 note 依赖平台存储加密，不是 E2E encryption；OAuth token 使用 Better Auth token encryption。
 - LocalStorage 为用户隔离缓存；旧数据首次认领保持兼容，不可跨账号继承。
-- Journal 保存未同步修改及删除意图；删除 session 级联 anchors 与 artifacts。
-- 默认不上传完整原文、prompt、note、key 或身份。LLM 内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
+- 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts，但没有服务端删除 tombstone 或旧版本写入保护。
+- 默认不向监控服务上报完整原文、prompt、note、key 或身份。AI 请求仍会发送原文给模型；LLM 监控内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
 - Source 为不可信数据；当前无 tool execution，仍需检查 prompt injection 对 grounding 的影响。
 
 ## 验证边界
@@ -105,16 +104,13 @@ Contract tests、真实服务端到端检查、模型评估与用户观察分别
 命令统一见 [README](../README.md#verify-changes)。历史报告不证明当前部署通过，
 历史材料仅保存在本地 `docs/archive/`，不随仓库分发。
 
-## 阅读现场与地址（2026-09-07）
+## 阅读现场与地址
 
 `/app/readings/:documentId` 定位阅读对象；`?artifact=:artifactId` 打开已保存成果，
 `?view=history` 打开该 session 的 History；`/app/new` 为导入入口。
-`/app` 恢复当前用户最近打开的 session。地址只提供定位，不授予其他账号访问权限。
-云数据加载完成前不展示另一篇缓存原文；缺失对象显示提示和导航/重试入口。
+`/app` 恢复当前用户最近打开的 session；`/app/analysis` 保留 legacy 入口。
+地址只提供定位，不授予其他账号访问权限。
 
-阅读现场使用版本化、按用户与 document 隔离的本地快照：布局、分栏比例、已选成果、
-History 查询/筛选/排序/选择、笔记编辑器开关，以及各阅读面板的滚动位置。
-段落内容签名和段内比例用于重排后定位；内容变化且无法唯一匹配时回到顶部。
-快照写入失败时保留本次页面生命周期内的内存状态，并提示刷新可能丢失位置。
-这些视图快照不进入云 API；内容、草稿与运行任务继续使用既有存储和生命周期。
-行为约束见[旅程契约](ux/workspace-journey-contract.md)，验证边界见[验收记录](ux/reading-navigation-verification.md)。
+阅读现场由版本化、按用户与 document 隔离的本地快照保存，不进入云 API。
+恢复、加载和失败回退规则见[旅程契约](ux/workspace-journey-contract.md#阅读现场与导航e1)，
+已执行的检查见[验收记录](ux/reading-navigation-verification.md)。
