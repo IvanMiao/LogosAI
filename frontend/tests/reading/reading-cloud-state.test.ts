@@ -76,6 +76,23 @@ function createLocalState(): LocalWorkspaceState {
 describe('reading cloud state', () => {
   beforeEach(() => localStorage.clear());
 
+  it('does not attach the previous reading anchor to a newly imported reading', () => {
+    const local = createLocalState();
+    local.documentLibrary.documentsById['document-2'] = {
+      ...local.documentLibrary.documentsById['document-1'],
+      id: 'document-2',
+      title: 'New reading',
+    };
+    local.documentLibrary.activeDocumentId = 'document-2';
+
+    const sessions = buildReadingSessions(local);
+
+    expect(sessions.find((session) => session.document.id === 'document-2'))
+      .toMatchObject({ activeAnchorId: null, anchors: [], artifacts: [] });
+    expect(sessions.find((session) => session.document.id === 'document-1')?.activeAnchorId)
+      .toBe('anchor-1');
+  });
+
   it('round-trips documents, anchors, and artifacts by session', () => {
     const local = createLocalState();
     const sessions = buildReadingSessions(local);
