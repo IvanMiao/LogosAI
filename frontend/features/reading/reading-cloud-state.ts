@@ -1,4 +1,4 @@
-import type { AnchorStorageState, TextAnchor } from '@/features/anchors';
+import { getActiveAnchorIdForDocument, type AnchorStorageState, type TextAnchor } from '@/features/anchors';
 import type { Artifact, ArtifactStorageState } from '@/features/artifacts';
 import type {
   AnalysisLanguage,
@@ -49,10 +49,7 @@ export function buildReadingSessions(
 ): ReadingSessionSnapshot[] {
   return Object.values(state.documentLibrary.documentsById).map((document) => ({
     document,
-    activeAnchorId: state.anchorStorage.activeAnchorIdByDocumentId?.[document.id]
-      ?? (state.documentLibrary.activeDocumentId === document.id
-        ? state.anchorStorage.activeAnchorId
-        : null),
+    activeAnchorId: getActiveAnchorIdForDocument(state.anchorStorage, document.id),
     anchors: getSessionAnchors(state.anchorStorage, document.id),
     artifacts: getSessionArtifacts(state.artifactStorage, document.id),
   }));
