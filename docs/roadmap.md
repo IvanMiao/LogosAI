@@ -1,7 +1,7 @@
 # LogosAI Roadmap
 
 - 状态：Active，产品研究与工程交付的唯一实施顺序
-- 更新：2026-09-13，补真实服务验收；生产多标签页覆盖为当前阻塞
+- 更新：2026-09-15，生产云恢复与导航验收通过；N1/N2 工程验收完成
 - 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
 
 阅读工作台的目标交互、实施切片与验收见[阅读工作台与常驻 Agent 实施设计](ux/reading-workspace-evolution.md)。
@@ -20,27 +20,27 @@ Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。
 | 能力 | 代码与测试证据 | 剩余验证 |
 | --- | --- | --- |
 | 精确选区与 note 基础 | DOM Range、重复 quote、歧义、跨段及 Unicode 测试 | 真实浏览器选区、note 刷新定位；前后文 selector 未独立实现 |
-| Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 真实注册到恢复链路、断网及多标签页覆盖行为 |
-| 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 200% 缩放与真实服务验收 |
-| 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[验收记录](ux/reading-navigation-verification.md) | 真实登录、云恢复、多标签页；用户价值观察 |
-| Anchor 流终态校验 | 匹配 done、identity 校验；截断保留部分输出、failed 与 Retry；transport 和旅程回归测试 | 真实服务 stop/retry、断流及云同步组合验收 |
-| 重载恢复 | Persisted running → stopped，可重试 | 与真实断流、云同步组合检查 |
+| Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 已通过真实注册到恢复链路、断网及多标签页验收；持续观察 |
+| 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 真实服务通过；用户 Firefox 200% 实测通过 |
+| 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[验收记录](ux/reading-navigation-verification.md) | 真实登录、云恢复、多标签页已验证；用户价值观察仍待完成 |
+| Anchor 流终态校验 | 匹配 done、identity 校验；截断保留部分输出、failed 与 Retry；transport 和旅程回归测试 | 真实服务 stop/retry、断流及云同步验收已通过 |
+| 重载恢复 | Persisted running → stopped，可重试 | 真实断流与云同步组合检查已通过 |
 | LLM monitoring | Spans、首 token 延迟、usage 采集代码 | 生产采集完整性与健康状态 |
 
 Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经验证的证据。
 
 ## Now
 
-### N1：Explain 流终态可靠性验收（工程第一项）
+### N1：Explain 流终态可靠性验收（已完成）
 
 - 现状：缺失 done 和 identity 校验已实现；旅程回归覆盖截断后的部分输出保留、failed 和 Retry。代码与测试入口见[旅程契约](ux/workspace-journey-contract.md#测试与未验证范围)。
 - 2026-09-13：真实完成/error/retry/stop、任务归属和云保存，以及回放截断/identity/error 已验证；见[验收记录](ux/real-service-acceptance-2026-09-13.md)。
 - 验收：正常 done 完成；缺 done、错 identity、error、主动 stop 有明确终态；切换选区不改变原 task 归属。
 - 验证：沿用现有 transport/旅程回归与 stopped/failed 状态，补真实 stream 记录；发现问题后修复并执行相关检查。
 
-### N2：云端数据恢复验收
+### N2：云端数据恢复验收（已完成）
 
-- 问题：真实注册、导入、Note、刷新、重新登录、断网恢复和删除路径已验证；生产多标签页静默覆盖已复现。revision 条件写入与冲突副本修复待发布，发布后重跑组合验收；见[记录](ux/real-service-acceptance-2026-09-13.md)。
+- 状态：PR #49/#50 与 migration 0003 已部署；真实并发保存/删除、立即刷新、离线加并发恢复、重新登录均通过，见[生产验收](ux/real-service-acceptance-2026-09-15.md)。
 - 范围：注册/登录、导入、note、刷新、登出再登录；断网编辑后恢复；debounce 前刷新；删除后刷新；多标签页修改。
 - 验收：内容可恢复；本地保存与云同步状态准确；失败可见且可重试；记录并发覆盖行为。
 - 约束：复用 journal 与重试；复现覆盖后再决定 revision 检查/冲突副本，不先引入协作框架。数据丢失问题优先修复。

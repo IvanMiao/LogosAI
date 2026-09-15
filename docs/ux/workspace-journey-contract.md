@@ -91,7 +91,7 @@ Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
 
-## 云写入冲突恢复（待部署）
+## 云写入冲突恢复（2026-09-15 已部署）
 
 阅读保存和删除带基准 revision，旧版本不会覆盖云端新版。同步冲突显示失败和 Retry；
 重试后保留云端阅读，并把未同步本地内容保存为新的 `(conflict copy)` session，
@@ -100,4 +100,6 @@ Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 
 2026-09-13 的生产复现、修复与本地验证见
 [真实服务验收](real-service-acceptance-2026-09-13.md)。
-本轮没有部署；发布后仍须复验真实多标签页和 200% 浏览器缩放。
+2026-09-15 已完成生产多标签页、删除和离线恢复组合验收；用户完成 Firefox 实际 200% 缩放验收。
+结果与部署版本见[发布验收记录](real-service-acceptance-2026-09-15.md)。
+新建阅读的云快照只引用属于该阅读的 active anchor，避免切换阅读后保存被拒绝。
