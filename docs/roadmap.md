@@ -1,7 +1,7 @@
 # LogosAI Roadmap
 
 - 状态：Active，产品研究与工程交付的唯一实施顺序
-- 更新：2026-09-12，核对 SSE 与 E1 实现状态，保留真实服务验收待办
+- 更新：2026-09-13，补真实服务验收；生产多标签页覆盖为当前阻塞
 - 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
 
 阅读工作台的目标交互、实施切片与验收见[阅读工作台与常驻 Agent 实施设计](ux/reading-workspace-evolution.md)。
@@ -34,13 +34,13 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 ### N1：Explain 流终态可靠性验收（工程第一项）
 
 - 现状：缺失 done 和 identity 校验已实现；旅程回归覆盖截断后的部分输出保留、failed 和 Retry。代码与测试入口见[旅程契约](ux/workspace-journey-contract.md#测试与未验证范围)。
-- 剩余：真实服务 stop/retry、截断及云同步组合验证；记录环境、结果和失败路径。
+- 2026-09-13：真实完成/error/retry/stop、任务归属和云保存，以及回放截断/identity/error 已验证；见[验收记录](ux/real-service-acceptance-2026-09-13.md)。
 - 验收：正常 done 完成；缺 done、错 identity、error、主动 stop 有明确终态；切换选区不改变原 task 归属。
 - 验证：沿用现有 transport/旅程回归与 stopped/failed 状态，补真实 stream 记录；发现问题后修复并执行相关检查。
 
 ### N2：云端数据恢复验收
 
-- 问题：已有持久化实现和模拟云同步测试，缺少完整真实服务验收记录；服务端仍为无版本条件的整包替换，本地 journal 不解决跨设备冲突。
+- 问题：真实注册、导入、Note、刷新、重新登录、断网恢复和删除路径已验证；生产多标签页静默覆盖已复现。revision 条件写入与冲突副本修复待发布，发布后重跑组合验收；见[记录](ux/real-service-acceptance-2026-09-13.md)。
 - 范围：注册/登录、导入、note、刷新、登出再登录；断网编辑后恢复；debounce 前刷新；删除后刷新；多标签页修改。
 - 验收：内容可恢复；本地保存与云同步状态准确；失败可见且可重试；记录并发覆盖行为。
 - 约束：复用 journal 与重试；复现覆盖后再决定 revision 检查/冲突副本，不先引入协作框架。数据丢失问题优先修复。
