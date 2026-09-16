@@ -12,7 +12,8 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 顶栏按文档导航、阅读控制、同步与账号分组，依据工具栏实际可用宽度换行。
 History 保持独立入口；布局按钮保留 aria-pressed。已配置 key 的提示移入账号菜单，
 缺 key 的入口和横幅保留；云同步状态用简短文字显示，离线/失败直接显示 Retry sync。
-Reading 按钮显示当前 AI 输出语言（窄屏使用语言缩写），打开统一设置弹窗。
+Reading 显示当前 AI 输出语言（窄屏使用语言缩写），直接下拉展示七种语言选项。
+旁边独立的 Reading appearance 按钮打开外观弹窗，调整字体、字号、行距与行宽。
 七种输出语言、字体联动、文字大小、行距与行宽复用现有偏好；外观即时生效。
 语言只影响下一次 AI 请求（包括 Retry），不重跑已有结果，也不修改运行中请求；
 Reset appearance 只重置外观，不改变语言，不引入每篇偏好继承。
@@ -51,7 +52,7 @@ History 查询当前 session 已保存工作，
 | WJ-04 | 从 Close Reading 原文打开 saved Explain，再返回 | Explain 替换分析正文；Back to Close Reading 恢复同一分析，不重新请求 |
 | WJ-05 | 打开 History，切换 Source order | 默认 updatedAt 倒序；原文顺序按 source offset；使用 session 内 list-detail |
 | WJ-06 | History 条目 → Open in Text | 当前桌面测试恢复双栏及对应解释，精确 range 使用 mark；不发起新请求，也不增加常驻返回条 |
-| WJ-07 | 打开 Reading，调整阅读设置，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
+| WJ-07 | 打开 Reading appearance，调整阅读外观，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
 | WJ-08 | 左侧 Sessions drawer → Pin → Unpin / Collapse | 紧凑平坦导航；两种模式均在左侧；固定时切换保持侧栏；pin 偏好持久化；取消固定保留抽屉，收起后可重新打开 |
 | WJ-09 | 启动 Close Reading，先 stage 后正文 | 显示真实 interpret 阶段文案；完成后由正文替代 |
 | WJ-10 | 无 key 时 Explain，再打开 History | 顶部 Settings 黄条，不另出红色错误；不创建污染 History 的失败 artifact |

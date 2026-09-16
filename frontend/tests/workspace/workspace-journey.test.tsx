@@ -238,12 +238,14 @@ describe('workspace journey contract', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: /Reading settings/ }));
     await user.click(screen.getByRole('combobox', { name: 'Analysis language' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(7);
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument();
     await user.click(await screen.findByRole('option', { name: 'Français' }));
     expect(fetchMock).not.toHaveBeenCalled();
-    await user.keyboard('{Escape}');
-    expect(screen.getByRole('button', { name: /Reading settings.*Français/ })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Analysis language' })).toHaveTextContent('Français');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', {
       name: 'Run Close Reading again in Français',
     }));
@@ -400,7 +402,8 @@ describe('workspace journey contract', () => {
     expect(sourceArticle).toHaveStyle({ fontSize: '18px', maxWidth: 'min(760px, 68ch)' });
     expect(analysisBody).toHaveStyle({ fontSize: '18px', maxWidth: '760px' });
 
-    await user.click(screen.getByRole('button', { name: /Reading settings/ }));
+    await user.click(screen.getByRole('button', { name: 'Reading appearance' }));
+    expect(within(screen.getByRole('dialog', { name: 'Reading appearance' })).queryByRole('combobox')).not.toBeInTheDocument();
     fireEvent.change(screen.getByRole('slider', { name: /Text size/ }), { target: { value: '21' } });
     expect(sourceArticle).toHaveStyle({ fontSize: '21px' });
     expect(analysisBody).toHaveStyle({ fontSize: '21px' });

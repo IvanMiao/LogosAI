@@ -1,7 +1,5 @@
 import { type ReactElement } from 'react';
 import { RotateCcw } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ANALYSIS_LANGUAGE_LABELS } from '../analysis-language';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { AnalysisLanguage, ReaderFontFamily, ReaderPreferences } from '@/features/reading';
+import type { ReaderFontFamily, ReaderPreferences } from '@/features/reading';
 import { DEFAULT_READER_PREFERENCES } from '@/features/reading/reading-storage';
 import { cn } from '@/utils/class-name';
 import { getReaderFontClassName } from '../reading-typography';
@@ -22,11 +20,9 @@ const FONT_OPTIONS: Array<{ label: string; sample: string; value: ReaderFontFami
   { label: 'Mono', sample: 'Aa 文', value: 'mono' },
 ];
 
-interface ReadingSettingsDialogProps {
+interface ReadingAppearanceDialogProps {
   children: ReactElement;
   preferences: ReaderPreferences;
-  analysisLanguage: AnalysisLanguage;
-  onAnalysisLanguageChange: (language: AnalysisLanguage) => void;
   onPreferenceChange: <Key extends keyof ReaderPreferences>(
     key: Key,
     value: ReaderPreferences[Key],
@@ -109,13 +105,11 @@ function RangePreference({
   );
 }
 
-export function ReadingSettingsDialog({
+export function ReadingAppearanceDialog({
   children,
-  analysisLanguage,
-  onAnalysisLanguageChange,
   preferences,
   onPreferenceChange,
-}: ReadingSettingsDialogProps): ReactElement {
+}: ReadingAppearanceDialogProps): ReactElement {
   const resetPreferences = () => {
     Object.entries(DEFAULT_READER_PREFERENCES).forEach(([key, value]) => {
       onPreferenceChange(
@@ -130,14 +124,12 @@ export function ReadingSettingsDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[92dvh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Reading</DialogTitle>
+          <DialogTitle>Reading appearance</DialogTitle>
           <DialogDescription>
-            Choose the language for AI output and adjust your reading appearance.
+            Adjust fonts and text layout. Changes apply immediately to source text and saved reading work.
           </DialogDescription>
         </DialogHeader>
-        <AnalysisLanguageSelect language={analysisLanguage} onLanguageChange={onAnalysisLanguageChange} />
         <div className="space-y-4">
-          <div><h3 className="text-sm font-bold">Appearance</h3><p className="mt-1 font-sans text-xs leading-5 text-muted-foreground">Changes apply immediately to source text and saved reading work.</p></div>
           <FontPicker
             label={preferences.fontLinked ? 'Font' : 'Source font'}
             value={preferences.fontFamily}
@@ -200,42 +192,5 @@ export function ReadingSettingsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function AnalysisLanguageSelect({
-  language,
-  onLanguageChange,
-}: {
-  language: AnalysisLanguage;
-  onLanguageChange: (language: AnalysisLanguage) => void;
-}): ReactElement {
-  return (
-    <div className="space-y-2 border-b border-border/30 pb-5">
-      <p className="text-sm font-bold">AI output language</p>
-
-      <Select
-        value={language}
-        onValueChange={(value) => onLanguageChange(value as AnalysisLanguage)}
-      >
-        <SelectTrigger
-          aria-label="Analysis language"
-          title="Analysis language"
-          className="h-11 w-full bg-card shadow-none"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(ANALYSIS_LANGUAGE_LABELS).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <p className="font-sans text-xs leading-5 text-muted-foreground">
-        Applies to your next AI request, including Retry. Existing results and running requests stay unchanged.
-      </p>
-    </div>
   );
 }

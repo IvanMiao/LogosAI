@@ -3,13 +3,14 @@ import {
   BookOpen,
   Columns2,
   History,
-  ChevronDown,
+  SlidersHorizontal,
   PanelLeft,
   PanelLeftClose,
   PanelRight,
   Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import type {
   AnalysisLanguage,
   ReaderPreferences,
@@ -20,7 +21,7 @@ import type {
   ReaderLayout,
   WorkspaceDestination,
 } from '../useWorkspaceViewState';
-import { ReadingSettingsDialog } from './ReadingSettingsDialog';
+import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';
 import {
   ReaderSyncAlert,
   WorkspaceAppActions,
@@ -161,28 +162,29 @@ function EditableDocumentTitle({
   );
 }
 
-function ReadingSettingsMenu({
-  preferences, onPreferenceChange, analysisLanguage, onAnalysisLanguageChange,
-}: Pick<ReaderToolbarProps, 'preferences' | 'onPreferenceChange' | 'analysisLanguage' | 'onAnalysisLanguageChange'>): ReactElement {
+function ReadingLanguageSelect({
+  analysisLanguage, onAnalysisLanguageChange,
+}: Pick<ReaderToolbarProps, 'analysisLanguage' | 'onAnalysisLanguageChange'>): ReactElement {
   const languageLabel = ANALYSIS_LANGUAGE_LABELS[analysisLanguage];
   return (
-    <ReadingSettingsDialog
-      preferences={preferences}
-      onPreferenceChange={onPreferenceChange}
-      analysisLanguage={analysisLanguage}
-      onAnalysisLanguageChange={onAnalysisLanguageChange}
-    >
-      <Button
-        type="button" variant="outline"
-        className="h-11 gap-1.5 border border-border/40 px-2 shadow-none hover:shadow-none active:translate-none sm:h-10 sm:px-3"
-        aria-label={`Reading settings, AI output language: ${languageLabel}`}
+    <Select value={analysisLanguage} onValueChange={(value) => onAnalysisLanguageChange(value as AnalysisLanguage)}>
+      <SelectTrigger
+        className="h-11 w-auto gap-1.5 border border-border/40 px-2 shadow-none sm:h-10 sm:px-3"
+        aria-label="Analysis language"
+        title="AI output language for your next request"
       >
-        Reading <span className="font-normal text-muted-foreground">·</span>
-        <span className="font-normal text-muted-foreground sm:hidden">{analysisLanguage === 'zh' ? '中文' : analysisLanguage.toUpperCase()}</span>
-        <span className="hidden font-normal text-muted-foreground sm:inline">{languageLabel}</span>
-        <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-      </Button>
-    </ReadingSettingsDialog>
+        <span className="flex items-center gap-1.5">
+          Reading <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground sm:hidden">{analysisLanguage === 'zh' ? '中文' : analysisLanguage.toUpperCase()}</span>
+          <span className="hidden text-muted-foreground sm:inline">{languageLabel}</span>
+        </span>
+      </SelectTrigger>
+      <SelectContent align="end" className="border shadow-sm">
+        {Object.entries(ANALYSIS_LANGUAGE_LABELS).map(([value, label]) => (
+          <SelectItem key={value} value={value}>{label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -243,20 +245,30 @@ export function ReaderToolbar({
           <Button
             type="button"
             variant={destination === 'history' ? 'secondary' : 'ghost'}
-            className="h-11 border-0 px-2 shadow-none hover:shadow-none active:translate-none sm:h-10"
+            className="h-11 shrink-0 border-0 px-2 shadow-none hover:shadow-none active:translate-none sm:h-10"
             aria-label="History"
+            title="History"
             aria-pressed={destination === 'history'}
             onClick={onOpenHistory}
           >
-            <History className="hidden h-4 w-4 sm:block" aria-hidden="true" />
-            <span>History</span>
+            <History className="h-4 w-4 @min-[360px]:hidden @min-[600px]:block" aria-hidden="true" />
+            <span className="hidden @min-[360px]:inline">History</span>
           </Button>
-          <ReadingSettingsMenu
-            preferences={preferences}
-            onPreferenceChange={onPreferenceChange}
-            analysisLanguage={analysisLanguage}
-            onAnalysisLanguageChange={onAnalysisLanguageChange}
-          />
+          <div className="flex shrink-0 items-center gap-1">
+            <ReadingLanguageSelect
+              analysisLanguage={analysisLanguage}
+              onAnalysisLanguageChange={onAnalysisLanguageChange}
+            />
+            <ReadingAppearanceDialog preferences={preferences} onPreferenceChange={onPreferenceChange}>
+              <Button
+                type="button" variant="ghost" size="icon"
+                className="h-11 w-10 border-0 hover:shadow-none active:translate-none sm:h-10"
+                aria-label="Reading appearance" title="Reading appearance"
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </ReadingAppearanceDialog>
+          </div>
         </div>
         <div className="order-2 border-s border-border/30 ps-2 @min-[900px]:order-3 @min-[900px]:ps-3">
           <WorkspaceAppActions

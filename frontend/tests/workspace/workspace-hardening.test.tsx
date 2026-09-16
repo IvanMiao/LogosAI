@@ -192,7 +192,8 @@ describe('workspace hardening', () => {
       expect(screen.getByRole('button', { name: /API key missing/i })).toBeInTheDocument();
       expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Reading settings/ })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Analysis language' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reading appearance' })).toBeInTheDocument();
       expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Reader layout' })).toBeInTheDocument();
       const activeLayoutName = width === 390
