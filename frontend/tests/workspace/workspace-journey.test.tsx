@@ -383,6 +383,34 @@ describe('workspace journey contract', () => {
     expect(screen.getByText(explanation.content)).toBeInTheDocument();
   });
 
+  it('opens History and appearance from the app menu and restores keyboard focus', async () => {
+    const user = userEvent.setup();
+    window.innerWidth = 390;
+    renderWorkspace();
+
+    await user.click(screen.getByRole('button', { name: 'Open app menu' }));
+    await user.click(screen.getByRole('menuitem', { name: 'History' }));
+    expect(screen.getByRole('region', { name: 'History' })).toBeInTheDocument();
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open app menu' }));
+    const appearanceItem = screen.getByRole('menuitem', { name: 'Reading appearance' });
+    await user.click(appearanceItem);
+    const dialog = screen.getByRole('dialog', { name: 'Reading appearance' });
+    expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument();
+    fireEvent.change(within(dialog).getByRole('slider', { name: 'Text size' }), { target: { value: '21' } });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(appearanceItem).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Open app menu' })).toHaveFocus();
+
+    await user.click(screen.getByRole('combobox', { name: 'Analysis language' }));
+    expect(screen.getByText('AI output language')).toBeInTheDocument();
+    expect(screen.getByText('Applies to your next request.')).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(7);
+  });
+
   it('keeps reading appearance unified by default and allows explicit font unlinking', async () => {
     const user = userEvent.setup();
     const closeReading = createArtifact(

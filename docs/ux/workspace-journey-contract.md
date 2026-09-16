@@ -1,6 +1,6 @@
 # Workspace Journey UX Contract
 
-- 状态：Active；文档核对：2026-09-16
+- 状态：Active；文档核对：2026-09-17
 - 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
 
 ## 当前界面模型
@@ -9,11 +9,16 @@ Destination 是 reader / history；Reader layout 是 source / split / analysis�
 桌面默认双栏，窄屏默认单栏；三个布局按钮只改变阅读区域布局，History 是独立查询入口。
 Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 
-顶栏按文档导航、阅读控制、同步与账号分组，依据工具栏实际可用宽度换行。
-History 保持独立入口；布局按钮保留 aria-pressed。已配置 key 的提示移入账号菜单，
-缺 key 的入口和横幅保留；云同步状态用简短文字显示，离线/失败直接显示 Retry sync。
-Reading 显示当前 AI 输出语言（窄屏使用语言缩写），直接下拉展示七种语言选项。
-旁边独立的 Reading appearance 按钮打开外观弹窗，调整字体、字号、行距与行宽。
+阅读顶栏保持单行，依据工具栏实际可用宽度收起次要操作。不足 900px 时常驻
+Sessions、截断标题、布局切换、语言和菜单；History、Reading appearance 与品牌主页入口
+仅在窄工具栏菜单中显示；宽屏保留 History、外观与主页快捷入口，菜单不重复显示。
+菜单按工具栏实际可用宽度切换，固定侧栏后的窄工具栏仍保留入口；布局按钮保留 aria-pressed。
+菜单不显示已配置 key 或正常同步状态文字；缺 key 的提示与横幅保留，窄屏通过菜单 Settings 配置。
+宽屏同步状态只显示图标，保存中使用动态指示；离线/失败仍直接显示文字与 Retry sync。
+语言按钮仅显示语言名称（不足 600px 使用缩写），直接下拉展示七种语言选项，
+弹出内容标明 AI output language 和 Applies to your next request。
+Reading appearance 独立打开外观弹窗，调整字体、字号、行距与行宽；从菜单打开后
+关闭弹窗恢复该菜单项焦点，Escape 可继续关闭菜单并返回菜单按钮。
 七种输出语言、字体联动、文字大小、行距与行宽复用现有偏好；外观即时生效。
 语言只影响下一次 AI 请求（包括 Retry），不重跑已有结果，也不修改运行中请求；
 Reset appearance 只重置外观，不改变语言，不引入每篇偏好继承。
@@ -62,6 +67,7 @@ History 查询当前 session 已保存工作，
 | WJ-14 | Explain → Show in source，桌面及窄屏 | 定位精确引用；窄屏返回分析仍是同一结果；不发起 AI、不新增成果 |
 | WJ-15 | 打开已无法定位的 Explain | 保存的引文及结果可读；定位入口禁用并说明原因 |
 | WJ-16 | 粘贴草稿后导入不支持/空/不可读文件，再开始阅读 | 错误直接可见；保留标题和文本；可继续完成粘贴导入（hardening 测试） |
+| WJ-17 | 从菜单打开 History、Reading appearance，再关闭弹窗与菜单 | History 使用原查询入口；外观不含语言控件；Escape 依次恢复外观菜单项和菜单按钮焦点 |
 
 
 ## 阅读现场与导航（E1）

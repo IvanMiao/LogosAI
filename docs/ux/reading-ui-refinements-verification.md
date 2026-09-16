@@ -34,12 +34,30 @@
 - 自动化回归确认：语言下拉不打开弹窗，不显示外观控件；切换语言不发起请求，下一次分析使用所选语言；外观弹窗不含语言选择。
 - 本轮未调用 AI 或云服务；前端 lint、类型检查、158 项测试和构建全部通过。
 
+## 单行阅读顶栏复查（2026-09-17）
+
+- 阅读顶栏保持单行，窄屏常驻 Sessions、标题、布局、语言和菜单；History、外观与主页
+  仅在窄工具栏菜单中显示。宽屏保留同步图标，菜单不显示已配置 key 或正常同步文字，失败/离线继续提供直接重试。
+- 本地 Vite + Chrome headless，使用合成文档与真实 WorkspacePage；未开启云同步或请求 AI。
+  320、390、640、900、940、1024、1280px 均无页面或顶栏横向溢出，正常顶栏高度均为 64px。
+- 1024px 固定 Sessions 侧栏后工具栏可用宽度为 704px，仍保持单行；320px 缺 key 场景
+  保留单行顶栏，568px 短视口中的菜单可以滚动到 Settings 和 Sign out。
+- 七种语言选项可用，下拉说明下一次请求的输出语言；语言切换不打开外观弹窗。
+  菜单 History 打开真实查询区域；外观调整可用，Escape 关闭弹窗后恢复菜单项焦点，
+  再次 Escape 关闭菜单并恢复菜单按钮焦点。桌面外观快捷按钮仍可用。
+- 已查看桌面、390px、320px、固定侧栏与菜单截图，浏览器无页面错误。
+  测试使用模拟视口和鼠标/键盘事件，未验证实体触屏、Safari 或屏幕阅读器。
+- 菜单去重复查：1280/940px 菜单不显示 History、Reading appearance、主页；900/390/320px
+  和 1024px 固定侧栏仍保留这些入口。菜单打开后扩宽窗口也能切换，不出现正常 key/同步文字。
+  已查看宽屏与小屏菜单截图，确认小屏 History、外观弹窗和缺 key 提示可用。
+
 ## 自动化入口
 
 - `frontend/tests/workspace/workspace-journey.test.tsx`：Reading 语言与外观、Explain 返回和定位、流终态。
 - `frontend/tests/workspace/workspace-hardening.test.tsx`：可见粘贴区、文件导入、格式/空/读取错误保留草稿。
-- `frontend/tests/workspace/reading-controls.test.tsx`：同步失败/离线的直接重试与恢复。
-- 前端检查：`npm run lint`、`npx tsc --noEmit`、`npm test`、`npm run build` 全部通过；26 个测试文件、158 项测试。
+- `frontend/tests/workspace/reading-controls.test.tsx`：同步失败/离线的直接重试、菜单重试与恢复。
+- 单行顶栏增量回归：菜单打开 History、外观设置与 Escape 焦点恢复、语言下拉语义。
+- 前端检查：`npm run lint`、`npx tsc --noEmit`、`npm test`、`npm run build` 全部通过；26 个测试文件、160 项测试。
 
 ## 验证边界
 

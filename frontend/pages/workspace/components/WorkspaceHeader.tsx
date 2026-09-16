@@ -43,6 +43,7 @@ interface WorkspaceAppActionsProps extends WorkspaceAppChromeProps {
   compact?: boolean;
   onStartNewDocument?: () => void;
   showApiKeyShortcut?: boolean;
+  readingMenuItems?: ReactElement;
 }
 
 export function WorkspaceBrandButton({
@@ -61,7 +62,7 @@ export function WorkspaceBrandButton({
       <span className={cn("flex shrink-0 items-center justify-center border-2 border-border bg-primary", compact ? "h-8 w-8 shadow-[2px_2px_0px_0px_var(--border)]" : "h-10 w-10 shadow-[4px_4px_0px_0px_var(--border)]")}>
         <Brain className="h-5 w-5" aria-hidden="true" />
       </span>
-      <span className={compact ? 'hidden min-w-0 xl:block' : 'min-w-0'}>
+      <span className={compact ? 'hidden min-w-0 @min-[1100px]:block' : 'min-w-0'}>
         <span className="block truncate font-brand text-lg font-black leading-tight">LogosAI</span>
         {!compact ? (
           <span className="hidden text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground sm:block">
@@ -83,6 +84,7 @@ export function WorkspaceAppActions({
   compact = false,
   onStartNewDocument,
   showApiKeyShortcut = true,
+  readingMenuItems,
 }: WorkspaceAppActionsProps): ReactElement {
   const navigate = useNavigate();
   const signOut = async () => {
@@ -91,18 +93,11 @@ export function WorkspaceAppActions({
   };
 
   return (
-    <div className="flex shrink-0 items-center gap-2 font-mono">
-      <span className="inline-flex">
-        <CloudSyncIndicator
-          label={viewModel.cloudSyncLabel}
-          tone={viewModel.cloudSyncTone}
-          onRetry={onRetryCloudSync}
-          compact={compact}
-        />
-      </span>
-      {showApiKeyShortcut && (!compact || viewModel.apiKeyStatusTone === 'missing') ? (
-        <ApiKeyShortcutButton viewModel={viewModel} compact={compact} />
-      ) : null}
+    <div className={cn('flex shrink-0 items-center font-mono', compact ? 'gap-0 @min-[900px]:gap-2' : 'gap-2')}>
+      <WorkspaceStatusActions
+        viewModel={viewModel} onRetryCloudSync={onRetryCloudSync}
+        compact={compact} showApiKeyShortcut={showApiKeyShortcut}
+      />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -110,13 +105,17 @@ export function WorkspaceAppActions({
             aria-label="Open app menu"
             variant={compact ? "ghost" : "secondary"}
             size="icon"
-            className={cn("h-10 w-10", compact && "border-0 shadow-none hover:shadow-none active:translate-none")}
+            className={cn("h-10 w-10", compact && "h-11 w-11 border-0 shadow-none hover:shadow-none active:translate-none")}
           >
             <Menu className="h-4 w-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <AppMenuIdentity userName={userName} userEmail={userEmail} compact={compact} viewModel={viewModel} />
+        <DropdownMenuContent align="end" className="max-h-[var(--radix-dropdown-menu-content-available-height)] w-64 overflow-y-auto">
+          {readingMenuItems}
+          <AppMenuIdentity
+            userName={userName} userEmail={userEmail} compact={compact}
+            viewModel={viewModel} onRetryCloudSync={onRetryCloudSync}
+          />
           <DropdownMenuSeparator />
           {onStartNewDocument ? (
             <DropdownMenuItem onClick={onStartNewDocument} className="gap-2">
@@ -152,6 +151,27 @@ export function WorkspaceAppActions({
   );
 }
 
+function WorkspaceStatusActions({
+  viewModel, onRetryCloudSync, compact, showApiKeyShortcut,
+}: Pick<WorkspaceAppActionsProps, 'viewModel' | 'onRetryCloudSync'> & {
+  compact: boolean;
+  showApiKeyShortcut: boolean;
+}): ReactElement {
+  return (
+    <>
+      <span className={compact ? 'hidden @min-[900px]:inline-flex' : 'inline-flex'}>
+        <CloudSyncIndicator
+          label={viewModel.cloudSyncLabel} tone={viewModel.cloudSyncTone}
+          onRetry={onRetryCloudSync} compact={compact}
+        />
+      </span>
+      {showApiKeyShortcut && (!compact || viewModel.apiKeyStatusTone === 'missing') ? (
+        <ApiKeyShortcutButton viewModel={viewModel} compact={compact} />
+      ) : null}
+    </>
+  );
+}
+
 export function WorkspaceHeader(props: WorkspaceAppChromeProps): ReactElement {
   return (
     <header className="border-b-2 border-border bg-background px-3 py-3 font-mono sm:px-4">
@@ -180,7 +200,7 @@ function ApiKeyShortcutButton({
       size={isMissing && !compact ? 'default' : 'icon'}
       className={cn(
         isMissing ? 'bg-accent' : 'h-10 w-10 bg-secondary',
-        compact && !isMissing ? 'hidden sm:inline-flex' : '',
+        compact ? 'hidden @min-[900px]:inline-flex' : '',
       )}
       aria-label={viewModel.apiKeyStatusLabel}
       title={viewModel.apiKeyStatusLabel}
@@ -206,11 +226,7 @@ function CloudSyncIndicator({
   compact?: boolean;
 }): ReactElement {
   if (compact) {
-    const labels = { saved: 'Synced', saving: 'Syncing…', loading: 'Loading…', offline: 'Offline', error: 'Not synced' };
-    return <span role="status" aria-label={label} title={label} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-      {tone === 'saved' ? <Check className="h-3 w-3" aria-hidden="true" /> : null}
-      {labels[tone]}
-    </span>;
+    return <CompactSyncIndicator label={label} tone={tone} />;
   }
   if (tone === 'offline' || tone === 'error') {
     return (
@@ -242,6 +258,20 @@ function CloudSyncIndicator({
   );
 }
 
+function CompactSyncIndicator({ label, tone }: {
+  label: string;
+  tone: WorkspaceViewModel['cloudSyncTone'];
+}): ReactElement {
+  const isUnavailable = tone === 'offline' || tone === 'error';
+  const Icon = isUnavailable ? CloudOff : tone === 'saved' ? Check : LoaderCircle;
+  const isPending = tone === 'saving' || tone === 'loading';
+  return (
+    <span role="status" aria-label={label} title={label} className="flex h-11 w-5 items-center justify-center text-muted-foreground">
+      <Icon className={cn('h-4 w-4', isPending && 'motion-safe:animate-spin')} aria-hidden="true" />
+    </span>
+  );
+}
+
 export function ReaderSyncAlert({ viewModel, onRetry }: {
   viewModel: WorkspaceViewModel;
   onRetry: () => void;
@@ -256,16 +286,28 @@ export function ReaderSyncAlert({ viewModel, onRetry }: {
   );
 }
 
-function AppMenuIdentity({ userName, userEmail, compact, viewModel }: Pick<WorkspaceAppActionsProps,
-  'userName' | 'userEmail' | 'compact' | 'viewModel'
+function AppMenuIdentity({ userName, userEmail, compact, viewModel, onRetryCloudSync }: Pick<WorkspaceAppActionsProps,
+  'userName' | 'userEmail' | 'compact' | 'viewModel' | 'onRetryCloudSync'
 >): ReactElement {
+  const hasSyncError = viewModel.cloudSyncTone === 'offline' || viewModel.cloudSyncTone === 'error';
   return <>
     <DropdownMenuLabel className="truncate">
       {userName || userEmail}
       {userEmail ? <span className="mt-0.5 block truncate font-normal">{userEmail}</span> : null}
     </DropdownMenuLabel>
-    {compact ? <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-      {viewModel.apiKeyStatusTone === 'missing' ? 'Gemini API key missing' : 'Gemini API key configured'}
+    {compact && viewModel.apiKeyStatusTone === 'missing' ? <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+      Gemini API key missing
     </DropdownMenuLabel> : null}
+    {compact && hasSyncError ? (
+      <>
+        <DropdownMenuLabel role="status" className="text-xs font-normal text-muted-foreground">
+          {viewModel.cloudSyncTone === 'offline' ? 'Cloud sync is paused.' : 'Cloud sync failed.'}
+        </DropdownMenuLabel>
+        <DropdownMenuItem onSelect={onRetryCloudSync} className="gap-2">
+          <CloudOff className="h-4 w-4" aria-hidden="true" />
+          <span>Retry sync</span>
+        </DropdownMenuItem>
+      </>
+    ) : null}
   </>;
 }
