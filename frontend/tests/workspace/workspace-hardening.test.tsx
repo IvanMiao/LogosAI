@@ -140,7 +140,6 @@ describe('workspace hardening', () => {
     });
     renderWorkspace();
 
-    await user.click(screen.getByRole('button', { name: 'Paste text' }));
     const pasteEditor = screen.getByPlaceholderText('Paste source text here...');
     await user.type(pasteEditor, 'Text that must not be lost.');
     await user.click(screen.getByRole('button', { name: 'Start reading' }));
@@ -149,6 +148,35 @@ describe('workspace hardening', () => {
     expect(pasteEditor).toHaveValue('Text that must not be lost.');
     expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
     setItemSpy.mockRestore();
+  });
+
+  it.each(['unsupported', 'empty', 'unreadable'] as const)('keeps import drafts and shows %s file errors before reading', async (failure) => {
+    const user = userEvent.setup({ applyAccept: false });
+    renderWorkspace();
+    await user.type(screen.getByRole('textbox', { name: 'Source text' }), 'Keep this passage.');
+    await user.type(screen.getByRole('textbox', { name: /Session title/ }), 'Keep this title');
+    const file = new File(['content'], failure === 'unsupported' ? 'chapter.pdf' : 'chapter.txt');
+    Object.defineProperty(file, 'text', { value: failure === 'unreadable'
+      ? () => Promise.reject(new Error('Read failed'))
+      : () => Promise.resolve('') });
+    await user.upload(screen.getByLabelText('Open text file'), file);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Choose another file|Try opening it again/);
+    expect(screen.getByRole('textbox', { name: 'Source text' })).toHaveValue('Keep this passage.');
+    expect(screen.getByRole('textbox', { name: /Session title/ })).toHaveValue('Keep this title');
+    expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start reading' }));
+    expect(await screen.findByRole('region', { name: 'Reading surface' })).toHaveTextContent('Keep this passage.');
+  });
+
+  it('opens a supported file directly from the visible paste form', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    expect(screen.getByRole('textbox', { name: 'Source text' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Start reading' })).toBeDisabled();
+    const file = new File(['Read this file.'], 'chapter.md', { type: 'text/markdown' });
+    Object.defineProperty(file, 'text', { value: () => Promise.resolve('Read this file.') });
+    await user.upload(screen.getByLabelText('Open text file'), file);
+    expect(await screen.findByRole('region', { name: 'Reading surface' })).toHaveTextContent('Read this file.');
   });
 
   it('renders a focused reader at mobile and desktop viewport widths', async () => {
@@ -164,7 +192,7 @@ describe('workspace hardening', () => {
       expect(screen.getByRole('button', { name: /API key missing/i })).toBeInTheDocument();
       expect(screen.getByRole('status', { name: 'Gemini API key missing' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Open app menu' })).toBeInTheDocument();
-      expect(screen.getByRole('combobox', { name: 'Analysis language' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Reading settings/ })).toBeInTheDocument();
       expect(screen.getByRole('region', { name: 'Reading surface' })).toBeInTheDocument();
       expect(screen.getByRole('group', { name: 'Reader layout' })).toBeInTheDocument();
       const activeLayoutName = width === 390

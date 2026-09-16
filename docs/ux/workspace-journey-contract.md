@@ -1,6 +1,6 @@
 # Workspace Journey UX Contract
 
-- 状态：Active；文档核对：2026-09-12
+- 状态：Active；文档核对：2026-09-16
 - 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
 
 ## 当前界面模型
@@ -8,6 +8,25 @@
 Destination 是 reader / history；Reader layout 是 source / split / analysis。
 桌面默认双栏，窄屏默认单栏；三个布局按钮只改变阅读区域布局，History 是独立查询入口。
 Explain 为关联原文的当前详情，Close Reading 为整篇分析。
+
+顶栏按文档导航、阅读控制、同步与账号分组，依据工具栏实际可用宽度换行。
+History 保持独立入口；布局按钮保留 aria-pressed。已配置 key 的提示移入账号菜单，
+缺 key 的入口和横幅保留；云同步状态用简短文字显示，离线/失败直接显示 Retry sync。
+Reading 按钮显示当前 AI 输出语言（窄屏使用语言缩写），打开统一设置弹窗。
+七种输出语言、字体联动、文字大小、行距与行宽复用现有偏好；外观即时生效。
+语言只影响下一次 AI 请求（包括 Retry），不重跑已有结果，也不修改运行中请求；
+Reset appearance 只重置外观，不改变语言，不引入每篇偏好继承。
+
+导入页面直接显示 Source text，随后是可选标题及 Open file / Start reading。
+不支持的格式、空文件和读取异常在按钮上方显示原因与下一步操作；文件失败不清空
+粘贴文本和标题。文件导入成功直接打开阅读；粘贴输入为空时禁用 Start reading。
+
+Explain 引文超过三行时默认折叠，提供 Show full quote / Show less；短引文无折叠按钮。
+Show in source 先验证原文位置或唯一引用匹配，桌面恢复双栏、窄屏切到原文并定位；
+保留同一成果、任务和笔记，不新建选段或请求 AI。无法唯一定位时禁用入口并说明原因，
+保留引用快照。Explain 栏顶固定显示当前状态、真实生成阶段和文字版 Stop / Retry；
+部分输出与错误继续保留，Retry 创建新输出，不覆盖旧成果。
+
 
 Sessions 是始终位于左侧的跨 session 导航，不展开 artifact 子树。未固定时为临时抽屉，
 打开 session 后关闭；桌面固定后为常驻侧栏，切换 session 时保持可见。Unpin 在原侧
@@ -32,13 +51,17 @@ History 查询当前 session 已保存工作，
 | WJ-04 | 从 Close Reading 原文打开 saved Explain，再返回 | Explain 替换分析正文；Back to Close Reading 恢复同一分析，不重新请求 |
 | WJ-05 | 打开 History，切换 Source order | 默认 updatedAt 倒序；原文顺序按 source offset；使用 session 内 list-detail |
 | WJ-06 | History 条目 → Open in Text | 当前桌面测试恢复双栏及对应解释，精确 range 使用 mark；不发起新请求，也不增加常驻返回条 |
-| WJ-07 | 调整阅读设置，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
+| WJ-07 | 打开 Reading，调整阅读设置，解除字体联动 | 默认原文/分析偏好统一；即时生效；解除后可分别调字体 |
 | WJ-08 | 左侧 Sessions drawer → Pin → Unpin / Collapse | 紧凑平坦导航；两种模式均在左侧；固定时切换保持侧栏；pin 偏好持久化；取消固定保留抽屉，收起后可重新打开 |
 | WJ-09 | 启动 Close Reading，先 stage 后正文 | 显示真实 interpret 阶段文案；完成后由正文替代 |
 | WJ-10 | 无 key 时 Explain，再打开 History | 顶部 Settings 黄条，不另出红色错误；不创建污染 History 的失败 artifact |
 | WJ-11 | 重载带 running artifact 的 session | 恢复为 stopped；可 Retry，不再显示 Stop |
 | WJ-12 | 选择旧 Close Reading 版本，切换布局再返回 | 恢复仍有效的所选版本，不强制跳到最新版本 |
 | WJ-13 | Explain paragraph 收到部分正文后提前 EOF | 保留部分输出，artifact 为 failed；显示错误和 Retry，不误标 complete |
+| WJ-14 | Explain → Show in source，桌面及窄屏 | 定位精确引用；窄屏返回分析仍是同一结果；不发起 AI、不新增成果 |
+| WJ-15 | 打开已无法定位的 Explain | 保存的引文及结果可读；定位入口禁用并说明原因 |
+| WJ-16 | 粘贴草稿后导入不支持/空/不可读文件，再开始阅读 | 错误直接可见；保留标题和文本；可继续完成粘贴导入（hardening 测试） |
+
 
 ## 阅读现场与导航（E1）
 
@@ -73,6 +96,8 @@ Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 长标题截断及菜单完整标题、重命名输入焦点与 Escape 取消、取消删除后返回列表。
 固定后焦点进入侧栏搜索；窄屏无固定按钮，抽屉内容未横向溢出。
 本轮不包含真实 AI 请求、屏幕阅读器或 200% zoom 验收。
+
+2026-09-16 本次界面变更的本地浏览器与模拟流验证见[阅读控件验收](reading-ui-refinements-verification.md)。
 
 浏览器验收应另记环境、日期、版本和结果：
 

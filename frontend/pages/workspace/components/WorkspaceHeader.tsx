@@ -58,7 +58,7 @@ export function WorkspaceBrandButton({
       title={compact ? 'LogosAI home' : undefined}
       className="flex min-h-10 min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-primary shadow-[4px_4px_0px_0px_var(--border)]">
+      <span className={cn("flex shrink-0 items-center justify-center border-2 border-border bg-primary", compact ? "h-8 w-8 shadow-[2px_2px_0px_0px_var(--border)]" : "h-10 w-10 shadow-[4px_4px_0px_0px_var(--border)]")}>
         <Brain className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className={compact ? 'hidden min-w-0 xl:block' : 'min-w-0'}>
@@ -92,14 +92,15 @@ export function WorkspaceAppActions({
 
   return (
     <div className="flex shrink-0 items-center gap-2 font-mono">
-      <span className={compact ? 'hidden sm:inline-flex' : 'inline-flex'}>
+      <span className="inline-flex">
         <CloudSyncIndicator
           label={viewModel.cloudSyncLabel}
           tone={viewModel.cloudSyncTone}
           onRetry={onRetryCloudSync}
+          compact={compact}
         />
       </span>
-      {showApiKeyShortcut ? (
+      {showApiKeyShortcut && (!compact || viewModel.apiKeyStatusTone === 'missing') ? (
         <ApiKeyShortcutButton viewModel={viewModel} compact={compact} />
       ) : null}
 
@@ -107,18 +108,15 @@ export function WorkspaceAppActions({
         <DropdownMenuTrigger asChild>
           <Button
             aria-label="Open app menu"
-            variant="secondary"
+            variant={compact ? "ghost" : "secondary"}
             size="icon"
-            className="h-10 w-10"
+            className={cn("h-10 w-10", compact && "border-0 shadow-none hover:shadow-none active:translate-none")}
           >
             <Menu className="h-4 w-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="truncate">
-            {userName || userEmail}
-            {userEmail ? <span className="mt-0.5 block truncate font-normal">{userEmail}</span> : null}
-          </DropdownMenuLabel>
+          <AppMenuIdentity userName={userName} userEmail={userEmail} compact={compact} viewModel={viewModel} />
           <DropdownMenuSeparator />
           {onStartNewDocument ? (
             <DropdownMenuItem onClick={onStartNewDocument} className="gap-2">
@@ -200,11 +198,20 @@ function CloudSyncIndicator({
   label,
   tone,
   onRetry,
+  compact = false,
 }: {
   label: string;
   tone: WorkspaceViewModel['cloudSyncTone'];
   onRetry: () => void;
+  compact?: boolean;
 }): ReactElement {
+  if (compact) {
+    const labels = { saved: 'Synced', saving: 'Syncing…', loading: 'Loading…', offline: 'Offline', error: 'Not synced' };
+    return <span role="status" aria-label={label} title={label} className="flex items-center gap-1 text-[11px] text-muted-foreground">
+      {tone === 'saved' ? <Check className="h-3 w-3" aria-hidden="true" /> : null}
+      {labels[tone]}
+    </span>;
+  }
   if (tone === 'offline' || tone === 'error') {
     return (
       <Button
@@ -233,4 +240,32 @@ function CloudSyncIndicator({
         : <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />}
     </span>
   );
+}
+
+export function ReaderSyncAlert({ viewModel, onRetry }: {
+  viewModel: WorkspaceViewModel;
+  onRetry: () => void;
+}): ReactElement | null {
+  const tone = viewModel.cloudSyncTone;
+  if (tone !== 'offline' && tone !== 'error') return null;
+  return (
+    <div role="alert" className="mt-2 flex items-center justify-between gap-3 border-t border-border/30 pt-2 font-sans text-sm text-error-foreground">
+      <span>{tone === 'offline' ? 'You are offline. Cloud sync is paused.' : 'Cloud sync failed.'}</span>
+      <Button type="button" variant="outline" size="sm" className="shrink-0 shadow-none" onClick={onRetry}>Retry sync</Button>
+    </div>
+  );
+}
+
+function AppMenuIdentity({ userName, userEmail, compact, viewModel }: Pick<WorkspaceAppActionsProps,
+  'userName' | 'userEmail' | 'compact' | 'viewModel'
+>): ReactElement {
+  return <>
+    <DropdownMenuLabel className="truncate">
+      {userName || userEmail}
+      {userEmail ? <span className="mt-0.5 block truncate font-normal">{userEmail}</span> : null}
+    </DropdownMenuLabel>
+    {compact ? <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+      {viewModel.apiKeyStatusTone === 'missing' ? 'Gemini API key missing' : 'Gemini API key configured'}
+    </DropdownMenuLabel> : null}
+  </>;
 }

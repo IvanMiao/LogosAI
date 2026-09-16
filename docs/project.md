@@ -30,6 +30,12 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 [跨段/Unicode 测试](../frontend/tests/anchors/selection-offsets.test.ts)。
 交互以[旅程契约](ux/workspace-journey-contract.md)为准。
 
+2026-09-16 阅读交互增量：导入页粘贴区直接可见，文件错误保留草稿；Explain 支持
+三行引文折叠及验证后定位原文，状态和 Stop/Retry 固定在栏顶；顶栏分组，并将输出语言
+与外观合并到 Reading 弹窗。沿用现有偏好、History、任务与保存契约，未改 AI API。
+本地验证范围见[阅读控件验收](ux/reading-ui-refinements-verification.md)。
+
+
 ## 领域语言
 
 | 概念 | 含义 |

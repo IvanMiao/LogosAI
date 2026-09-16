@@ -120,16 +120,25 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
     if (!isSupportedTextFile(file.name)) {
       setImportState((current) => ({
         ...current,
-        importError: 'Only .txt and .md files are supported in Workspace Alpha.',
+        importError: `Could not import ${file.name}. Only .txt and .md files are supported. Choose another file, or paste the text above.`,
       }));
       return false;
     }
 
-    const text = (await file.text()).trim();
+    let text: string;
+    try {
+      text = (await file.text()).trim();
+    } catch {
+      setImportState((current) => ({
+        ...current,
+        importError: `Could not read ${file.name}. Try opening it again, or paste the text above.`,
+      }));
+      return false;
+    }
     if (!text) {
       setImportState((current) => ({
         ...current,
-        importError: 'The selected file is empty.',
+        importError: 'The selected file is empty. Choose another file, or paste the text above.',
       }));
       return false;
     }

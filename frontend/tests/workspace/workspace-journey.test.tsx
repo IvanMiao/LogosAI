@@ -238,8 +238,12 @@ describe('workspace journey contract', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderWorkspace();
 
+    await user.click(screen.getByRole('button', { name: /Reading settings/ }));
     await user.click(screen.getByRole('combobox', { name: 'Analysis language' }));
     await user.click(await screen.findByRole('option', { name: 'Français' }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: /Reading settings.*Français/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', {
       name: 'Run Close Reading again in Français',
     }));
@@ -396,7 +400,7 @@ describe('workspace journey contract', () => {
     expect(sourceArticle).toHaveStyle({ fontSize: '18px', maxWidth: 'min(760px, 68ch)' });
     expect(analysisBody).toHaveStyle({ fontSize: '18px', maxWidth: '760px' });
 
-    await user.click(screen.getByRole('button', { name: 'Reading appearance' }));
+    await user.click(screen.getByRole('button', { name: /Reading settings/ }));
     fireEvent.change(screen.getByRole('slider', { name: /Text size/ }), { target: { value: '21' } });
     expect(sourceArticle).toHaveStyle({ fontSize: '21px' });
     expect(analysisBody).toHaveStyle({ fontSize: '21px' });
@@ -547,4 +551,43 @@ describe('workspace journey contract', () => {
     expect(within(pane).getByRole('button', { name: 'Retry artifact' })).toBeEnabled();
     expect(within(pane).queryByRole('button', { name: 'Stop artifact' })).not.toBeInTheDocument();
   });
+  it.each([390, 1280])('locates Explain in source at %ipx without creating work or requesting AI', async (width) => {
+    window.innerWidth = width;
+    const user = userEvent.setup();
+    const artifact = createArtifact('locate-output', savedSelectionAnchor.id, 'explanation', 'Saved explanation.', '2026-07-21T12:00:00.000Z');
+    seedReadingWork([savedSelectionAnchor], { [savedSelectionAnchor.id]: [artifact] });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+    await user.click(screen.getByRole('button', { name: 'History' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Text' }));
+    const storedBefore = readStoredArtifacts(TEST_USER_ID);
+    await user.click(screen.getByRole('button', { name: 'Show in source' }));
+    const source = screen.getByRole('region', { name: 'Reading surface' });
+    expect(source.querySelector('mark')).toHaveTextContent(savedSelectionAnchor.quote);
+    expect(screen.getByRole('button', { name: width === 390 ? 'Show source only' : 'Show source and analysis' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    if (width === 390) await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
+    expect(screen.getByText('Saved explanation.')).toBeInTheDocument();
+    expect(readStoredArtifacts(TEST_USER_ID)).toEqual(storedBefore);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps an unresolvable saved quote readable and disables source navigation', async () => {
+    const user = userEvent.setup();
+    const anchor = { ...savedSelectionAnchor, quote: 'A removed passage.', normalizedQuote: 'a removed passage.' };
+    const artifact = createArtifact('unresolved-output', anchor.id, 'explanation', 'Saved explanation.', '2026-07-21T12:00:00.000Z');
+    seedReadingWork([anchor], { [anchor.id]: [artifact] });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    renderWorkspace();
+    await user.click(screen.getByRole('button', { name: 'History' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Text' }));
+    expect(screen.getByRole('button', { name: 'Show in source' })).toBeDisabled();
+    expect(screen.getByText(/could not be uniquely matched/)).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Selected source' })).getByText(anchor.quote)).toBeInTheDocument();
+    expect(screen.getByText('Saved explanation.')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
 });
