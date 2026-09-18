@@ -21,5 +21,6 @@ backend/history.db
 skills-lock.json
 docs/gtm-cofounder
 
-# Local documentation archives
+# Local working notes, QA logs, and historical documentation
+docs/local/
 docs/archive/

@@ -79,12 +79,28 @@ npm run check
 - [Cloud architecture ADR](./docs/adr/0001-cloud-auth-and-reading-sessions.md):
   auth, data ownership, and credential boundaries.
 - [Workspace Journey Contract](./docs/ux/workspace-journey-contract.md): current
-  behavior and test coverage.
+  interaction rules and test entry points.
+- [Workspace Evolution](./docs/ux/reading-workspace-evolution.md): remaining design
+  decisions and slice dependencies, subject to the Roadmap.
 - [User Evidence](./docs/user-evidence.md): historical reports, hypotheses, and
   evidence limits.
-Historical designs, QA, and learning material may be kept locally in
-`docs/archive/`; this directory is ignored by Git and is not an implementation backlog.
+- [Evaluation samples](./docs/evals/workspace_alpha.jsonl): versioned test inputs,
+  consumed by the backend dataset validator; these are not QA logs.
 
-Start with this README, Project Reference, and Roadmap. Keep current facts in
-Project Reference, execution priorities in Roadmap, and UX invariants in the
-Journey Contract. Link to the owning document instead of copying its contents.
+Start with this README, Project Reference, and Roadmap. Each document owns one
+kind of information; link to that owner instead of copying it.
+
+| Material | Where it belongs |
+| --- | --- |
+| Setup, current contracts, priorities, accepted architecture decisions, reusable evaluation inputs | Tracked in the owning document or dataset; include affected updates in the same PR |
+| Minor UI polish, change rationale, verification results | PR description; a UI change does not require a new UX document |
+| A changed interaction or failure rule | A concise edit to the Journey Contract and relevant tests |
+| Substantial unresolved design spanning multiple changes | A concise tracked proposal only when the PR or existing docs are insufficient; consolidate after delivery |
+| Raw browser logs, screenshots, drafts, research and personal notes | Ignored `docs/local/` |
+| Superseded designs, old QA and learning material | Git history; optional ignored `docs/archive/` copy |
+
+PR verification should state the environment/version, relevant scenarios, result,
+and material gaps. Before archiving, promote unresolved blockers and lasting
+decisions to their owner or an issue. Local-only files are optional working
+material, not required references or an implementation backlog. Detailed editing
+rules live in [AGENTS.md](./AGENTS.md#documentation).

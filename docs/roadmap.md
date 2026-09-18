@@ -1,11 +1,11 @@
 # LogosAI Roadmap
 
 - 状态：Active，产品研究与工程交付的唯一实施顺序
-- 更新：2026-09-12，核对 SSE 与 E1 实现状态，保留真实服务验收待办
+- 更新：2026-09-18，收敛文档并提取历史验收中的未解阻塞；本次未重跑服务验收
 - 现状：[项目参考](project.md)；来源：[用户证据](user-evidence.md)
 
-阅读工作台的目标交互、实施切片与验收见[阅读工作台与常驻 Agent 实施设计](ux/reading-workspace-evolution.md)。
-该文档定义目标与依赖，当前行为见[旅程契约](ux/workspace-journey-contract.md)。
+跨切片边界与待决项见[工作台演进设计](ux/reading-workspace-evolution.md)，
+当前行为见[旅程契约](ux/workspace-journey-contract.md)。
 
 ## 当前目标与状态
 
@@ -22,28 +22,37 @@ Now 是当前优先事项；Next 按启动条件推进；Later 等待证据。
 | 精确选区与 note 基础 | DOM Range、重复 quote、歧义、跨段及 Unicode 测试 | 真实浏览器选区、note 刷新定位；前后文 selector 未独立实现 |
 | Cloud foundation | Better Auth、D1 sessions、per-user key、journal 和重试 | 真实注册到恢复链路、断网及多标签页覆盖行为 |
 | 阅读工作台 | 默认双栏、独立 History、整篇 Close Reading、段落 Explain | 200% 缩放与真实服务验收 |
-| 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[验收记录](ux/reading-navigation-verification.md) | 真实登录、云恢复、多标签页；用户价值观察 |
+| 阅读现场与导航 E1 | session / artifact 地址；用户隔离现场；History 返回；[导航回归](../frontend/tests/workspace/reading-navigation.test.tsx) | 当前发布版本复验、多标签页、200% 缩放；用户价值观察 |
 | Anchor 流终态校验 | 匹配 done、identity 校验；截断保留部分输出、failed 与 Retry；transport 和旅程回归测试 | 真实服务 stop/retry、断流及云同步组合验收 |
 | 重载恢复 | Persisted running → stopped，可重试 | 与真实断流、云同步组合检查 |
 | LLM monitoring | Spans、首 token 延迟、usage 采集代码 | 生产采集完整性与健康状态 |
 
 Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经验证的证据。
 
+### 已有验收证据与阻塞
+
+2026-09-13 本地保存的真实服务报告（关联 #43–#46）记录了生产 Explain 正常完成、
+无效 key/Stop、D1 保存与离线重试；缺 done、identity 改变和正文后 error 使用受控回放。
+它同时复现两标签页整包写入静默覆盖笔记。生产资源未映射到可核实的 commit，不能据此关闭当前版本验收。
+报告所述 If-Match/冲突副本修复属于另一分支；2026-09-18 静态核对此分支仍无版本条件写入。
+N2 保留为阻塞：确认修复合入与部署状态，再复验并发、删除及离线组合。200% 实际缩放、
+屏幕阅读器、模型质量和用户价值没有完成证据。原始报告留本地，以上结论不依赖该文件才能理解。
+
 ## Now
 
 ### N1：Explain 流终态可靠性验收（工程第一项）
 
 - 现状：缺失 done 和 identity 校验已实现；旅程回归覆盖截断后的部分输出保留、failed 和 Retry。代码与测试入口见[旅程契约](ux/workspace-journey-contract.md#测试与未验证范围)。
-- 剩余：真实服务 stop/retry、截断及云同步组合验证；记录环境、结果和失败路径。
+- 剩余：在可追溯的发布版本上复验真实服务 stop/retry、截断及云同步组合；记录环境、结果和失败路径。
 - 验收：正常 done 完成；缺 done、错 identity、error、主动 stop 有明确终态；切换选区不改变原 task 归属。
 - 验证：沿用现有 transport/旅程回归与 stopped/failed 状态，补真实 stream 记录；发现问题后修复并执行相关检查。
 
 ### N2：云端数据恢复验收
 
-- 问题：已有持久化实现和模拟云同步测试，缺少完整真实服务验收记录；服务端仍为无版本条件的整包替换，本地 journal 不解决跨设备冲突。
+- 问题：历史真实服务报告已记录并发覆盖；此分支仍为无版本条件的整包替换，本地 journal 不解决跨设备冲突。
 - 范围：注册/登录、导入、note、刷新、登出再登录；断网编辑后恢复；debounce 前刷新；删除后刷新；多标签页修改。
 - 验收：内容可恢复；本地保存与云同步状态准确；失败可见且可重试；记录并发覆盖行为。
-- 约束：复用 journal 与重试；复现覆盖后再决定 revision 检查/冲突副本，不先引入协作框架。数据丢失问题优先修复。
+- 约束：复用 journal 与重试；核查已有 revision 检查/冲突副本修复的合入状态，不先引入协作框架。数据丢失问题优先修复。
 
 ### N3：解释质量基线
 
@@ -92,6 +101,6 @@ Cloud auth 是 2026-08-09 明确产品决策，不作为重复使用需求已经
 
 ## 完成标准
 
-每项记录代码证据、验证环境/日期、结果、失败路径与未验证项。
-AI 改动需相称的真实模型 review；行为变化同步旅程契约并执行
+每项在 PR 中记录代码证据、验证环境/版本/日期、结果、失败路径与未验证项；原始日志留本地。
+AI 改动需相称的真实模型 review；持久交互规则变化时更新旅程契约对应条目，并执行
 [相关检查](../README.md#verify-changes)。私人原文与笔记不进入公开证据或默认 telemetry。

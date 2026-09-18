@@ -1,7 +1,7 @@
 # LogosAI Project Reference
 
 - 状态：Active，当前产品与工程参考
-- 核对日期：2026-09-12（代码与测试静态核对，不代表生产验收）
+- 代码基线核对：2026-09-12；2026-09-18 整理文档并静态复核云写入边界，不代表重新验收
 - 下一步：[路线图](roadmap.md)；用户与价值假设：[用户证据](user-evidence.md)
 
 ## 产品边界
@@ -29,15 +29,6 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 [重复文本/歧义测试](../frontend/tests/anchors/anchor-core.test.ts)及
 [跨段/Unicode 测试](../frontend/tests/anchors/selection-offsets.test.ts)。
 交互以[旅程契约](ux/workspace-journey-contract.md)为准。
-
-2026-09-16 阅读交互增量：导入页粘贴区直接可见，文件错误保留草稿；Explain 支持
-三行引文折叠及验证后定位原文，状态和 Stop/Retry 固定在栏顶。
-2026-09-17 顶栏保持单行：窄屏将 History、外观和主页入口收进菜单；语言按钮仅显示
-语言名称或缩写，下拉说明其用于下一次 AI 请求。正常同步不常驻文字，宽屏保留状态图标，
-宽屏菜单不重复显示顶栏已有的 History、外观与主页入口，也不显示已配置 key 或已同步文字；
-离线/失败仍显示文字和重试。沿用现有偏好、History、任务与保存契约，未改 AI API。
-本地验证范围见[阅读控件验收](ux/reading-ui-refinements-verification.md)。
-
 
 ## 领域语言
 
@@ -109,9 +100,9 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 
 ## 验证边界
 
-Contract tests、真实服务端到端检查、模型评估与用户观察分别记录，不能互相替代。
-命令统一见 [README](../README.md#verify-changes)。历史报告不证明当前部署通过，
-历史材料仅保存在本地 `docs/archive/`，不随仓库分发。
+Contract tests、真实服务端到端检查、模型评估与用户观察不能互相替代。
+命令统一见 [README](../README.md#verify-changes)，每次执行结果写入 PR；原始记录留本地。
+已知阻塞与验收待办由[路线图](roadmap.md)维护，历史报告不证明当前部署通过。
 
 ## 阅读现场与地址
 
@@ -121,5 +112,4 @@ Contract tests、真实服务端到端检查、模型评估与用户观察分别
 地址只提供定位，不授予其他账号访问权限。
 
 阅读现场由版本化、按用户与 document 隔离的本地快照保存，不进入云 API。
-恢复、加载和失败回退规则见[旅程契约](ux/workspace-journey-contract.md#阅读现场与导航e1)，
-已执行的检查见[验收记录](ux/reading-navigation-verification.md)。
+恢复、加载和失败回退规则见[旅程契约](ux/workspace-journey-contract.md#阅读现场与导航e1)。
