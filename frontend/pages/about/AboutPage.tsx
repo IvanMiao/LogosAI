@@ -5,14 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { cn } from '@/utils/class-name';
 
 const STACK_GROUPS = [
-  { label: 'Reader', items: ['React', 'Vite', 'TypeScript', 'Tailwind CSS'] },
+  { label: 'Frontend', items: ['React', 'Vite', 'TypeScript', 'Tailwind CSS'] },
   { label: 'App & data', items: ['Cloudflare Workers', 'Hono', 'Better Auth', 'D1'] },
   { label: 'AI backend', items: ['FastAPI', 'Pydantic', 'LangChain', 'Gemini'] },
 ];
 
 function StackBadges(): ReactElement {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="space-y-3">
       {STACK_GROUPS.map((group) => (
         <div key={group.label}>
           <p className="mb-2 font-mono text-xs font-bold text-muted-foreground">
@@ -67,7 +67,7 @@ function AboutSection({
 export function AboutPage(): ReactElement {
   return (
     <div className="space-y-6">
-      <Card className="mx-auto max-w-5xl border-border shadow-[4px_4px_0px_0px_var(--border)]">
+      <Card className="mx-auto max-w-3xl border-border shadow-[4px_4px_0px_0px_var(--border)]">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center border-2 border-border bg-secondary shadow-[2px_2px_0px_0px_var(--border)]">
@@ -92,13 +92,12 @@ export function AboutPage(): ReactElement {
           >
             <div className="space-y-3">
               <p className="max-w-[72ch] text-sm leading-6 text-muted-foreground">
-                Take the text apart. See how it works. LogosAI explores language, structure,
-                and context—with AI to support your reading and room for your own interpretation.
+                Deconstructs syntax. Decodes rhetoric. Maps the logic.
+                Examines language, nuance, and context.
               </p>
               <p className="max-w-[72ch] text-sm leading-6 text-muted-foreground">
-                Your Gemini API key is encrypted before storage and decrypted by the app gateway
-                only when you make an AI request. Reading sessions sync with your signed-in account
-                and are not end-to-end encrypted.
+                Your Gemini key is stored encrypted. The gateway decrypts it only for AI requests.
+                Sessions sync to your account without end-to-end encryption.
               </p>
             </div>
           </AboutSection>
@@ -118,20 +117,15 @@ export function AboutPage(): ReactElement {
             iconColorClassName="text-black"
             title="OPEN_SOURCE"
           >
-            <div>
-              <p className="mb-3 max-w-[72ch] text-sm leading-6 text-muted-foreground">
-                Open source. Open to inspection.
-              </p>
-              <a
-                href="https://github.com/IvanMiao/LogosAI"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border-2 border-transparent bg-foreground px-4 py-2 text-sm font-bold text-background shadow-[2px_2px_0px_0px_var(--border)] transition-colors hover:bg-foreground/90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-              >
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                View on GitHub
-              </a>
-            </div>
+            <a
+              href="https://github.com/IvanMiao/LogosAI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-2 border-transparent bg-foreground px-4 py-2 text-sm font-bold text-background shadow-[2px_2px_0px_0px_var(--border)] transition-colors hover:bg-foreground/90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              View on GitHub
+            </a>
           </AboutSection>
 
           <div className="flex items-center justify-between border-t-2 border-border pt-5 font-mono text-xs text-muted-foreground">

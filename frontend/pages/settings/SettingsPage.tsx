@@ -25,7 +25,7 @@ export function SettingsPage({ settings }: SettingsPageProps): ReactElement {
             <div>
               <h1 className="font-mono text-xl font-semibold leading-none tracking-tight">Settings</h1>
               <CardDescription className="mt-1 font-sans text-xs">
-                Manage your private AI credentials and model preference.
+                Your Gemini key and model.
               </CardDescription>
             </div>
           </div>
@@ -42,7 +42,7 @@ export function SettingsPage({ settings }: SettingsPageProps): ReactElement {
                   Gemini API
                 </h2>
                 <p className="mt-1 font-sans text-xs text-muted-foreground">
-                  The key is encrypted in Cloudflare D1 and never returned to this browser.
+                  Stored encrypted. Never sent back to your browser.
                 </p>
               </div>
             </div>

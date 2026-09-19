@@ -38,29 +38,25 @@ export function AuthPage({ mode }: AuthPageProps): ReactElement {
             LogosAI
           </Link>
           <div className="mt-12 max-w-md">
-            <p className="text-xs font-black uppercase tracking-[0.18em]">Your reading workspace</p>
             <h1 className="mt-3 break-words font-brand text-4xl font-black leading-tight sm:text-5xl">
-              Your next close reading starts here.
+              Read deeper.
             </h1>
             <ul className="mt-8 space-y-4 font-sans text-sm leading-6">
-              <li className="flex gap-3"><Cloud className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Sessions stay available across devices.</li>
-              <li className="flex gap-3"><BookOpen className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Selections, notes, and Close Readings stay tied to their source.</li>
-              <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Your Gemini key is encrypted before storage.</li>
+              <li className="flex gap-3"><Cloud className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Your readings, synced across devices.</li>
+              <li className="flex gap-3"><BookOpen className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Notes and analysis, tied to the source.</li>
+              <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />Your Gemini key, stored encrypted.</li>
             </ul>
           </div>
         </section>
 
         <section className="min-w-0 p-6 sm:p-8 lg:p-10" aria-labelledby="auth-heading">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">
-            {isSignUp ? 'Create_Account' : 'Welcome_Back'}
-          </p>
           <h2 id="auth-heading" className="mt-2 font-brand text-3xl font-black">
-            {isSignUp ? 'Create your account' : 'Sign in to continue'}
+            {isSignUp ? 'Create an account' : 'Sign in'}
           </h2>
           <p className="mt-2 font-sans text-sm leading-6 text-muted-foreground">
             {isSignUp
-              ? 'Start a private, synced reading library.'
-              : 'Open your saved reading sessions and continue where you stopped.'}
+              ? 'Save your reading across devices.'
+              : 'Return to your texts and notes.'}
           </p>
 
           <div className="mt-7 space-y-5">
