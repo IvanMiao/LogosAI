@@ -1,32 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  deleteCloudReadingSession,
-  getCloudWorkspace,
-  saveCloudReadingSession,
-  saveCloudWorkspacePreferences,
-} from '@/client-api/workspace-api';
-import {
-  buildReadingSessions,
-  buildWorkspacePreferences,
-  fingerprint,
-  mergeCloudWorkspace,
-  type LocalWorkspaceState,
-} from '@/features/reading/reading-cloud-state';
+import { RemoteApiError } from '@/client-api/api-error';
+import { deleteCloudReadingSession, getCloudWorkspace, saveCloudReadingSession,
+  saveCloudWorkspacePreferences } from '@/client-api/workspace-api';
+import { buildReadingSessions, buildWorkspacePreferences, fingerprint, type LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
+import { type ReadingConflict } from '@/features/reading/reading-session-merge';
+import { readWorkspaceSyncJournal, writeWorkspaceSyncJournal, type WorkspaceSyncJournal } from '@/features/reading/reading-sync-journal';
 import type { WorkspaceSyncStatus } from './workspace-types';
-import {
-  readWorkspaceSyncJournal,
-  writeWorkspaceSyncJournal,
-  type WorkspaceSyncJournal,
-} from '@/features/reading/reading-sync-journal';
+import { WorkspaceSyncState, type ConflictResolution } from '@/features/reading/reading-sync-state';
 
 const SYNC_DEBOUNCE_MS = 1_500;
-
+function isRevisionConflict(error: unknown): boolean {
+  return error instanceof RemoteApiError && error.status === 409;
+}
 export interface WorkspaceCloudSync {
   status: WorkspaceSyncStatus;
   error: string;
+  conflicts: ReadingConflict[];
   retry: () => void;
+  resolveConflict: (conflict: ReadingConflict, choice: ConflictResolution) => void;
 }
-
 interface UseWorkspaceCloudSyncInput {
   enabled: boolean;
   userId: string;
@@ -34,224 +26,140 @@ interface UseWorkspaceCloudSyncInput {
   onHydrate: (state: LocalWorkspaceState) => void;
 }
 
-interface PendingWorkspaceSync {
-  changedSessions: ReturnType<typeof buildReadingSessions>;
-  deletedSessionIds: string[];
-  preferences: ReturnType<typeof buildWorkspacePreferences>;
-  preferencesChanged: boolean;
-}
-
-function sessionFingerprintMap(state: LocalWorkspaceState): Map<string, string> {
-  return new Map(buildReadingSessions(state).map((session) => [
-    session.document.id,
-    fingerprint(session),
-  ]));
-}
-
-function getPendingSync(
-  state: LocalWorkspaceState,
-  remoteSessions: Map<string, string>,
-  remotePreferences: string,
-): PendingWorkspaceSync {
-  const sessions = buildReadingSessions(state);
+// Include edits made while the workspace request was in flight.
+function includeNewEdits(journal: WorkspaceSyncJournal, before: LocalWorkspaceState, after: LocalWorkspaceState): WorkspaceSyncJournal {
+  const previous = new Map(buildReadingSessions(before).map((session) => [session.document.id, fingerprint(session)]));
+  const sessions = buildReadingSessions(after);
   const currentIds = new Set(sessions.map((session) => session.document.id));
-  const preferences = buildWorkspacePreferences(state);
-
-  return {
-    changedSessions: sessions.filter((session) => (
-      remoteSessions.get(session.document.id) !== fingerprint(session)
-    )),
-    deletedSessionIds: [...remoteSessions.keys()]
-      .filter((sessionId) => !currentIds.has(sessionId)),
-    preferences,
-    preferencesChanged: remotePreferences !== fingerprint(preferences),
+  return { ...journal,
+    preferencesDirty: journal.preferencesDirty || fingerprint(buildWorkspacePreferences(before)) !== fingerprint(buildWorkspacePreferences(after)),
+    dirtySessionIds: [...new Set([...journal.dirtySessionIds, ...sessions.filter((session) =>
+      previous.get(session.document.id) !== fingerprint(session)).map((session) => session.document.id)])],
+    deletedSessionIds: [...new Set([...journal.deletedSessionIds, ...[...previous.keys()].filter((id) => !currentIds.has(id))])],
   };
 }
 
-function hasPendingChanges(pending: PendingWorkspaceSync): boolean {
-  return pending.changedSessions.length > 0
-    || pending.deletedSessionIds.length > 0
-    || pending.preferencesChanged;
+async function savePending(engine: WorkspaceSyncState, state: LocalWorkspaceState, active: () => boolean) {
+  const pending = engine.pending(state);
+  const changedSessions = pending.changedSessions.filter((session) => !engine.blocked(session.document.id));
+  const deletedSessionIds = pending.deletedSessionIds.filter((id) => !engine.blocked(id));
+  for (const session of changedSessions) {
+    if (!active()) return;
+    const saved = await saveCloudReadingSession(session, engine.revision(session.document.id));
+    if (active()) engine.saved(session, saved);
+  }
+  for (const id of deletedSessionIds) {
+    if (!active()) return;
+    await deleteCloudReadingSession(id, engine.revision(id));
+    if (active()) engine.deleted(id);
+  }
+  await savePreferences(engine, pending, active);
 }
 
-function createSyncJournal(
-  pending: PendingWorkspaceSync,
-  knownSessionIds: string[],
-  revisions: Map<string, number>,
-): WorkspaceSyncJournal {
-  return {
-    knownSessionIds,
-    revisions: Object.fromEntries(revisions),
-    dirtySessionIds: pending.changedSessions.map((session) => session.document.id),
-    deletedSessionIds: pending.deletedSessionIds,
-    preferencesDirty: pending.preferencesChanged,
-  };
+async function savePreferences(engine: WorkspaceSyncState, pending: ReturnType<WorkspaceSyncState['pending']>, active: () => boolean) {
+  if (pending.preferencesChanged && active()) {
+    await saveCloudWorkspacePreferences(pending.preferences);
+    if (active()) engine.savedPreferences(pending.preferences);
+  }
 }
 
-export function useWorkspaceCloudSync({
-  enabled,
-  userId,
-  state,
-  onHydrate,
-}: UseWorkspaceCloudSyncInput): WorkspaceCloudSync {
+export function useWorkspaceCloudSync({ enabled, userId, state, onHydrate }: UseWorkspaceCloudSyncInput): WorkspaceCloudSync {
   const [status, setStatus] = useState<WorkspaceSyncStatus>('loading');
   const [error, setError] = useState('');
+  const [storageFailed, setStorageFailed] = useState(false);
+  const [conflicts, setConflicts] = useState<ReadingConflict[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [retryVersion, setRetryVersion] = useState(0);
+  const engineRef = useRef<WorkspaceSyncState | null>(null);
   const latestStateRef = useRef(state);
-  const remoteSessionsRef = useRef(new Map<string, string>());
-  const remotePreferencesRef = useRef('');
-  const revisionsRef = useRef(new Map<string, number>());
+  const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const generationRef = useRef(0);
+  const autoRetryRef = useRef(0);
   const retryJournalRef = useRef<WorkspaceSyncJournal | null>(null);
-  const syncQueueRef = useRef<Promise<void>>(Promise.resolve());
   latestStateRef.current = state;
+  const persistJournal = useCallback((engine: WorkspaceSyncState, current: LocalWorkspaceState) => {
+    setStorageFailed(!writeWorkspaceSyncJournal(userId, engine.journal(current)));
+  }, [userId]);
 
   useEffect(() => {
-    if (!enabled) {
-      setStatus('saved');
-      setIsHydrated(false);
-      return;
-    }
-
-    let active = true;
+    const generation = ++generationRef.current;
+    if (!enabled) { setStatus('saved'); setIsHydrated(false); return; }
+    const before = latestStateRef.current;
     const journal = retryJournalRef.current ?? readWorkspaceSyncJournal(userId);
     retryJournalRef.current = null;
-    revisionsRef.current = new Map(Object.entries(journal.revisions ?? {}));
-    setStatus('loading');
-    setIsHydrated(false);
-    void getCloudWorkspace()
-      .then((cloudState) => {
-        if (!active) return;
-        remoteSessionsRef.current = new Map(cloudState.sessions.map((session) => [
-          session.document.id,
-          fingerprint({
-            document: session.document,
-            activeAnchorId: session.activeAnchorId,
-            anchors: session.anchors,
-            artifacts: session.artifacts,
-          }),
-        ]));
-        revisionsRef.current = new Map(cloudState.sessions.map((session) => [session.document.id, session.revision]));
-        remotePreferencesRef.current = fingerprint(cloudState.preferences);
-        onHydrate(mergeCloudWorkspace(
-          latestStateRef.current,
-          cloudState,
-          journal,
-        ));
-        setError('');
-        setStatus('saved');
-        setIsHydrated(true);
-      })
-      .catch(() => {
-        if (!active) return;
-        remoteSessionsRef.current = new Map(
-          journal.knownSessionIds.map((sessionId) => [sessionId, 'unknown']),
-        );
-        remotePreferencesRef.current = journal.preferencesDirty
-          ? 'unknown'
-          : fingerprint(buildWorkspacePreferences(latestStateRef.current));
-        setError('Cloud sync is offline. Your changes remain saved on this device.');
-        setStatus('offline');
-        setIsHydrated(true);
-      });
-    return () => {
-      active = false;
-    };
+    const engine = new WorkspaceSyncState(journal, before);
+    engineRef.current = engine;
+    setStatus('loading'); setIsHydrated(false);
+    void queueRef.current.catch(() => undefined).then(getCloudWorkspace).then((cloud) => {
+      if (generation !== generationRef.current) return;
+      const currentJournal = includeNewEdits(journal, before, latestStateRef.current);
+      const merged = engine.hydrate(latestStateRef.current, cloud, currentJournal);
+      latestStateRef.current = merged;
+      onHydrate(merged);
+      setConflicts(engine.conflicts);
+      setError(''); setStatus(engine.conflicts.length ? 'conflict' : 'saved'); setIsHydrated(true);
+    }).catch(() => {
+      if (generation !== generationRef.current) return;
+      setError('Cloud sync is offline. Keep this device’s changes until sync resumes.');
+      setStatus('offline');
+    });
+    return () => { generationRef.current = generation + 1; };
   }, [enabled, onHydrate, retryVersion, userId]);
 
-  const syncCurrentState = useCallback(async () => {
-    const pending = getPendingSync(
-      state,
-      remoteSessionsRef.current,
-      remotePreferencesRef.current,
-    );
-
-    await Promise.all([
-      ...pending.changedSessions.map(async (session) => {
-        const id = session.document.id;
-        const saved = await saveCloudReadingSession(session, revisionsRef.current.get(id) ?? 0);
-        revisionsRef.current.set(id, saved.revision);
-        remoteSessionsRef.current.set(id, fingerprint(session));
-      }),
-      ...pending.deletedSessionIds.map(async (id) => {
-        await deleteCloudReadingSession(id, revisionsRef.current.get(id) ?? 0);
-        revisionsRef.current.delete(id);
-        remoteSessionsRef.current.delete(id);
-      }),
-    ]);
-    if (pending.preferencesChanged) {
-      await saveCloudWorkspacePreferences(pending.preferences);
-    }
-
-    remoteSessionsRef.current = sessionFingerprintMap(state);
-    remotePreferencesRef.current = fingerprint(pending.preferences);
-    const latestPending = getPendingSync(
-      latestStateRef.current,
-      remoteSessionsRef.current,
-      remotePreferencesRef.current,
-    );
-    writeWorkspaceSyncJournal(
-      userId,
-      createSyncJournal(latestPending, [...remoteSessionsRef.current.keys()], revisionsRef.current),
-    );
-  }, [state, userId]);
-
-  const enqueueSync = useCallback(() => {
-    const queuedSync = syncQueueRef.current
-      .catch(() => undefined)
-      .then(syncCurrentState);
-    syncQueueRef.current = queuedSync;
-    return queuedSync;
-  }, [syncCurrentState]);
+  const retry = useCallback(() => {
+    const engine = engineRef.current;
+    if (engine) retryJournalRef.current = engine.journal(latestStateRef.current);
+    setRetryVersion((version) => version + 1);
+  }, []);
 
   useEffect(() => {
-    if (!enabled || !isHydrated) return;
-    const pending = getPendingSync(
-      state,
-      remoteSessionsRef.current,
-      remotePreferencesRef.current,
-    );
-    writeWorkspaceSyncJournal(
-      userId,
-      createSyncJournal(pending, [...remoteSessionsRef.current.keys()], revisionsRef.current),
-    );
-    if (!hasPendingChanges(pending)) {
-      setStatus('saved');
-      return;
-    }
-
-    let active = true;
+    const engine = engineRef.current;
+    if (!enabled || !engine) return;
+    persistJournal(engine, state);
+    if (!isHydrated) return;
+    const pending = engine.pending(state);
+    const changes = pending.changedSessions.some((session) => !engine.blocked(session.document.id))
+      || pending.deletedSessionIds.some((id) => !engine.blocked(id)) || pending.preferencesChanged;
+    if (!changes) { setStatus(engine.conflicts.length ? 'conflict' : 'saved'); return; }
     setStatus('saving');
+    const generation = generationRef.current;
+    const active = () => generation === generationRef.current;
     const timeoutId = window.setTimeout(() => {
-      void enqueueSync()
-        .then(() => {
-          if (!active) return;
-          setError('');
-          setStatus('saved');
-        })
-        .catch((syncError) => {
-          if (!active) return;
-          setError(syncError instanceof Error
-            ? syncError.message
-            : 'Unable to sync. Your changes remain saved on this device.');
-          setStatus('error');
-        });
+      const run = async () => {
+        if (!active()) return;
+        try {
+          await savePending(engine, latestStateRef.current, active);
+          if (!active()) return;
+          autoRetryRef.current = 0;
+          setError(''); setStatus(engine.conflicts.length ? 'conflict' : 'saved');
+        } catch (syncError) {
+          if (!active()) return;
+          if (isRevisionConflict(syncError) && autoRetryRef.current < 1) {
+            autoRetryRef.current += 1;
+            retry();
+          } else {
+            setError(syncError instanceof Error ? syncError.message : 'Unable to sync. Your changes remain on this device.');
+            setStatus('error');
+          }
+        } finally {
+          if (active()) persistJournal(engine, latestStateRef.current);
+        }
+      };
+      queueRef.current = queueRef.current.catch(() => undefined).then(run);
     }, SYNC_DEBOUNCE_MS);
-    return () => {
-      active = false;
-      window.clearTimeout(timeoutId);
-    };
-  }, [enabled, enqueueSync, isHydrated, retryVersion, state, userId]);
+    return () => window.clearTimeout(timeoutId);
+  }, [enabled, isHydrated, retry, state, conflicts, persistJournal]);
 
-  return {
-    status,
-    error,
-    retry: () => {
-      retryJournalRef.current = createSyncJournal(
-        getPendingSync(latestStateRef.current, remoteSessionsRef.current, remotePreferencesRef.current),
-        [...remoteSessionsRef.current.keys()], revisionsRef.current,
-      );
-      setRetryVersion((version) => version + 1);
-    },
-  };
+  const resolveConflict = useCallback((conflict: ReadingConflict, choice: ConflictResolution) => {
+    const engine = engineRef.current;
+    if (!engine || !engine.blocked(conflict.sessionId)) return;
+    const merged = engine.resolve(latestStateRef.current, conflict, choice);
+    latestStateRef.current = merged;
+    onHydrate(merged);
+    setConflicts([...engine.conflicts]);
+    persistJournal(engine, merged);
+  }, [onHydrate, persistJournal]);
+
+  const visibleConflicts = engineRef.current?.review(state) ?? conflicts;
+  return { status, error: storageFailed ? 'Sync recovery could not be saved on this device. Keep this page open until your changes are synced or reviewed.' : error, conflicts: visibleConflicts, resolveConflict, retry: () => { autoRetryRef.current = 0; retry(); } };
 }

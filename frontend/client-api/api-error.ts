@@ -1,7 +1,7 @@
 import { reportUnexpectedError } from '@/monitoring/sentry';
 
 export class RemoteApiError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly status?: number) {
     super(message);
     this.name = 'RemoteApiError';
   }

@@ -8,6 +8,7 @@ import {
   PinnedSessionsSidebar,
 } from './components';
 import { WorkspacePageLayout } from './components/WorkspacePageLayout';
+import { WorkspaceSyncRecovery } from './components/WorkspaceSyncRecovery';
 import { WorkspaceReading } from './components/WorkspaceReading';
 import { ReadingViewProvider } from './components/ReadingViewProvider';
 import { ReadingViewContext } from './reading-view-context';
@@ -143,6 +144,7 @@ function WorkspacePageContent({
         />
       }
     >
+      <WorkspaceSyncRecovery conflicts={workspace.syncConflicts} onResolve={workspace.resolveSyncConflict} />
       <WorkspaceBody
         workspace={workspace}
         navigation={navigation}

@@ -1,3 +1,4 @@
+import type { WorkspaceCloudSync } from './useWorkspaceCloudSync';
 import type { AnalysisModel } from '@/types';
 import type { HistoryItem } from '@/types';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
@@ -18,7 +19,7 @@ export interface WorkspacePageProps {
 }
 
 export type ApiKeyStatusTone = 'ready' | 'missing';
-export type WorkspaceSyncStatus = 'loading' | 'saved' | 'saving' | 'offline' | 'error';
+export type WorkspaceSyncStatus = 'loading' | 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
 
 export interface WorkspaceViewModel {
   apiKeyStatusLabel: string;
@@ -107,4 +108,6 @@ export interface WorkspaceController {
   updateAnalysisLanguage: (language: AnalysisLanguage) => void;
   clearDocument: () => void;
   retryCloudSync: () => void;
+  syncConflicts: WorkspaceCloudSync['conflicts'];
+  resolveSyncConflict: WorkspaceCloudSync['resolveConflict'];
 }

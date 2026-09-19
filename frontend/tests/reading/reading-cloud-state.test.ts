@@ -1,3 +1,4 @@
+import type { ReadingConflict } from '@/features/reading/reading-session-merge';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   buildReadingSessions,
@@ -222,12 +223,12 @@ describe('reading cloud state', () => {
       preferencesDirty: false,
     });
 
-    expect(merged.documentLibrary.documentsById).not.toHaveProperty('document-1');
-    expect(Object.values(merged.documentLibrary.documentsById)[0].title).toContain('(conflict copy)');
+    expect(merged.documentLibrary.documentsById).toHaveProperty('document-1');
+    expect(Object.values(merged.documentLibrary.documentsById)).toHaveLength(1);
   });
 
 
-  it('preserves the newer cloud note and the stale tab rename as separate readings', () => {
+  it('keeps legacy local edits in place for review without duplicating a reading', () => {
     const local = createLocalState();
     const base = buildReadingSessions(local)[0];
     local.documentLibrary.documentsById['document-1'].title = 'Stale tab rename';
@@ -240,26 +241,23 @@ describe('reading cloud state', () => {
       deletedSessionIds: [], preferencesDirty: false, revisions: { 'document-1': 1 },
     });
     const sessions = buildReadingSessions(merged);
-    expect(sessions).toHaveLength(2);
-    expect(sessions.find((session) => session.document.id === 'document-1')?.artifacts[0].content)
-      .toBe('Newer saved cloud note');
-    const copy = sessions.find((session) => session.document.id !== 'document-1')!;
-    expect(copy.document.title).toBe('Stale tab rename (conflict copy)');
-    expect(copy.artifacts[0].content).toBe('Important image.');
-    expect(copy.artifacts[0].anchorId).toBe(copy.anchors[0].id);
-    expect(copy.artifacts[0].documentId).toBe(copy.document.id);
-    expect(copy.artifacts[0].id).not.toBe(base.artifacts[0].id);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].document.title).toBe('Stale tab rename');
+    expect(sessions[0].artifacts[0].content).toBe('Important image.');
+    expect(cloud.sessions[0].artifacts[0].content).toBe('Newer saved cloud note');
   });
 
   it('does not replay a stale deletion over a newly changed cloud reading', () => {
     const previous = createLocalState();
+    const conflicts: ReadingConflict[] = [];
     const preferences = { activeDocumentId: null, readerPreferences: previous.readerPreferences,
       analysisLanguage: 'en' as const };
     const merged = mergeCloudWorkspace(createLocalWorkspaceState([], preferences), {
       preferences, sessions: [{ ...buildReadingSessions(previous)[0], revision: 2, syncedAt: NOW }],
     }, { knownSessionIds: ['document-1'], dirtySessionIds: [], deletedSessionIds: ['document-1'],
-      preferencesDirty: true, revisions: { 'document-1': 1 } });
-    expect(merged.documentLibrary.documentsById).toHaveProperty('document-1');
+      preferencesDirty: true, revisions: { 'document-1': 1 } }, conflicts);
+    expect(merged.documentLibrary.documentsById).not.toHaveProperty('document-1');
+    expect(conflicts).toMatchObject([{ sessionId: 'document-1', localDeleted: true }]);
   });
 
   it('hydrates cloud preferences when the remote session library is empty', () => {
