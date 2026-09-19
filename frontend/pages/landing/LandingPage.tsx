@@ -20,14 +20,14 @@ const LANDING_FEATURES: LandingFeature[] = [
     iconSurface: 'bg-primary text-primary-foreground',
   },
   {
-    title: 'Words, unpacked',
-    description: 'Select a passage. Explore its meaning, language, and context.',
+    title: 'Deep breakdown',
+    description: 'Syntax, rhetoric, context. Examine each passage.',
     icon: BookOpen,
     iconSurface: 'bg-secondary text-black',
   },
   {
-    title: 'Pick up the thread',
-    description: 'Return to your texts, notes, and explanations across devices.',
+    title: 'Saved readings',
+    description: 'Texts, notes, explanations. Synced across devices.',
     icon: Cloud,
     iconSurface: 'bg-accent text-black',
   },
@@ -70,12 +70,12 @@ function LandingHero({
 
       <div className="mx-2 max-w-[calc(100vw-3rem)] rotate-1 border-4 border-border bg-accent px-3 py-2 shadow-[4px_4px_0px_0px_var(--border)] sm:px-6 md:rotate-2">
         <p className="text-balance font-brand text-sm font-bold uppercase tracking-[0.12em] text-accent-foreground sm:text-2xl sm:tracking-widest">
-          Read between the lines.
+          Deep Text Analysis Engine
         </p>
       </div>
 
       <p className="mt-8 max-w-2xl text-pretty px-1 font-mono text-base font-medium leading-relaxed text-muted-foreground sm:text-xl">
-        Unpack difficult passages with AI. Keep your notes beside the text.
+        Deconstruct complex texts with AI. Keep your notes beside the source.
       </p>
 
       <Link
