@@ -98,9 +98,31 @@ for the AI backend. See [operations](cloudflare/README.md).
 
 ## Documentation
 
-Current facts belong in `docs/project.md`, priorities in `docs/roadmap.md`, and
-workspace behavior in `docs/ux/workspace-journey-contract.md`. Update the owning
-document when behavior changes. `docs/archive/` is historical, not an active plan.
+Keep documentation proportional to the change. A UI change does not by itself
+require a new document or updates to every reference.
+
+- Current product/API facts belong in `docs/project.md`, priorities in
+  `docs/roadmap.md`, and durable workspace behavior in
+  `docs/ux/workspace-journey-contract.md`. Update only the affected owner, in place;
+  link to it instead of repeating its contents or appending a dated change log.
+- Spacing, colors, alignment, copy, and other presentation-only changes normally
+  need only a concise PR description and relevant verification. Update the UX
+  contract only when navigation, action semantics, state, persistence, accessibility
+  behavior, or failure handling changes; keep test details in executable tests.
+- Put per-change validation results in the PR: environment/version, scenarios,
+  result, and material gaps. Raw QA logs, screenshots, drafts, and research notes
+  belong in ignored `docs/local/`; superseded material may stay in ignored
+  `docs/archive/`. Neither directory is an implementation backlog.
+- Before moving a document out of Git, retain unresolved blockers and necessary
+  decisions in their owning tracked document or issue. Tracked docs must stand
+  alone without local-only files. Git history preserves removed tracked content.
+- Add a tracked design only for a substantial, unresolved cross-cutting change
+  that cannot be explained clearly in the PR or an existing document. Keep its
+  scope, decisions, open questions, and exit criteria concise. Use an ADR for
+  lasting architecture/data decisions and their rationale. After implementation,
+  fold current behavior into its owner and remove superseded planning detail.
+
+The documentation placement guide is in [README](README.md#documentation).
 
 ## Definition of Done
 

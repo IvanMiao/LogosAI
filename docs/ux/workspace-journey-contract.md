@@ -1,6 +1,6 @@
 # Workspace Journey UX Contract
 
-- 状态：Active；文档核对：2026-09-17
+- 状态：Active；行为基线：2026-09-17；2026-09-18 精简文档，未改变产品行为
 - 可执行规范：[workspace-journey.test.tsx](../../frontend/tests/workspace/workspace-journey.test.tsx)
 
 ## 当前界面模型
@@ -9,45 +9,24 @@ Destination 是 reader / history；Reader layout 是 source / split / analysis�
 桌面默认双栏，窄屏默认单栏；三个布局按钮只改变阅读区域布局，History 是独立查询入口。
 Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 
-阅读顶栏保持单行，依据工具栏实际可用宽度收起次要操作。不足 900px 时常驻
-Sessions、截断标题、布局切换、语言和菜单；History、Reading appearance 与品牌主页入口
-仅在窄工具栏菜单中显示；宽屏保留 History、外观与主页快捷入口，菜单不重复显示。
-菜单按工具栏实际可用宽度切换，固定侧栏后的窄工具栏仍保留入口；布局按钮保留 aria-pressed。
-菜单不显示已配置 key 或正常同步状态文字；缺 key 的提示与横幅保留，窄屏通过菜单 Settings 配置。
-宽屏同步状态只显示图标，保存中使用动态指示；离线/失败仍直接显示文字与 Retry sync。
-语言按钮仅显示语言名称（不足 600px 使用缩写），直接下拉展示七种语言选项，
-弹出内容标明 AI output language 和 Applies to your next request。
-Reading appearance 独立打开外观弹窗，调整字体、字号、行距与行宽；从菜单打开后
-关闭弹窗恢复该菜单项焦点，Escape 可继续关闭菜单并返回菜单按钮。
-七种输出语言、字体联动、文字大小、行距与行宽复用现有偏好；外观即时生效。
-语言只影响下一次 AI 请求（包括 Retry），不重跑已有结果，也不修改运行中请求；
-Reset appearance 只重置外观，不改变语言，不引入每篇偏好继承。
-
-导入页面直接显示 Source text，随后是可选标题及 Open file / Start reading。
-不支持的格式、空文件和读取异常在按钮上方显示原因与下一步操作；文件失败不清空
-粘贴文本和标题。文件导入成功直接打开阅读；粘贴输入为空时禁用 Start reading。
-
-Explain 引文超过三行时默认折叠，提供 Show full quote / Show less；短引文无折叠按钮。
-Show in source 先验证原文位置或唯一引用匹配，桌面恢复双栏、窄屏切到原文并定位；
-保留同一成果、任务和笔记，不新建选段或请求 AI。无法唯一定位时禁用入口并说明原因，
-保留引用快照。Explain 栏顶固定显示当前状态、真实生成阶段和文字版 Stop / Retry；
-部分输出与错误继续保留，Retry 创建新输出，不覆盖旧成果。
-
-
-Sessions 是始终位于左侧的跨 session 导航，不展开 artifact 子树。未固定时为临时抽屉，
-打开 session 后关闭；桌面固定后为常驻侧栏，切换 session 时保持可见。Unpin 在原侧
-恢复临时抽屉，Collapse 直接收起；两种模式共享搜索条件。窄屏只提供左侧抽屉，
-保留桌面的固定偏好。
-列表采用紧凑条目：标题、最近打开日期与当前项标记；搜索正文时按需显示命中摘要。
-文本信息、selection / reading entry 计数及重命名、删除收进每项的 More options 菜单。
-来源与字数仅按需显示在该菜单，阅读工具栏不常驻显示。
-History 查询当前 session 已保存工作，
-打开条目不重新请求 AI。关闭详情不删除成果；笔记与 AI 输出均关联原文。
-阅读偏好默认统一作用于原文和分析，只有明确解除联动后分开调整。
+- 顶栏保持单行，按实际可用宽度将 History、外观和主页入口收进菜单；宽屏菜单不重复快捷入口。
+  缺 key 有 Settings 入口；正常 key/同步不占常驻文字，离线/失败直接显示原因与 Retry sync。
+- 语言直接下拉选择，只影响下一次 AI 请求（含 Retry），不重跑已有成果或修改运行中请求。
+  外观独立即时生效，默认联动原文与分析；解除后可分别调整；Reset appearance 不改变语言。
+  外观弹窗关闭后恢复触发器焦点，从菜单打开时可继续 Escape 返回菜单按钮。
+- 导入页直接显示粘贴区；文件成功后打开阅读，失败显示原因并保留标题与文本；空粘贴不能开始阅读。
+- Explain 长引文默认折叠，可展开；Show in source 验证原位置或唯一匹配后定位。
+  桌面恢复双栏，窄屏显示原文，保留同一成果与任务；无法定位时保留引用和解释，并禁用入口说明原因。
+  栏顶保留真实状态、阶段和 Stop/Retry；失败保留部分输出，Retry 新建输出，不覆盖旧成果。
+- Sessions 始终在左侧，抽屉打开阅读后关闭，桌面固定侧栏切换后保持可见。
+  Unpin 恢复抽屉，Collapse 收起；共享搜索，窄屏保留桌面固定偏好。条目平坦，不展开成果子树，
+  元数据、计数、重命名和删除按需在条目菜单显示。
+- History 查询当前 session 的已保存工作；打开旧条目不请求 AI，关闭详情不删除成果。
+  用户笔记与 AI 输出关联原文，AI 不覆盖用户笔记。
 
 ## 已有测试场景
 
-编号保持稳定；WJ-13 补录现有截断回归。测试顺序不等于编号顺序。
+编号保持稳定；实现细节以链接的可执行测试为准，不在这里记录每次运行结果。
 
 | ID | 动作 | 必须保持 |
 | --- | --- | --- |
@@ -69,7 +48,6 @@ History 查询当前 session 已保存工作，
 | WJ-16 | 粘贴草稿后导入不支持/空/不可读文件，再开始阅读 | 错误直接可见；保留标题和文本；可继续完成粘贴导入（hardening 测试） |
 | WJ-17 | 从菜单打开 History、Reading appearance，再关闭弹窗与菜单 | History 使用原查询入口；外观不含语言控件；Escape 依次恢复外观菜单项和菜单按钮焦点 |
 
-
 ## 阅读现场与导航（E1）
 
 - session 切换写入 `/app/readings/:documentId`；`/app` 恢复最近阅读，`/app/new` 打开导入。
@@ -86,32 +64,21 @@ History 查询当前 session 已保存工作，
   损坏的视图快照使用默认值，存储满时明确提示。
 - 笔记与任务保持既有保存路径；现场快照只保存编辑器状态，不复制正文或启动任务。
 
-自动化与本地浏览器证据见[阅读导航验收](reading-navigation-verification.md)。
-讨论模型、常驻 agent 和跨设备视图同步仍属目标设计。
+讨论模型、常驻 agent 和跨设备视图同步仍属[目标设计](reading-workspace-evolution.md)。
 
 ## 测试与未验证范围
 
-旅程测试使用 React Testing Library、localStorage fixture、mock SSE 和模拟 1280px 桌面。
-它不调用真实 Gemini、后端或云同步，不替代真实浏览器及模型质量检查。
-WJ-11 覆盖重载恢复，WJ-13 覆盖 Anchor 截断后的界面与保存状态。
-Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
-和 UTF-8 分片由独立的 [SSE 客户端测试](../../frontend/tests/client-api/anchor-stream.test.ts)
-覆盖；真实服务断流与恢复仍需浏览器验收。
+| 测试入口 | 覆盖 |
+| --- | --- |
+| [旅程](../../frontend/tests/workspace/workspace-journey.test.tsx)、[失败路径](../../frontend/tests/workspace/workspace-hardening.test.tsx) | 上述场景、导入失败与草稿保留 |
+| [阅读控件](../../frontend/tests/workspace/reading-controls.test.tsx) | 语言、外观、菜单、同步失败及重试 |
+| [导航](../../frontend/tests/workspace/reading-navigation.test.tsx)、[地址加载](../../frontend/tests/workspace/reading-route-loading.test.tsx)、[滚动](../../frontend/tests/workspace/reading-scroll.test.ts) | 深链、History 返回、账号隔离、现场与重排恢复 |
+| [SSE 客户端](../../frontend/tests/client-api/anchor-stream.test.ts) | 提前 EOF、缺 done、身份不一致、error、UTF-8 分片 |
 
-2026-09-13 Sessions 局部浏览器验收：本地 Vite + Worker、测试账号，桌面 1280px
-及 390px / 320px 窄屏。已检查左侧抽屉、固定 / 取消固定、两个 session 切换、
-长标题截断及菜单完整标题、重命名输入焦点与 Escape 取消、取消删除后返回列表。
-固定后焦点进入侧栏搜索；窄屏无固定按钮，抽屉内容未横向溢出。
-本轮不包含真实 AI 请求、屏幕阅读器或 200% zoom 验收。
-
-2026-09-16 本次界面变更的本地浏览器与模拟流验证见[阅读控件验收](reading-ui-refinements-verification.md)。
-
-浏览器验收应另记环境、日期、版本和结果：
-
-- 注册、登录、保存 key、云同步、断网与重新登录恢复。
-- 桌面/390px 窄屏、200% zoom、长标题、跨段与重复文本选区。
-- 布局 resize 的 pointer/keyboard、焦点、scroll 与返回路径。
-- 真实 stream 的 stop/retry/截断及缺 key 失败。
+组件测试使用 localStorage fixture、mock SSE 与模拟视口，不调用真实 Gemini 或云服务。
+真实浏览器需按改动覆盖桌面/窄屏、实际 200% 缩放、长标题/选区、键盘焦点、resize 与返回；
+数据或流变更还需检查登录恢复、断网、真实 stop/retry 和缺 key。每次结果写 PR，原始日志留本地。
+已完成的工程验收与当前优先项统一见[路线图](../roadmap.md#已完成的工程验收)。
 
 原文行长保持可读；长输出用阅读字体；品牌与控制可保留 mono 和现有视觉语言。
 状态不只靠颜色，icon button 有 accessible name，hover 操作也可 focus；这些设计约束
@@ -119,19 +86,16 @@ Anchor 提前 EOF、缺失 done、身份不一致、服务端 error
 
 ## 维护
 
-行为变化时同次提交更新测试与对应场景；纯文档纠偏无需修改测试制造无关 diff。
-只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
+只在持久交互规则变化时更新对应条目与测试；视觉微调在 PR 说明即可，不新建 UX 文档。
+纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
 
-## 云写入冲突恢复（2026-09-15 已部署）
+## 云写入冲突恢复
 
 阅读保存和删除带基准 revision，旧版本不会覆盖云端新版。同步冲突显示失败和 Retry；
 重试后保留云端阅读，并把未同步本地内容保存为新的 `(conflict copy)` session，
 成果与 anchor 重新编号。旧删除与云端新修改冲突时保留云端阅读；
 远端已删除的本地改动保存为新副本，不复活原地址。
 
-2026-09-13 的生产复现、修复与本地验证见
-[真实服务验收](real-service-acceptance-2026-09-13.md)。
-2026-09-15 已完成生产多标签页、删除和离线恢复组合验收；用户完成 Firefox 实际 200% 缩放验收。
-结果与部署版本见[发布验收记录](real-service-acceptance-2026-09-15.md)。
+验收范围与版本见[项目参考](../project.md#已记录的生产验收)。
 新建阅读的云快照只引用属于该阅读的 active anchor，避免切换阅读后保存被拒绝。

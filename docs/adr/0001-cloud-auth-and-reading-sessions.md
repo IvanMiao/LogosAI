@@ -3,7 +3,7 @@
 - 状态：Accepted
 - 日期：2026-08-09
 - 决策者：Product owner + engineering
-- 文档核对：2026-09-12；保留原决策，修正实现与部署描述
+- 文档核对：2026-09-19；保留原决策，标明后续并发保护演进
 
 ## Context
 
@@ -91,11 +91,11 @@ Costs and limits:
 
 - The configured browser origin is `https://logosai.ymiao.dev`; `workers.dev`
   is disabled. Fly is the AI origin and requires the gateway configuration above.
-- The current sync is aggregate replacement with debounced, last-writer-wins
-  behavior. Revision is returned but not checked against the client's version;
-  server-side deletion tombstones and conflict UI are absent. Concurrent writes
-  can overwrite work or recreate deleted sessions. Validation and follow-up
-  decisions belong to [roadmap N2](../roadmap.md#n2云端数据恢复验收).
+- The initial aggregate sync used last-writer-wins writes without revision
+  checks, allowing stale clients to overwrite work. PRs #49/#50 subsequently
+  added conditional writes and conflict copies; the current protocol and
+  recorded acceptance are maintained in [Project Reference](../project.md#云写入版本前提).
+  Sync still replaces aggregates and does not automatically merge edits.
 - Source text and notes rely on Cloudflare's platform encryption at rest; only
   the Gemini credential has additional application-level encryption. This is
   not end-to-end encryption.
