@@ -1,4 +1,4 @@
-import type { AnchorStorageState, TextAnchor } from '@/features/anchors';
+import { getActiveAnchorIdForDocument, type AnchorStorageState, type TextAnchor } from '@/features/anchors';
 import type { Artifact, ArtifactStorageState } from '@/features/artifacts';
 import type {
   AnalysisLanguage,
@@ -7,9 +7,11 @@ import type {
 } from './reading-types';
 import type {
   CloudWorkspaceState,
+  StoredReadingSession,
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
 } from './reading-session-types';
+import { copyConflictingReading } from './reading-conflict-copy';
 import type { WorkspaceSyncJournal } from './reading-sync-journal';
 
 export interface LocalWorkspaceState {
@@ -47,10 +49,7 @@ export function buildReadingSessions(
 ): ReadingSessionSnapshot[] {
   return Object.values(state.documentLibrary.documentsById).map((document) => ({
     document,
-    activeAnchorId: state.anchorStorage.activeAnchorIdByDocumentId?.[document.id]
-      ?? (state.documentLibrary.activeDocumentId === document.id
-        ? state.anchorStorage.activeAnchorId
-        : null),
+    activeAnchorId: getActiveAnchorIdForDocument(state.anchorStorage, document.id),
     anchors: getSessionAnchors(state.anchorStorage, document.id),
     artifacts: getSessionArtifacts(state.artifactStorage, document.id),
   }));
@@ -66,55 +65,51 @@ export function buildWorkspacePreferences(
   };
 }
 
-function getSessionUpdatedAt(session: ReadingSessionSnapshot): number {
-  const timestamps = [
-    session.document.updatedAt,
-    session.document.lastOpenedAt,
-    ...session.anchors.map((anchor) => anchor.createdAt),
-    ...session.artifacts.map((artifact) => artifact.updatedAt),
-  ].filter((value): value is string => Boolean(value));
-  return Math.max(...timestamps.map((value) => Date.parse(value)), 0);
-}
-
-function chooseNewerSession(
-  local: ReadingSessionSnapshot,
-  remote: ReadingSessionSnapshot,
-): ReadingSessionSnapshot {
-  return getSessionUpdatedAt(local) > getSessionUpdatedAt(remote) ? local : remote;
+function hasRevisionConflict(
+  sessionId: string,
+  remote: StoredReadingSession | undefined,
+  journal?: WorkspaceSyncJournal,
+): boolean {
+  if (!journal?.knownSessionIds.includes(sessionId)) return false;
+  const expected = journal.revisions?.[sessionId];
+  return expected === undefined || expected !== (remote?.revision ?? 0);
 }
 
 function mergeSessions(
   local: ReadingSessionSnapshot[],
-  remote: ReadingSessionSnapshot[],
+  remote: StoredReadingSession[],
   journal?: WorkspaceSyncJournal,
 ): ReadingSessionSnapshot[] {
-  const knownIds = new Set(journal?.knownSessionIds ?? []);
+  const remoteById = new Map(remote.map((session) => [session.document.id, session]));
   const deletedIds = new Set(journal?.deletedSessionIds ?? []);
   const dirtyIds = new Set(journal?.dirtySessionIds ?? []);
-  const merged = new Map(
-    remote
-      .filter((session) => !deletedIds.has(session.document.id))
-      .map((session) => [session.document.id, session]),
-  );
-  for (const localSession of local) {
-    const sessionId = localSession.document.id;
-    const remoteSession = merged.get(sessionId);
-    const wasDeletedRemotely = knownIds.has(sessionId) && !remoteSession;
-    if (
-      deletedIds.has(sessionId)
-      || (wasDeletedRemotely && !dirtyIds.has(sessionId))
-    ) {
-      continue;
-    }
-
-    merged.set(
-      sessionId,
-      remoteSession && !dirtyIds.has(sessionId)
-        ? chooseNewerSession(localSession, remoteSession)
-        : localSession,
-    );
+  const merged = new Map<string, ReadingSessionSnapshot>(remote.map((session) => [session.document.id, session]));
+  for (const id of deletedIds) {
+    if (!hasRevisionConflict(id, remoteById.get(id), journal)) merged.delete(id);
+  }
+  for (const session of local) {
+    if (deletedIds.has(session.document.id)) continue;
+    mergeLocalSession(merged, session, remoteById.get(session.document.id), dirtyIds, journal);
   }
   return [...merged.values()];
+}
+
+function mergeLocalSession(
+  merged: Map<string, ReadingSessionSnapshot>,
+  local: ReadingSessionSnapshot,
+  remote: StoredReadingSession | undefined,
+  dirtyIds: Set<string>,
+  journal?: WorkspaceSyncJournal,
+): void {
+  const id = local.document.id;
+  const dirty = dirtyIds.has(id);
+  if (!remote && journal?.knownSessionIds.includes(id) && !dirty) return;
+  if (dirty && hasRevisionConflict(id, remote, journal)) {
+    const copy = copyConflictingReading(local);
+    merged.set(copy.document.id, copy);
+    return;
+  }
+  merged.set(id, remote && !dirty ? remote : local);
 }
 
 function createArtifactTask(artifact: Artifact) {

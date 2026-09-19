@@ -78,7 +78,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 组件测试使用 localStorage fixture、mock SSE 与模拟视口，不调用真实 Gemini 或云服务。
 真实浏览器需按改动覆盖桌面/窄屏、实际 200% 缩放、长标题/选区、键盘焦点、resize 与返回；
 数据或流变更还需检查登录恢复、断网、真实 stop/retry 和缺 key。每次结果写 PR，原始日志留本地。
-剩余真实服务验收与已知阻塞统一见[路线图](../roadmap.md#已有验收证据与阻塞)。
+已完成的工程验收与当前优先项统一见[路线图](../roadmap.md#已完成的工程验收)。
 
 原文行长保持可读；长输出用阅读字体；品牌与控制可保留 mono 和现有视觉语言。
 状态不只靠颜色，icon button 有 accessible name，hover 操作也可 focus；这些设计约束
@@ -89,3 +89,13 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 只在持久交互规则变化时更新对应条目与测试；视觉微调在 PR 说明即可，不新建 UX 文档。
 纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
+
+## 云写入冲突恢复
+
+阅读保存和删除带基准 revision，旧版本不会覆盖云端新版。同步冲突显示失败和 Retry；
+重试后保留云端阅读，并把未同步本地内容保存为新的 `(conflict copy)` session，
+成果与 anchor 重新编号。旧删除与云端新修改冲突时保留云端阅读；
+远端已删除的本地改动保存为新副本，不复活原地址。
+
+验收范围与版本见[项目参考](../project.md#已记录的生产验收)。
+新建阅读的云快照只引用属于该阅读的 active anchor，避免切换阅读后保存被拒绝。

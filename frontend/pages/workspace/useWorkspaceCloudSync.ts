@@ -77,9 +77,11 @@ function hasPendingChanges(pending: PendingWorkspaceSync): boolean {
 function createSyncJournal(
   pending: PendingWorkspaceSync,
   knownSessionIds: string[],
+  revisions: Map<string, number>,
 ): WorkspaceSyncJournal {
   return {
     knownSessionIds,
+    revisions: Object.fromEntries(revisions),
     dirtySessionIds: pending.changedSessions.map((session) => session.document.id),
     deletedSessionIds: pending.deletedSessionIds,
     preferencesDirty: pending.preferencesChanged,
@@ -99,6 +101,8 @@ export function useWorkspaceCloudSync({
   const latestStateRef = useRef(state);
   const remoteSessionsRef = useRef(new Map<string, string>());
   const remotePreferencesRef = useRef('');
+  const revisionsRef = useRef(new Map<string, number>());
+  const retryJournalRef = useRef<WorkspaceSyncJournal | null>(null);
   const syncQueueRef = useRef<Promise<void>>(Promise.resolve());
   latestStateRef.current = state;
 
@@ -110,7 +114,9 @@ export function useWorkspaceCloudSync({
     }
 
     let active = true;
-    const journal = readWorkspaceSyncJournal(userId);
+    const journal = retryJournalRef.current ?? readWorkspaceSyncJournal(userId);
+    retryJournalRef.current = null;
+    revisionsRef.current = new Map(Object.entries(journal.revisions ?? {}));
     setStatus('loading');
     setIsHydrated(false);
     void getCloudWorkspace()
@@ -125,6 +131,7 @@ export function useWorkspaceCloudSync({
             artifacts: session.artifacts,
           }),
         ]));
+        revisionsRef.current = new Map(cloudState.sessions.map((session) => [session.document.id, session.revision]));
         remotePreferencesRef.current = fingerprint(cloudState.preferences);
         onHydrate(mergeCloudWorkspace(
           latestStateRef.current,
@@ -160,8 +167,17 @@ export function useWorkspaceCloudSync({
     );
 
     await Promise.all([
-      ...pending.changedSessions.map(saveCloudReadingSession),
-      ...pending.deletedSessionIds.map(deleteCloudReadingSession),
+      ...pending.changedSessions.map(async (session) => {
+        const id = session.document.id;
+        const saved = await saveCloudReadingSession(session, revisionsRef.current.get(id) ?? 0);
+        revisionsRef.current.set(id, saved.revision);
+        remoteSessionsRef.current.set(id, fingerprint(session));
+      }),
+      ...pending.deletedSessionIds.map(async (id) => {
+        await deleteCloudReadingSession(id, revisionsRef.current.get(id) ?? 0);
+        revisionsRef.current.delete(id);
+        remoteSessionsRef.current.delete(id);
+      }),
     ]);
     if (pending.preferencesChanged) {
       await saveCloudWorkspacePreferences(pending.preferences);
@@ -176,7 +192,7 @@ export function useWorkspaceCloudSync({
     );
     writeWorkspaceSyncJournal(
       userId,
-      createSyncJournal(latestPending, [...remoteSessionsRef.current.keys()]),
+      createSyncJournal(latestPending, [...remoteSessionsRef.current.keys()], revisionsRef.current),
     );
   }, [state, userId]);
 
@@ -197,7 +213,7 @@ export function useWorkspaceCloudSync({
     );
     writeWorkspaceSyncJournal(
       userId,
-      createSyncJournal(pending, [...remoteSessionsRef.current.keys()]),
+      createSyncJournal(pending, [...remoteSessionsRef.current.keys()], revisionsRef.current),
     );
     if (!hasPendingChanges(pending)) {
       setStatus('saved');
@@ -230,6 +246,12 @@ export function useWorkspaceCloudSync({
   return {
     status,
     error,
-    retry: () => setRetryVersion((version) => version + 1),
+    retry: () => {
+      retryJournalRef.current = createSyncJournal(
+        getPendingSync(latestStateRef.current, remoteSessionsRef.current, remotePreferencesRef.current),
+        [...remoteSessionsRef.current.keys()], revisionsRef.current,
+      );
+      setRetryVersion((version) => version + 1);
+    },
   };
 }

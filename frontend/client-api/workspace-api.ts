@@ -11,17 +11,19 @@ export function getCloudWorkspace(): Promise<CloudWorkspaceState> {
 
 export function saveCloudReadingSession(
   snapshot: ReadingSessionSnapshot,
+  revision: number,
 ): Promise<{ revision: number; syncedAt: string }> {
   return requestCloudJson(`/api/reading-sessions/${encodeURIComponent(snapshot.document.id)}`, {
     method: 'PUT',
+    headers: { 'If-Match': `"${revision}"` },
     body: JSON.stringify(snapshot),
   });
 }
 
-export function deleteCloudReadingSession(sessionId: string): Promise<void> {
+export function deleteCloudReadingSession(sessionId: string, revision: number): Promise<void> {
   return requestCloudEmpty(
     `/api/reading-sessions/${encodeURIComponent(sessionId)}`,
-    { method: 'DELETE' },
+    { method: 'DELETE', headers: { 'If-Match': `"${revision}"` } },
   );
 }
 

@@ -1,7 +1,7 @@
 # LogosAI Project Reference
 
 - 状态：Active，当前产品与工程参考
-- 代码基线核对：2026-09-12；2026-09-18 整理文档并静态复核云写入边界，不代表重新验收
+- 核对：2026-09-19，同步主线的云写入保护与已记录验收；本次未重跑生产验收
 - 下一步：[路线图](roadmap.md)；用户与价值假设：[用户证据](user-evidence.md)
 
 ## 产品边界
@@ -15,12 +15,12 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 | 能力 | 已实现 | 尚未验证或已知限制 |
 | --- | --- | --- |
 | 文本入口 | Paste、`.txt`、`.md`、legacy history 导入；多个 reading sessions | 每个 session 对应一份原文；首发人群和最佳导入方式待验证 |
-| Reader | 桌面默认双栏；source / split / analysis 布局与 History 分离；阅读偏好可调 | 已有部分桌面/窄屏本地浏览器记录；200% 缩放与真实服务组合仍待验收 |
+| Reader | 桌面默认双栏；source / split / analysis 布局与 History 分离；阅读偏好可调 | 2026-09-15 基线真实服务与用户 Firefox 200% 验收通过；后续 UI 改动按 PR 验证 |
 | Selection | Explain、Translate、Vocab、Note；确认动作后保存选区 | DOM Range 提供真实 offset；旧 anchor 无法唯一恢复时不猜测；前后文 selector 尚未独立建模 |
 | Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
 | Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
-| Streaming | Anchor done/identity 校验；截断保留部分输出并标为 failed；stop/retry；重载后 running 恢复为 stopped | 真实服务断流仍待验收；本地 request ID 尚未作为 client_request_id 贯穿协议 |
-| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | 整包替换；revision 未用于条件写入；无冲突 UI；真实多设备恢复待验收 |
+| Streaming | Anchor done/identity 校验；截断保留部分输出并标为 failed；stop/retry；重载后 running 恢复为 stopped | 真实服务与受控断流验收通过；本地 request ID 尚未作为 client_request_id 贯穿协议 |
+| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | revision 条件写入与冲突副本已部署，真实并发、离线、删除与恢复验收通过；不自动合并并发编辑 |
 | 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 生产 OAuth 配置未核实；尚无邮件验证/密码重置邮件服务 |
 | 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
 | 评估 | Workspace Alpha JSONL 与结构校验程序 | 不运行真实模型，不证明生成质量 |
@@ -94,15 +94,33 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 - D1 保存用户隔离的数据；key 用 AES-GCM、随机 IV、user ID associated data 加密；读取仅返回存在标志和末四位 hint。
 - Source 与 note 依赖平台存储加密，不是 E2E encryption；OAuth token 使用 Better Auth token encryption。
 - LocalStorage 为用户隔离缓存；旧数据首次认领保持兼容，不可跨账号继承。
-- 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts，但没有服务端删除 tombstone 或旧版本写入保护。
+- 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts。保存/删除均校验 revision；冲突重试保留云端新版及本地冲突副本，无服务端删除 tombstone。
 - 默认不向监控服务上报完整原文、prompt、note、key 或身份。AI 请求仍会发送原文给模型；LLM 监控内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
 - Source 为不可信数据；当前无 tool execution，仍需检查 prompt injection 对 grounding 的影响。
+
+## 云写入版本前提
+
+`PUT /api/reading-sessions/:id` 与 `DELETE /api/reading-sessions/:id` 要求
+`If-Match: "<revision>"`；新 session 使用 `"0"`，JSON snapshot 结构不变。
+缺少版本返回 428，旧版本返回 409；migration `0003_reading_revision_guards.sql` 的
+D1 触发器使过期整包替换原子失败。构建云快照时校验 active anchor 属于当前阅读。
+冲突后的交互与恢复规则见[旅程契约](ux/workspace-journey-contract.md#云写入冲突恢复)。
 
 ## 验证边界
 
 Contract tests、真实服务端到端检查、模型评估与用户观察不能互相替代。
 命令统一见 [README](../README.md#verify-changes)，每次执行结果写入 PR；原始记录留本地。
 已知阻塞与验收待办由[路线图](roadmap.md)维护，历史报告不证明当前部署通过。
+
+### 已记录的生产验收
+
+- 2026-09-13：真实 Gemini 完成、无效 key、Stop/Retry、任务归属和 D1 保存通过；提前 EOF、identity 改变与 error 使用受控回放。当时发现并发覆盖，后由 #49/#50 修复。
+- 2026-09-15：#49/#50 与 migration 0003 已部署；记录的生产提交为 `c8eb696`，Worker 版本为 `bdbd0041-26a0-4229-bf9b-62ef3e861962`。并发保存/删除、立即刷新、离线加并发恢复、重新登录及 History 返回通过。
+- Firefox 实际 200% 缩放由用户实测通过；屏幕阅读器、模型质量和自然回访仍无完成证据。
+
+原始证据保留在 Git 历史：[9 月 13 日验收](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-13.md)、
+[9 月 15 日发布与复验](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-15.md)。
+这些结论限于当次环境与场景，不自动证明后续提交或部署通过。
 
 ## 阅读现场与地址
 
