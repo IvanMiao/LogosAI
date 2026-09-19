@@ -23,3 +23,15 @@ export function formatArtifactTimestamp(artifact: Artifact): string {
     timeStyle: 'short',
   }).format(createdAt);
 }
+
+export function getArtifactProgressLabel(artifact: Artifact): string {
+  if (artifact.stage === 'detect') return 'Identifying language and structure…';
+  if (artifact.stage === 'correct') return 'Resolving source text…';
+  if (artifact.stage === 'interpret') {
+    if (artifact.type === 'translation') return 'Translating selection…';
+    if (artifact.type === 'vocabulary') return 'Building vocabulary…';
+    if (artifact.type === 'explanation') return 'Explaining selection…';
+    return 'Interpreting the full text…';
+  }
+  return 'Starting analysis…';
+}

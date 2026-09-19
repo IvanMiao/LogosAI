@@ -1,3 +1,4 @@
+import { ExplainSourceQuote } from './ExplainSourceQuote';
 import { useReadingScroll } from '../useReadingScroll';
 import type { ReactElement } from 'react';
 import {
@@ -32,6 +33,8 @@ import {
 
 interface CurrentExplainPanelProps {
   activeAnchor: TextAnchor;
+  canShowSource: boolean;
+  onShowSource: () => void;
   artifacts: Artifact[];
   activeArtifact: Artifact | null;
   readingPreferences: ReaderPreferences;
@@ -48,18 +51,6 @@ interface CurrentExplainPanelProps {
   onRunSkill: (skill: AnchorSkill) => void;
   onStopArtifact: (artifact: Artifact) => void;
   onRetryArtifact: (artifact: Artifact) => void;
-}
-
-function getSourceLabel(anchor: TextAnchor): string {
-  if (anchor.scope === 'paragraph') {
-    return 'Paragraph';
-  }
-
-  if (anchor.scope === 'document') {
-    return 'Document';
-  }
-
-  return 'Selected text';
 }
 
 function OutputHistoryMenu({
@@ -141,25 +132,12 @@ function SourceActions({
   );
 }
 
-export function CurrentExplainPanel({
-  activeAnchor,
-  artifacts,
-  activeArtifact,
-  readingPreferences,
-  noteDraftContent,
-  isNoteEditorOpen,
-  backLabel,
-  onBack,
-  onClose,
-  onSelectArtifact,
-  onRequestDeleteAnchor,
-  onRequestDeleteArtifact,
-  onNoteDraftChange,
-  onOpenNoteEditor,
-  onRunSkill,
-  onStopArtifact,
-  onRetryArtifact,
-}: CurrentExplainPanelProps): ReactElement {
+export function CurrentExplainPanel(props: CurrentExplainPanelProps): ReactElement {
+  const {
+    activeAnchor, canShowSource, onShowSource, activeArtifact,
+    noteDraftContent, isNoteEditorOpen,
+    onNoteDraftChange, onOpenNoteEditor, onRunSkill,
+  } = props;
   const paneRef = useReadingScroll(`artifact:${activeArtifact?.id ?? activeAnchor.id}`);
   return (
     <aside
@@ -167,51 +145,12 @@ export function CurrentExplainPanel({
       aria-label="Current explanation"
       className="h-full min-h-0 overflow-y-auto border-border bg-[#fbfbf8]"
     >
-      <header data-reading-sticky className="sticky top-0 z-10 flex min-h-10 items-center justify-between gap-2 border-b-2 border-border bg-card px-3 py-1 font-mono sm:px-4">
-        <div className="flex min-w-0 items-center gap-2">
-          {onBack ? (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9"
-              aria-label={backLabel ?? 'Back'}
-              title={backLabel ?? 'Back'}
-              onClick={onBack}
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          ) : null}
-          <h2 className="truncate text-xs font-black uppercase tracking-[0.1em] sm:text-sm">
-            Explain
-          </h2>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-            <SourceActions
-              activeAnchor={activeAnchor}
-              onOpenNoteEditor={onOpenNoteEditor}
-              onRequestDeleteAnchor={onRequestDeleteAnchor}
-              onRunSkill={onRunSkill}
-            />
-            {!onBack ? (
-              <Button type="button" size="icon" variant="ghost" aria-label="Close explanation" onClick={onClose}>
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            ) : null}
-        </div>
-      </header>
+      <ExplainHeader {...props} />
 
-      <div className="mx-auto max-w-[68ch] px-5 py-8 sm:px-8 sm:py-10">
-        <section className="mb-8" aria-label="Selected source">
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
-            {getSourceLabel(activeAnchor)}
-          </p>
-          <blockquote className="mt-3 border-s-4 border-secondary ps-4 font-sans text-[15px] leading-7 text-foreground">
-            {activeAnchor.quote}
-          </blockquote>
-        </section>
+      <div className="mx-auto max-w-[68ch] px-5 py-5 sm:px-7 sm:py-6">
+        <ExplainSourceQuote key={activeAnchor.id} anchor={activeAnchor} canShowSource={canShowSource} onShowSource={onShowSource} />
         {isNoteEditorOpen ? (
-          <label className="mb-6 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
+          <label className="my-6 block border-2 border-l-[8px] border-border border-l-accent bg-card p-3 text-xs font-black shadow-[2px_2px_0px_0px_var(--border)]">
             Note
             <textarea
               autoFocus
@@ -226,43 +165,9 @@ export function CurrentExplainPanel({
         ) : null}
 
         {activeArtifact ? (
-          <section data-reading-content aria-label="Active output">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
-              <div className="flex min-w-0 items-center gap-2">
-                <ArtifactStatusIcon artifact={activeArtifact} />
-                <h2 className="truncate text-sm font-black">{getArtifactLabel(activeArtifact)}</h2>
-              </div>
-              <div className="flex items-center gap-1">
-                <OutputHistoryMenu
-                  artifacts={artifacts}
-                  activeArtifact={activeArtifact}
-                  onSelectArtifact={onSelectArtifact}
-                />
-                <ArtifactTaskControls
-                  artifact={activeArtifact}
-                  onStopArtifact={onStopArtifact}
-                  onRetryArtifact={onRetryArtifact}
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
-                  aria-label={`Delete ${getArtifactLabel(activeArtifact)} output`}
-                  onClick={() => onRequestDeleteArtifact(activeArtifact)}
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
-            <ArtifactBody
-              artifact={activeArtifact}
-              variant="reading"
-              readingPreferences={readingPreferences}
-            />
-          </section>
+          <ExplainOutput {...props} activeArtifact={activeArtifact} />
         ) : (
-          <div className="border-2 border-dashed border-border bg-card p-5">
+          <div className="mt-6 border-2 border-dashed border-border bg-card p-5">
             <h2 className="text-sm font-black">Choose how to explore this text</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Explain the meaning, translate it, collect vocabulary, or attach a note.
@@ -277,5 +182,79 @@ export function CurrentExplainPanel({
         )}
       </div>
     </aside>
+  );
+}
+
+function ExplainHeader({
+  activeAnchor, activeArtifact, backLabel, onBack, onClose,
+  onOpenNoteEditor, onRequestDeleteAnchor, onRunSkill, onStopArtifact, onRetryArtifact,
+}: CurrentExplainPanelProps): ReactElement {
+  return (
+    <header data-reading-sticky className="sticky top-0 z-10 border-b border-border/30 bg-card px-3 py-2 font-mono sm:px-4">
+      <div className="flex min-h-10 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {onBack ? (
+            <Button type="button" size="icon" variant="ghost" className="h-9 w-9" aria-label={backLabel ?? 'Back'} title={backLabel ?? 'Back'} onClick={onBack}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          ) : null}
+          <h2 className="truncate text-xs font-black uppercase tracking-[0.1em] sm:text-sm">Explain</h2>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <SourceActions
+            activeAnchor={activeAnchor} onOpenNoteEditor={onOpenNoteEditor}
+            onRequestDeleteAnchor={onRequestDeleteAnchor} onRunSkill={onRunSkill}
+          />
+          {!onBack ? (
+            <Button type="button" size="icon" variant="ghost" aria-label="Close explanation" onClick={onClose}>
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      {activeArtifact ? (
+        <ArtifactTaskControls variant="reading" artifact={activeArtifact} onStopArtifact={onStopArtifact} onRetryArtifact={onRetryArtifact} />
+      ) : null}
+    </header>
+  );
+}
+
+function ExplainOutput({
+  activeArtifact, artifacts, onSelectArtifact, onRequestDeleteArtifact, readingPreferences,
+}: Pick<CurrentExplainPanelProps, 'artifacts' | 'onSelectArtifact' | 'onRequestDeleteArtifact' | 'readingPreferences'> & {
+  activeArtifact: Artifact;
+}): ReactElement {
+  return (
+    <section data-reading-content aria-label="Active output" className="mt-5 border-t border-border/30 pt-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 font-mono">
+        <div className="flex min-w-0 items-center gap-2">
+          <ArtifactStatusIcon artifact={activeArtifact} />
+          <h2 className="truncate text-sm font-black">{getArtifactLabel(activeArtifact)}</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <OutputHistoryMenu
+            artifacts={artifacts}
+            activeArtifact={activeArtifact}
+            onSelectArtifact={onSelectArtifact}
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="text-error-foreground hover:bg-destructive hover:text-destructive-foreground"
+            aria-label={`Delete ${getArtifactLabel(activeArtifact)} output`}
+            onClick={() => onRequestDeleteArtifact(activeArtifact)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+      <ArtifactBody
+        artifact={activeArtifact}
+        variant="reading"
+        showRecoveryHint
+        readingPreferences={readingPreferences}
+      />
+    </section>
   );
 }

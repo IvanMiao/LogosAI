@@ -50,7 +50,7 @@ function FontPicker({
             type="button"
             aria-pressed={value === option.value}
             className={cn(
-              'min-h-20 border-2 border-border bg-card p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'min-h-16 border-2 border-border bg-card p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               value === option.value ? 'bg-secondary shadow-[3px_3px_0px_0px_var(--border)]' : '',
             )}
             onClick={() => onChange(option.value)}
@@ -126,16 +126,16 @@ export function ReadingAppearanceDialog({
         <DialogHeader>
           <DialogTitle>Reading appearance</DialogTitle>
           <DialogDescription>
-            Changes preview immediately across source text and saved reading work.
+            Adjust fonts and text layout. Changes apply immediately to source text and saved reading work.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-5">
+        <div className="space-y-4">
           <FontPicker
             label={preferences.fontLinked ? 'Font' : 'Source font'}
             value={preferences.fontFamily}
             onChange={(font) => onPreferenceChange('fontFamily', font)}
           />
-          <label className="flex min-h-11 items-center gap-3 border-2 border-border bg-card px-3 text-sm font-bold">
+          <label className="flex min-h-11 items-center gap-3 text-sm font-bold">
             <input
               type="checkbox"
               checked={preferences.fontLinked}

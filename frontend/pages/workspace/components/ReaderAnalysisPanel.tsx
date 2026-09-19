@@ -19,6 +19,8 @@ interface ReaderAnalysisPanelProps extends Pick<ReaderWorkspaceProps,
   closeReadings: Artifact[];
   onStartCloseReading: () => void;
   onCloseExplain: () => void;
+  canShowSource: boolean;
+  onShowSource: () => void;
   selectCloseReading: (artifactId?: string) => void;
   requestDeleteAnchor: (anchor: TextAnchor) => void;
   requestDeleteArtifact: (artifact: Artifact) => void;
@@ -66,7 +68,7 @@ export function ReaderAnalysisPanel({
   reading, actions, isDesktopViewport, noteEditorAnchorId, onRunSkill, onStartNote,
   onClearActiveAnchor, onRetryArtifact, view, visibleReaderLayout,
   activeCloseReadingEntry, closeReadings, selectCloseReading,
-  requestDeleteAnchor, requestDeleteArtifact, onStartCloseReading, onCloseExplain,
+  requestDeleteAnchor, requestDeleteArtifact, onStartCloseReading, onCloseExplain, canShowSource, onShowSource,
 }: ReaderAnalysisPanelProps): ReactElement {
   const isNoteEditorOpen = reading.activeAnchor?.id === noteEditorAnchorId
     || reading.noteDraftContent.length > 0;
@@ -74,6 +76,8 @@ export function ReaderAnalysisPanel({
     <CurrentExplainPanel
       key={getExplainKey(reading)}
       activeAnchor={reading.activeAnchor}
+      canShowSource={canShowSource}
+      onShowSource={onShowSource}
       artifacts={getExplainArtifacts(reading)}
       activeArtifact={getActiveExplainArtifact(reading)}
       readingPreferences={reading.readerPreferences}

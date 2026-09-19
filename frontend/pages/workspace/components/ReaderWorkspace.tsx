@@ -1,5 +1,6 @@
-import { useState, type ReactElement } from 'react';
+import { useMemo, useState, type ReactElement } from 'react';
 import { useReaderNavigation } from '../useReaderNavigation';
+import { resolveAnchor } from '@/features/anchors';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
@@ -42,6 +43,12 @@ export function ReaderWorkspace({
   onRetryArtifact,
   onOpenLibrary,
 }: ReaderWorkspaceProps): ReactElement {
+  const locatedAnchor = useMemo(() => {
+    const anchor = reading.activeAnchor;
+    if (!anchor) return null;
+    const resolved = resolveAnchor(anchor, reading.activeDocument.text);
+    return resolved ? { ...anchor, ...resolved } : null;
+  }, [reading.activeAnchor, reading.activeDocument.text]);
   const view = useWorkspaceViewState(isDesktopViewport ? 'split' : 'source');
   const navigation = useReaderNavigation({ reading, actions, view, isDesktop: isDesktopViewport });
   const visibleReaderLayout = !isDesktopViewport && view.readerLayout === 'split'
@@ -113,7 +120,7 @@ export function ReaderWorkspace({
       preferences={reading.readerPreferences}
       isIndependentScroll
       sourceRevealRequest={view.sourceRevealRequest}
-      activeAnchor={reading.activeAnchor}
+      activeAnchor={locatedAnchor}
       anchors={reading.anchors}
       anchorMarkStatusById={reading.anchorMarkStatusById}
       selectionToolbarPlacement={reading.selectionToolbarPlacement}
@@ -145,6 +152,13 @@ export function ReaderWorkspace({
       onRetryArtifact={onRetryArtifact}
       view={view}
       onCloseExplain={navigation.closeExplain}
+      canShowSource={Boolean(locatedAnchor)}
+      onShowSource={() => {
+        if (!locatedAnchor) return;
+        actions.dismissSelectionToolbar();
+        navigation.openLayout(isDesktopViewport ? 'split' : 'source');
+        view.revealSource();
+      }}
       onStartCloseReading={startCloseReading}
       visibleReaderLayout={visibleReaderLayout}
       activeCloseReadingEntry={activeCloseReadingEntry}

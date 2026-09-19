@@ -1,23 +1,19 @@
 import { useState, type FormEvent, type KeyboardEvent, type ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
+  Brain,
   Columns2,
   History,
-  Languages,
+  SlidersHorizontal,
   PanelLeft,
   PanelLeftClose,
   PanelRight,
   Pencil,
-  SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from '@/components/ui/select';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type {
   AnalysisLanguage,
   ReaderPreferences,
@@ -30,12 +26,14 @@ import type {
 } from '../useWorkspaceViewState';
 import { ReadingAppearanceDialog } from './ReadingAppearanceDialog';
 import {
+  ReaderSyncAlert,
   WorkspaceAppActions,
   WorkspaceBrandButton,
   type WorkspaceAppChromeProps,
 } from './WorkspaceHeader';
 
 import { ANALYSIS_LANGUAGE_LABELS } from '../analysis-language';
+import { useReaderToolbarLayout } from '../useReaderToolbarLayout';
 
 interface ReaderToolbarProps {
   appChrome: WorkspaceAppChromeProps;
@@ -83,7 +81,7 @@ function ReaderLayoutControl({
 
   return (
     <div
-      className="flex shrink-0 border-2 border-border bg-background"
+      className="flex shrink-0 border border-border/40 bg-background"
       role="group"
       aria-label="Reader layout"
     >
@@ -98,8 +96,8 @@ function ReaderLayoutControl({
             aria-pressed={isActive}
             title={option.label}
             className={cn(
-              'flex h-10 w-10 touch-manipulation items-center justify-center border-e-2 border-border last:border-e-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-              isActive ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary/40',
+              'flex h-11 w-11 touch-manipulation items-center justify-center border-e border-border/30 last:border-e-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+              isActive ? 'bg-secondary/40 text-foreground shadow-[inset_0_-2px_0_var(--border)]' : 'bg-card hover:bg-secondary/40',
             )}
             onClick={() => onReaderLayoutChange(option.value)}
           >
@@ -163,64 +161,63 @@ function EditableDocumentTitle({
       <span className="max-w-full truncate text-sm font-black sm:max-w-[42ch] sm:text-base" title={document.title}>
         {document.title}
       </span>
-      <Pencil className="h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100" />
+      <Pencil className="hidden h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100 @min-[900px]:block" />
     </button>
   );
 }
 
-function AnalysisLanguageSelect({
-  language,
-  onLanguageChange,
-}: {
-  language: AnalysisLanguage;
-  onLanguageChange: (language: AnalysisLanguage) => void;
-}): ReactElement {
+function ReadingLanguageSelect({
+  analysisLanguage, onAnalysisLanguageChange,
+}: Pick<ReaderToolbarProps, 'analysisLanguage' | 'onAnalysisLanguageChange'>): ReactElement {
+  const languageLabel = ANALYSIS_LANGUAGE_LABELS[analysisLanguage];
   return (
-    <div className="flex items-center gap-2">
-      <Languages className="hidden h-4 w-4 sm:block" aria-hidden="true" />
-      <Select
-        value={language}
-        onValueChange={(value) => onLanguageChange(value as AnalysisLanguage)}
+    <Select value={analysisLanguage} onValueChange={(value) => onAnalysisLanguageChange(value as AnalysisLanguage)}>
+      <SelectTrigger
+        className="h-11 w-auto gap-1.5 border border-border/40 px-2 shadow-none @min-[600px]:px-3"
+        aria-label="Analysis language"
+        title="AI output language for your next request"
       >
-        <SelectTrigger
-          aria-label="Analysis language"
-          title="Analysis language"
-          className="h-10 w-24 bg-card sm:w-28"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
+        <span className="flex items-center gap-1.5">
+          <span className="@min-[600px]:hidden">{analysisLanguage === 'zh' ? '中文' : analysisLanguage.toUpperCase()}</span>
+          <span className="hidden @min-[600px]:inline">{languageLabel}</span>
+        </span>
+      </SelectTrigger>
+      <SelectContent align="end" className="border shadow-sm">
+        <SelectGroup>
+          <SelectLabel>AI output language</SelectLabel>
+          <p className="px-2 pb-2 font-sans text-xs text-muted-foreground">Applies to your next request.</p>
           {Object.entries(ANALYSIS_LANGUAGE_LABELS).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
+            <SelectItem key={value} value={value}>{label}</SelectItem>
           ))}
-        </SelectContent>
-      </Select>
-    </div>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }
 
-function ReadingSettingsMenu({
-  preferences,
-  onPreferenceChange,
-}: Pick<ReaderToolbarProps, 'preferences' | 'onPreferenceChange'>): ReactElement {
+function ReaderMenuItems({
+  destination, onOpenHistory, preferences, onPreferenceChange,
+}: Pick<ReaderToolbarProps, 'destination' | 'onOpenHistory' | 'preferences' | 'onPreferenceChange'>): ReactElement {
+  const navigate = useNavigate();
   return (
-    <ReadingAppearanceDialog
-      preferences={preferences}
-      onPreferenceChange={onPreferenceChange}
-    >
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="h-10 w-10"
-        aria-label="Reading appearance"
-        title="Reading appearance"
-      >
-        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-      </Button>
-    </ReadingAppearanceDialog>
+    <>
+      <DropdownMenuItem onSelect={onOpenHistory} aria-current={destination === 'history' ? 'page' : undefined} className="gap-2">
+        <History className="h-4 w-4" aria-hidden="true" />
+        <span>History</span>
+      </DropdownMenuItem>
+      <ReadingAppearanceDialog preferences={preferences} onPreferenceChange={onPreferenceChange}>
+        {/* Keep the menu mounted so closing the dialog restores focus to this item. */}
+        <DropdownMenuItem onSelect={(event) => event.preventDefault()} className="gap-2">
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          <span>Reading appearance</span>
+        </DropdownMenuItem>
+      </ReadingAppearanceDialog>
+      <DropdownMenuItem onSelect={() => navigate('/app')} className="gap-2">
+        <Brain className="h-4 w-4" aria-hidden="true" />
+        <span>LogosAI home</span>
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+    </>
   );
 }
 
@@ -241,19 +238,19 @@ export function ReaderToolbar({
   onOpenLibrary,
   onRenameDocument,
 }: ReaderToolbarProps): ReactElement {
+  const { toolbarRef, isToolbarCondensed } = useReaderToolbarLayout();
   return (
-    <header className="z-20 shrink-0 border-b-2 border-border bg-card px-3 py-1 sm:px-4">
+    <header ref={toolbarRef} className="@container z-20 shrink-0 border-b-2 border-border bg-card px-3 py-2 sm:px-4">
       <div
-        className="mx-auto flex max-w-[1800px] flex-wrap items-center gap-2 font-mono lg:flex-nowrap lg:justify-between"
+        className="mx-auto flex max-w-[1800px] items-center gap-1 font-mono @min-[900px]:gap-3"
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-          <WorkspaceBrandButton compact />
-          <span aria-hidden="true" className="h-8 border-e-2 border-border" />
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden @min-[900px]:gap-2">
+          <div className="hidden shrink-0 @min-[900px]:block"><WorkspaceBrandButton compact /></div>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-10 w-10 shrink-0"
+            className="h-11 w-11 shrink-0 border-0 hover:shadow-none active:translate-none"
             aria-label={isSessionsNavigationPinned
               ? 'Collapse sessions sidebar'
               : 'Open reading sessions'}
@@ -272,7 +269,7 @@ export function ReaderToolbar({
             onRename={onRenameDocument}
           />
         </div>
-        <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:ms-auto sm:w-auto sm:justify-end">
+        <div className="flex shrink-0 items-center gap-1 @min-[900px]:gap-3">
           <ReaderLayoutControl
             destination={destination}
             readerLayout={readerLayout}
@@ -281,30 +278,47 @@ export function ReaderToolbar({
           />
           <Button
             type="button"
-            variant={destination === 'history' ? 'default' : 'outline'}
-            className="h-10 px-3"
+            variant={destination === 'history' ? 'secondary' : 'ghost'}
+            className="hidden h-11 shrink-0 border-0 px-2 shadow-none hover:shadow-none active:translate-none @min-[900px]:inline-flex"
             aria-label="History"
+            title="History"
             aria-pressed={destination === 'history'}
             onClick={onOpenHistory}
           >
             <History className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">History</span>
+            <span>History</span>
           </Button>
-          <AnalysisLanguageSelect
-            language={analysisLanguage}
-            onLanguageChange={onAnalysisLanguageChange}
-          />
-          <ReadingSettingsMenu
-            preferences={preferences}
-            onPreferenceChange={onPreferenceChange}
-          />
+          <div className="flex shrink-0 items-center gap-1">
+            <ReadingLanguageSelect
+              analysisLanguage={analysisLanguage}
+              onAnalysisLanguageChange={onAnalysisLanguageChange}
+            />
+            <ReadingAppearanceDialog preferences={preferences} onPreferenceChange={onPreferenceChange}>
+              <Button
+                type="button" variant="ghost" size="icon"
+                className="hidden h-11 w-11 border-0 hover:shadow-none active:translate-none @min-[900px]:inline-flex"
+                aria-label="Reading appearance" title="Reading appearance"
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </ReadingAppearanceDialog>
+          </div>
+        </div>
+        <div className="shrink-0 @min-[900px]:border-s @min-[900px]:border-border/30 @min-[900px]:ps-3">
           <WorkspaceAppActions
             {...appChrome}
             compact
             onStartNewDocument={onClearDocument}
+            readingMenuItems={isToolbarCondensed ? (
+              <ReaderMenuItems
+                destination={destination} onOpenHistory={onOpenHistory}
+                preferences={preferences} onPreferenceChange={onPreferenceChange}
+              />
+            ) : undefined}
           />
         </div>
       </div>
+      <ReaderSyncAlert viewModel={appChrome.viewModel} onRetry={appChrome.onRetryCloudSync} />
     </header>
   );
 }
