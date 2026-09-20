@@ -41,6 +41,7 @@ function buildWorkspaceViewModel({
     saved: 'Saved to cloud',
     offline: 'Cloud sync offline. Select to retry.',
     error: 'Cloud sync failed. Select to retry.',
+    conflict: 'Sync needs review. Local changes are kept on this device.',
   };
   return {
     apiKeyStatusLabel: hasApiKey ? 'API key ready' : 'API key missing',
@@ -466,7 +467,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     noteDraftContent,
     anchorMarkStatusById,
     history,
-    workspaceError: workspaceActionError || workspaceError,
+    workspaceError: workspaceActionError || workspaceError || cloudSync.error,
     importState,
     readerPreferences,
     analysisLanguage,
@@ -501,5 +502,7 @@ export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
     updateAnalysisLanguage,
     clearDocument: startNewDocument,
     retryCloudSync: cloudSync.retry,
+    syncConflicts: cloudSync.conflicts,
+    resolveSyncConflict: cloudSync.resolveConflict,
   };
 }

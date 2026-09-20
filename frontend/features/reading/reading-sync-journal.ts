@@ -1,3 +1,4 @@
+import type { ReadingBaseline } from './reading-session-merge';
 import { readScopedStorage, writeScopedStorage } from '@/utils/scoped-storage';
 
 const WORKSPACE_SYNC_JOURNAL_KEY = 'logosai.workspace.cloudSyncJournal:v1';
@@ -8,6 +9,7 @@ export interface WorkspaceSyncJournal {
   deletedSessionIds: string[];
   preferencesDirty: boolean;
   revisions?: Record<string, number>;
+  baselines?: Record<string, ReadingBaseline>;
 }
 
 const EMPTY_SYNC_JOURNAL: WorkspaceSyncJournal = {
@@ -19,6 +21,13 @@ const EMPTY_SYNC_JOURNAL: WorkspaceSyncJournal = {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isReadingBaseline(value: unknown): value is ReadingBaseline {
+  if (!value || typeof value !== 'object' || !('parts' in value)) return false;
+  const parts = value.parts;
+  if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return false;
+  return 'source' in parts && 'title' in parts && Object.values(parts).every((part) => typeof part === 'string');
 }
 
 function normalizeJournal(value: unknown): WorkspaceSyncJournal {
@@ -34,9 +43,18 @@ function normalizeJournal(value: unknown): WorkspaceSyncJournal {
   ) {
     return EMPTY_SYNC_JOURNAL;
   }
+  return { ...journal, ...normalizeBaselines(journal) } as WorkspaceSyncJournal;
+}
+
+function normalizeBaselines(journal: Partial<WorkspaceSyncJournal>): Partial<WorkspaceSyncJournal> {
   const revisions = Object.fromEntries(Object.entries(journal.revisions ?? {})
     .filter(([, revision]) => Number.isSafeInteger(revision) && revision >= 0));
-  return { ...journal, ...(journal.revisions ? { revisions } : {}) } as WorkspaceSyncJournal;
+  const baselines = Object.fromEntries(Object.entries(journal.baselines ?? {})
+    .filter(([, baseline]) => isReadingBaseline(baseline)));
+  return {
+    ...(journal.revisions ? { revisions } : {}),
+    ...(journal.baselines ? { baselines } : {}),
+  };
 }
 
 export function readWorkspaceSyncJournal(userId: string): WorkspaceSyncJournal {
@@ -51,14 +69,15 @@ export function readWorkspaceSyncJournal(userId: string): WorkspaceSyncJournal {
 export function writeWorkspaceSyncJournal(
   userId: string,
   journal: WorkspaceSyncJournal,
-): void {
+): boolean {
   try {
     writeScopedStorage(
       WORKSPACE_SYNC_JOURNAL_KEY,
       JSON.stringify(journal),
       userId,
     );
+    return true;
   } catch {
-    // The workspace remains usable when browser storage is unavailable.
+    return false;
   }
 }

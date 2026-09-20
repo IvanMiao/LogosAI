@@ -20,7 +20,7 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 | Close Reading | 工作区提供整篇精读；段落动作归为 Explain | 仍使用 legacy analysis stream；旧接口与 history 导入保留兼容 |
 | Artifact | 解释、翻译、词汇、精读和笔记随 session 同步 | model、prompt version、context policy 尚未作为完整 provenance 保存 |
 | Streaming | Anchor done/identity 校验；截断保留部分输出并标为 failed；stop/retry；重载后 running 恢复为 stopped | 真实服务与受控断流验收通过；本地 request ID 尚未作为 client_request_id 贯穿协议 |
-| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | revision 条件写入与冲突副本已部署，真实并发、离线、删除与恢复验收通过；不自动合并并发编辑 |
+| 数据恢复 | D1、用户隔离的 localStorage、同步 journal、本地删除 tombstone、失败重试 | revision 条件写入保护整包保存；内容基准支持独立修改合并，重叠修改在原阅读中复核，见旅程契约 |
 | 登录与 key | Better Auth email/password；OAuth 按凭据启用；Worker 加密保存用户 Gemini key | 生产 OAuth 配置未核实；尚无邮件验证/密码重置邮件服务 |
 | 监控 | 前端、Worker、FastAPI Sentry；后端 LLM spans、耗时、首 token 延迟及 usage 记录 | 采样、模型 usage 完整性与 sink health 不由代码存在保证 |
 | 评估 | Workspace Alpha JSONL 与结构校验程序 | 不运行真实模型，不证明生成质量 |
@@ -94,7 +94,7 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 - D1 保存用户隔离的数据；key 用 AES-GCM、随机 IV、user ID associated data 加密；读取仅返回存在标志和末四位 hint。
 - Source 与 note 依赖平台存储加密，不是 E2E encryption；OAuth token 使用 Better Auth token encryption。
 - LocalStorage 为用户隔离缓存；旧数据首次认领保持兼容，不可跨账号继承。
-- 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts。保存/删除均校验 revision；冲突重试保留云端新版及本地冲突副本，无服务端删除 tombstone。
+- 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts。保存/删除均校验 revision；独立修改按内容基准合并，重叠修改保留本地待复核版本，不自动复制阅读；无服务端删除 tombstone。
 - 默认不向监控服务上报完整原文、prompt、note、key 或身份。AI 请求仍会发送原文给模型；LLM 监控内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
 - Source 为不可信数据；当前无 tool execution，仍需检查 prompt injection 对 grounding 的影响。
 

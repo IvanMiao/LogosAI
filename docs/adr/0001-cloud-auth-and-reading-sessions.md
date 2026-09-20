@@ -93,9 +93,10 @@ Costs and limits:
   is disabled. Fly is the AI origin and requires the gateway configuration above.
 - The initial aggregate sync used last-writer-wins writes without revision
   checks, allowing stale clients to overwrite work. PRs #49/#50 subsequently
-  added conditional writes and conflict copies; the current protocol and
-  recorded acceptance are maintained in [Project Reference](../project.md#云写入版本前提).
-  Sync still replaces aggregates and does not automatically merge edits.
+  added conditional writes and conflict copies. The browser now merges independent
+  content edits against a saved baseline and asks for a decision on overlapping
+  edits; D1 writes still replace the aggregate conditionally. The current protocol
+  and recorded acceptance are maintained in [Project Reference](../project.md#云写入版本前提).
 - Source text and notes rely on Cloudflare's platform encryption at rest; only
   the Gemini credential has additional application-level encryption. This is
   not end-to-end encryption.

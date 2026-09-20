@@ -11,7 +11,7 @@ import type {
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
 } from './reading-session-types';
-import { copyConflictingReading } from './reading-conflict-copy';
+import { describeReading, mergeReadingSession, preserveReadingPosition, readingContentFingerprint, stableFingerprint, type ReadingBaseline, type ReadingConflict } from './reading-session-merge';
 import type { WorkspaceSyncJournal } from './reading-sync-journal';
 
 export interface LocalWorkspaceState {
@@ -70,7 +70,7 @@ function hasRevisionConflict(
   remote: StoredReadingSession | undefined,
   journal?: WorkspaceSyncJournal,
 ): boolean {
-  if (!journal?.knownSessionIds.includes(sessionId)) return false;
+  if (!journal?.knownSessionIds.includes(sessionId)) return Boolean(remote);
   const expected = journal.revisions?.[sessionId];
   return expected === undefined || expected !== (remote?.revision ?? 0);
 }
@@ -78,20 +78,39 @@ function hasRevisionConflict(
 function mergeSessions(
   local: ReadingSessionSnapshot[],
   remote: StoredReadingSession[],
-  journal?: WorkspaceSyncJournal,
+  journal: WorkspaceSyncJournal | undefined,
+  conflicts: ReadingConflict[],
 ): ReadingSessionSnapshot[] {
   const remoteById = new Map(remote.map((session) => [session.document.id, session]));
   const deletedIds = new Set(journal?.deletedSessionIds ?? []);
   const dirtyIds = new Set(journal?.dirtySessionIds ?? []);
   const merged = new Map<string, ReadingSessionSnapshot>(remote.map((session) => [session.document.id, session]));
   for (const id of deletedIds) {
-    if (!hasRevisionConflict(id, remoteById.get(id), journal)) merged.delete(id);
+    recordDeletionConflict(id, remoteById.get(id), journal, conflicts);
+    merged.delete(id);
   }
   for (const session of local) {
     if (deletedIds.has(session.document.id)) continue;
-    mergeLocalSession(merged, session, remoteById.get(session.document.id), dirtyIds, journal);
+    mergeLocalSession(merged, session, remoteById.get(session.document.id), dirtyIds, journal, conflicts);
   }
   return [...merged.values()];
+}
+
+function recordDeletionConflict(
+  id: string,
+  remote: StoredReadingSession | undefined,
+  journal: WorkspaceSyncJournal | undefined,
+  conflicts: ReadingConflict[],
+): void {
+  if (!remote || !hasRevisionConflict(id, remote, journal)) return;
+  if (stableFingerprint(journal?.baselines?.[id]) === readingContentFingerprint(remote)) return;
+  conflicts.push({
+    sessionId: id,
+    title: remote.document.title,
+    localDeleted: true,
+    remoteDeleted: false,
+    items: [{ label: 'Deleted reading changed elsewhere', local: 'Deleted', remote: describeReading(remote) }],
+  });
 }
 
 function mergeLocalSession(
@@ -99,17 +118,58 @@ function mergeLocalSession(
   local: ReadingSessionSnapshot,
   remote: StoredReadingSession | undefined,
   dirtyIds: Set<string>,
-  journal?: WorkspaceSyncJournal,
+  journal: WorkspaceSyncJournal | undefined,
+  conflicts: ReadingConflict[],
 ): void {
   const id = local.document.id;
-  const dirty = dirtyIds.has(id);
-  if (!remote && journal?.knownSessionIds.includes(id) && !dirty) return;
-  if (dirty && hasRevisionConflict(id, remote, journal)) {
-    const copy = copyConflictingReading(local);
-    merged.set(copy.document.id, copy);
+  if (!dirtyIds.has(id)) {
+    const clean = mergeCleanSession(local, remote, journal);
+    if (clean) merged.set(id, clean);
     return;
   }
-  merged.set(id, remote && !dirty ? remote : local);
+  if (hasRevisionConflict(id, remote, journal)) {
+    const resolved = reconcileLocalSession(local, remote, journal?.baselines?.[id], conflicts);
+    if (resolved) merged.set(id, resolved);
+    return;
+  }
+  merged.set(id, local);
+}
+
+function mergeCleanSession(
+  local: ReadingSessionSnapshot,
+  remote: StoredReadingSession | undefined,
+  journal: WorkspaceSyncJournal | undefined,
+): ReadingSessionSnapshot | undefined {
+  if (remote) return preserveReadingPosition(remote, local);
+  return journal?.knownSessionIds.includes(local.document.id) ? undefined : local;
+}
+
+function reconcileLocalSession(
+  local: ReadingSessionSnapshot,
+  remote: StoredReadingSession | undefined,
+  base: ReadingBaseline | undefined,
+  conflicts: ReadingConflict[],
+): ReadingSessionSnapshot | undefined {
+  if (!remote) {
+    if (base && stableFingerprint(base) === readingContentFingerprint(local)) return;
+    conflicts.push({
+      sessionId: local.document.id,
+      title: local.document.title,
+      remoteDeleted: true,
+      localDeleted: false,
+      items: [{ label: 'Reading deleted elsewhere', local: describeReading(local), remote: 'Deleted' }],
+    });
+    return local;
+  }
+  const result = mergeReadingSession(local, remote, base);
+  if (result.items.length) conflicts.push({
+    sessionId: local.document.id,
+    title: local.document.title,
+    items: result.items,
+    remoteDeleted: false,
+    localDeleted: false,
+  });
+  return result.items.length ? local : result.session;
 }
 
 function createArtifactTask(artifact: Artifact) {
@@ -178,9 +238,10 @@ export function mergeCloudWorkspace(
   localState: LocalWorkspaceState,
   cloudState: CloudWorkspaceState,
   journal?: WorkspaceSyncJournal,
+  conflicts: ReadingConflict[] = [],
 ): LocalWorkspaceState {
   const localSessions = buildReadingSessions(localState);
-  const mergedSessions = mergeSessions(localSessions, cloudState.sessions, journal);
+  const mergedSessions = mergeSessions(localSessions, cloudState.sessions, journal, conflicts);
   const preferences = !journal?.preferencesDirty
     ? cloudState.preferences
     : buildWorkspacePreferences(localState);
