@@ -251,7 +251,7 @@ function CloudSyncIndicator({
       title={label}
       className="flex h-10 w-10 items-center justify-center border-2 border-border bg-card"
     >
-      {tone === 'saved'
+      {tone === 'conflict' ? <CloudOff className="h-4 w-4" aria-hidden="true" /> : tone === 'saved'
         ? <Check className="h-4 w-4" aria-hidden="true" />
         : <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />}
     </span>
@@ -262,7 +262,7 @@ function CompactSyncIndicator({ label, tone }: {
   label: string;
   tone: WorkspaceViewModel['cloudSyncTone'];
 }): ReactElement {
-  const isUnavailable = tone === 'offline' || tone === 'error';
+  const isUnavailable = tone === 'offline' || tone === 'error' || tone === 'conflict';
   const Icon = isUnavailable ? CloudOff : tone === 'saved' ? Check : LoaderCircle;
   const isPending = tone === 'saving' || tone === 'loading';
   return (

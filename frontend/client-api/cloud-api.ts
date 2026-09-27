@@ -21,7 +21,7 @@ export async function requestCloudJson<ResponseBody>(
     headers,
   });
   if (!response.ok) {
-    throw new RemoteApiError(await getErrorMessage(response));
+    throw new RemoteApiError(await getErrorMessage(response), response.status);
   }
   return response.json() as Promise<ResponseBody>;
 }
@@ -35,6 +35,6 @@ export async function requestCloudEmpty(
     credentials: 'include',
   });
   if (!response.ok) {
-    throw new RemoteApiError(await getErrorMessage(response));
+    throw new RemoteApiError(await getErrorMessage(response), response.status);
   }
 }

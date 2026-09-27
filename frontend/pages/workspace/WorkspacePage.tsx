@@ -8,6 +8,7 @@ import {
   PinnedSessionsSidebar,
 } from './components';
 import { WorkspacePageLayout } from './components/WorkspacePageLayout';
+import { WorkspaceSyncRecovery } from './components/WorkspaceSyncRecovery';
 import { WorkspaceReading } from './components/WorkspaceReading';
 import { ReadingViewProvider } from './components/ReadingViewProvider';
 import { ReadingViewContext } from './reading-view-context';
@@ -16,6 +17,8 @@ import { useWorkspace } from './useWorkspace';
 import { useWorkspaceViewport } from './useWorkspaceViewport';
 import type { WorkspaceAppChromeProps } from './components/WorkspaceHeader';
 import type { WorkspaceController, WorkspacePageProps } from './workspace-types';
+import type { ReadingConflict } from '@/features/reading/reading-session-merge';
+import type { ConflictResolution } from '@/features/reading/reading-sync-state';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
   const auth = useAuth();
@@ -90,6 +93,10 @@ function WorkspacePageContent({
   };
 
   const activeDocumentId = workspace.activeDocument?.id ?? null;
+  const resolveSyncConflict = (conflict: ReadingConflict, choice: ConflictResolution) => {
+    const nextId = workspace.resolveSyncConflict(conflict, choice);
+    if (nextId && nextId !== activeDocumentId) navigation.openDocument(nextId);
+  };
   return (
     <WorkspacePageLayout
       appChrome={appChrome}
@@ -143,6 +150,7 @@ function WorkspacePageContent({
         />
       }
     >
+      <WorkspaceSyncRecovery conflicts={workspace.syncConflicts} onResolve={resolveSyncConflict} />
       <WorkspaceBody
         workspace={workspace}
         navigation={navigation}
