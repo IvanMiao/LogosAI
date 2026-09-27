@@ -29,6 +29,14 @@ function hydrate(local: ReadingSessionSnapshot, remote: ReadingSessionSnapshot, 
   return { sessions: buildReadingSessions(merged), conflicts };
 }
 
+it('stores content hashes rather than raw content in the baseline', () => {
+  const baseline = readingBaseline(reading());
+  expect(baseline.version).toBe(2);
+  expect(baseline.parts.source).not.toContain('Read this.');
+  expect(baseline.parts.source.length).toBeLessThanOrEqual(16);
+  for (const part of Object.values(baseline.parts)) expect(part).toMatch(/^[0-9a-f]{16}$/);
+});
+
 describe('content-aware reading merge', () => {
   it.each([false, true])('deduplicates identical content with an old or absent revision (legacy=%s)', (legacy) => {
     const local = reading();

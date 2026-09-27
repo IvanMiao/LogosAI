@@ -3,7 +3,7 @@ import type { ReadingSessionSnapshot } from './reading-session-types';
 type Session = ReadingSessionSnapshot;
 type Artifact = Session['artifacts'][number];
 export type ReadingConflictChoice = 'local' | 'remote';
-export interface ReadingBaseline { parts: Record<string, string> }
+export interface ReadingBaseline { version: 2; parts: Record<string, string> }
 export interface ReadingConflictItem { key?: string; label: string; local: string; remote: string }
 export interface ReadingConflict {
   sessionId: string;
@@ -21,6 +21,20 @@ export function stableFingerprint(value: unknown): string {
   });
 }
 
+// Persisted baselines are only compared for equality; hash parts so they never duplicate content.
+function contentHash(value: string): string {
+  let high = 0xdeadbeef;
+  let low = 0x41c6ce57;
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value.charCodeAt(index);
+    high = Math.imul(high ^ char, 2654435761);
+    low = Math.imul(low ^ char, 1597334677);
+  }
+  high = Math.imul(high ^ (high >>> 16), 2246822507) ^ Math.imul(low ^ (low >>> 13), 3266489909);
+  low = Math.imul(low ^ (low >>> 16), 2246822507) ^ Math.imul(high ^ (high >>> 13), 3266489909);
+  return (low >>> 0).toString(16).padStart(8, '0') + (high >>> 0).toString(16).padStart(8, '0');
+}
+
 function artifactContent(artifact: Artifact) {
   const content: Partial<Artifact> = { ...artifact };
   delete content.updatedAt;
@@ -34,12 +48,12 @@ export function readingContentFingerprint(session: Session): string {
 
 export function readingBaseline(session: Session): ReadingBaseline {
   const parts: Record<string, string> = {
-    title: stableFingerprint(session.document.title),
-    source: stableFingerprint([session.document.text, session.document.sourceType]),
+    title: contentHash(stableFingerprint(session.document.title)),
+    source: contentHash(stableFingerprint([session.document.text, session.document.sourceType])),
   };
-  for (const anchor of session.anchors) parts[`anchor:${anchor.id}`] = stableFingerprint(anchor);
-  for (const artifact of session.artifacts) parts[`artifact:${artifact.id}`] = stableFingerprint(artifactContent(artifact));
-  return { parts };
+  for (const anchor of session.anchors) parts[`anchor:${anchor.id}`] = contentHash(stableFingerprint(anchor));
+  for (const artifact of session.artifacts) parts[`artifact:${artifact.id}`] = contentHash(stableFingerprint(artifactContent(artifact)));
+  return { version: 2, parts };
 }
 
 export function preserveReadingPosition(merged: Session, local: Session): Session {
@@ -112,9 +126,9 @@ function mergeWholeBody(context: MergeContext, local: Session, remote: Session):
     Object.fromEntries(Object.entries(baseline.parts).filter(([key]) => key !== 'title')),
   );
   const bodyContext: MergeContext = { ...context,
-    base: context.base ? { parts: { body: bodyFingerprint(context.base) } } : undefined,
-    local: { parts: { body: bodyFingerprint(context.local) } },
-    remote: { parts: { body: bodyFingerprint(context.remote) } },
+    base: context.base ? { version: 2, parts: { body: bodyFingerprint(context.base) } } : undefined,
+    local: { version: 2, parts: { body: bodyFingerprint(context.local) } },
+    remote: { version: 2, parts: { body: bodyFingerprint(context.remote) } },
   };
   // Replace any partial passage conflicts with a coherent whole-body choice.
   context.items.splice(0);

@@ -24,8 +24,10 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isReadingBaseline(value: unknown): value is ReadingBaseline {
-  if (!value || typeof value !== 'object' || !('parts' in value)) return false;
-  const parts = value.parts;
+  if (!value || typeof value !== 'object') return false;
+  const baseline = value as { version?: unknown; parts?: unknown };
+  if (baseline.version !== 2) return false;
+  const parts = baseline.parts;
   if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return false;
   return 'source' in parts && 'title' in parts && Object.values(parts).every((part) => typeof part === 'string');
 }
