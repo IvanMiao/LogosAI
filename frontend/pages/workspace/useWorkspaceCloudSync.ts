@@ -17,7 +17,7 @@ export interface WorkspaceCloudSync {
   error: string;
   conflicts: ReadingConflict[];
   retry: () => void;
-  resolveConflict: (conflict: ReadingConflict, choice: ConflictResolution) => void;
+  resolveConflict: (conflict: ReadingConflict, choice: ConflictResolution) => string | null;
 }
 interface UseWorkspaceCloudSyncInput {
   enabled: boolean;
@@ -150,14 +150,15 @@ export function useWorkspaceCloudSync({ enabled, userId, state, onHydrate }: Use
     return () => window.clearTimeout(timeoutId);
   }, [enabled, isHydrated, retry, state, conflicts, persistJournal]);
 
-  const resolveConflict = useCallback((conflict: ReadingConflict, choice: ConflictResolution) => {
+  const resolveConflict = useCallback((conflict: ReadingConflict, choice: ConflictResolution): string | null => {
     const engine = engineRef.current;
-    if (!engine || !engine.blocked(conflict.sessionId)) return;
+    if (!engine || !engine.blocked(conflict.sessionId)) return null;
     const merged = engine.resolve(latestStateRef.current, conflict, choice);
     latestStateRef.current = merged;
     onHydrate(merged);
     setConflicts([...engine.conflicts]);
     persistJournal(engine, merged);
+    return buildWorkspacePreferences(merged).activeDocumentId;
   }, [onHydrate, persistJournal]);
 
   const visibleConflicts = engineRef.current?.review(state) ?? conflicts;

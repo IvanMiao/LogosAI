@@ -69,10 +69,27 @@ it('holds overlapping edits through reload, then saves the explicit resolution',
   await waitFor(() => expect(result.current.sync.status).toBe('conflict'));
   expect(buildReadingSessions(result.current.state)).toHaveLength(1);
   expect(result.current.state.documentLibrary.documentsById.original.title).toBe('Local title');
-  act(() => result.current.sync.resolveConflict(result.current.sync.conflicts[0], 'local'));
+  let returned: string | null = null;
+  act(() => { returned = result.current.sync.resolveConflict(result.current.sync.conflicts[0], 'local'); });
+  expect(returned).toBe('original');
   await waitFor(() => expect(cloud.sessions[0].document.title).toBe('Local title'), { timeout: 4000 });
   expect(result.current.sync.conflicts).toEqual([]);
   expect(cloud.sessions).toHaveLength(1);
+});
+
+it('returns the recovered reading id after restoring a remotely deleted reading', async () => {
+  const { result } = renderHook(() => useHarness());
+  await waitFor(() => expect(result.current.sync.status).toBe('saved'));
+  cloud.sessions = [];
+  act(() => result.current.setState((state) => renamed(state, 'Offline title')));
+  await waitFor(() => expect(result.current.sync.status).toBe('conflict'), { timeout: 4000 });
+  expect(result.current.sync.conflicts[0].remoteDeleted).toBe(true);
+  let returned: string | null = null;
+  act(() => { returned = result.current.sync.resolveConflict(result.current.sync.conflicts[0], 'local'); });
+  const sessions = buildReadingSessions(result.current.state);
+  expect(returned).not.toBe('original');
+  expect(returned).toBe(sessions[0].document.id);
+  expect(sessions[0].document.title).toContain('(recovered)');
 });
 
 it('recognizes a successful save whose response was lost without creating a duplicate', async () => {
