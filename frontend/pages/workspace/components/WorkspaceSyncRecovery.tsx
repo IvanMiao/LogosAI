@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { ReadingConflict } from '@/features/reading/reading-session-merge';
-import type { ConflictResolution } from '@/features/reading/reading-sync-state';
+import type { ConflictResolution } from '@/features/reading/reading-sync';
 
 interface Props {
   conflicts: ReadingConflict[];

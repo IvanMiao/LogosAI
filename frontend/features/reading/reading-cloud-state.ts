@@ -12,7 +12,7 @@ import type {
   WorkspacePreferencesPayload,
 } from './reading-session-types';
 import { describeReading, mergeReadingSession, preserveReadingPosition, readingContentFingerprint, stableFingerprint, type ReadingBaseline, type ReadingConflict } from './reading-session-merge';
-import type { WorkspaceSyncJournal } from './reading-sync-journal';
+import type { WorkspaceSyncJournal } from './reading-sync-types';
 
 export interface LocalWorkspaceState {
   documentLibrary: WorkspaceDocumentLibrary;

@@ -42,6 +42,14 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 | Close Reading | 整篇文本的连续 Markdown 深度讲解 |
 | History | 当前 session 内已保存工作的显式查询入口 |
 | Legacy analysis | 旧的一次性分析记录，经兼容入口导入，不等同于当前 session |
+| Skill | 在 Anchor 上触发的 AI 动作：Explain、Translate、Vocab；每次运行生成一个 Artifact |
+| Note | 用户写在 Anchor 上的 Artifact；AI 不覆盖 |
+| Local workspace | 当前设备上该用户的全部 reading sessions 与阅读偏好，按用户隔离保存在 localStorage；界面只读这一份状态 |
+| Cloud workspace | D1 中该用户的 reading sessions 与 workspace preferences |
+| Revision | 云端 reading session 的版本号；保存和删除带 `If-Match`，不一致返回 409 |
+| Baseline | 上次确认同步时 reading session 各部分的内容哈希，三方合并据此判断哪一侧改动 |
+| Sync journal | 本地记录的已同步、待保存、待删除 sessions 及其 revision / baseline，重载后继续同步 |
+| Sync conflict | 两侧改了同一部分，或一侧删除一侧修改；该 session 暂停同步，由用户在原阅读中选择 |
 
 Offset 使用 JavaScript 字符串坐标（UTF-16 code units）。恢复先核对原位置，
 再尝试唯一 quote 匹配；歧义不静默绑定到首个位置。
@@ -59,7 +67,9 @@ Cloudflare Worker: Hono
 ```
 
 请求集中于 `frontend/client-api/`；页面 hook 编排流程，`features/` 保存领域逻辑，
-展示组件接收 typed props。开发时 Vite 代理到本地 Worker。
+展示组件接收 typed props。
+本地状态变更集中于 `features/reading/reading-workspace.ts`；云同步协议在 `features/reading/reading-sync.ts`，
+HTTP 与 sync journal 存储作为注入的 adapter。开发时 Vite 代理到本地 Worker。
 决策见 [ADR 0001](adr/0001-cloud-auth-and-reading-sessions.md)，
 运行与部署见 [Cloudflare Operations](../cloudflare/README.md)。
 

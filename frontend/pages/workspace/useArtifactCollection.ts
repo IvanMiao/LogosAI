@@ -4,23 +4,23 @@ import {
   getActiveArtifact,
   getArtifactsForAnchor,
   getNoteDraft,
-  readStoredArtifacts,
   removeArtifact,
-  removeArtifactsForAnchor,
-  removeArtifactsForDocument,
   upsertNoteDraft,
-  writeStoredArtifacts,
   type Artifact,
   type ArtifactStorageState,
 } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
+import {
+  updateArtifactStorage as updateWorkspaceArtifactStorage,
+} from '@/features/reading/reading-workspace';
 import { getAnchorMarkStatusById } from './workspace-selectors';
 import type { ReadingViewStore } from './reading-view-storage';
 import { ReadingViewContext } from './reading-view-context';
 import type { AnchorMarkStatus } from './workspace-types';
+import type { ReadingWorkspaceStore } from './useReadingWorkspace';
 
 interface UseArtifactCollectionInput {
-  userId: string;
+  store: ReadingWorkspaceStore;
   activeDocument: WorkspaceDocument | null;
   activeAnchor: TextAnchor | null;
   activeAnchorId: string | null;
@@ -37,25 +37,21 @@ interface ArtifactCollection {
   selectArtifact: (artifactId: string) => void;
   resetSelectedArtifact: () => void;
   deleteArtifact: (artifactId: string) => void;
-  removeArtifactsForAnchor: (anchorId: string) => void;
-  removeArtifactsForDocument: (documentId: string) => void;
   updateNoteDraft: (content: string) => void;
   updateArtifacts: (
     updater: (current: ArtifactStorageState) => ArtifactStorageState,
   ) => void;
-  hydrateArtifactStorage: (storage: ArtifactStorageState) => void;
 }
 
 export function useArtifactCollection({
-  userId,
+  store,
   activeDocument,
   activeAnchor,
   activeAnchorId,
   anchors,
 }: UseArtifactCollectionInput): ArtifactCollection {
-  const [artifactStorage, setArtifactStorage] = useState<ArtifactStorageState>(
-    () => readStoredArtifacts(userId),
-  );
+  const { commit, state } = store;
+  const artifactStorage = state.artifactStorage;
   const viewStore = useContext(ReadingViewContext)?.store;
   const [selectedIds, setSelectedIds] = useState<Record<string, string | null>>({});
   const documentId = activeDocument?.id ?? '';
@@ -65,44 +61,25 @@ export function useArtifactCollection({
     viewStore?.write(documentId, 'selectedArtifactId', id);
   }, [documentId, viewStore]);
   const activeArtifacts = getArtifactsForAnchor(artifactStorage, activeAnchor?.id ?? null);
-  const selectedArtifact = activeArtifacts.find(
-    (artifact) => artifact.id === selectedArtifactId,
-  );
+  const selectedArtifact = activeArtifacts.find((artifact) => artifact.id === selectedArtifactId);
   const activeArtifact = selectedArtifact ?? getActiveArtifact(activeArtifacts);
   const noteDraftContent = getNoteDraft(activeArtifacts)?.content ?? '';
-  const artifactCountByAnchorId = Object.fromEntries(
-    anchors.map((anchor) => [
-      anchor.id,
-      getArtifactsForAnchor(artifactStorage, anchor.id).length,
-    ]),
-  );
-  const anchorMarkStatusById = getAnchorMarkStatusById({
-    anchors,
-    activeAnchorId,
-    artifactStorage,
-  });
+  const artifactCountByAnchorId = Object.fromEntries(anchors.map((anchor) => [
+    anchor.id,
+    getArtifactsForAnchor(artifactStorage, anchor.id).length,
+  ]));
+  const anchorMarkStatusById = getAnchorMarkStatusById({ anchors, activeAnchorId, artifactStorage });
 
   const updateArtifacts = useCallback((
     updater: (current: ArtifactStorageState) => ArtifactStorageState,
   ) => {
-    setArtifactStorage((current) => {
-      const nextState = updater(current);
-      writeStoredArtifacts(nextState, userId);
-      return nextState;
-    });
-  }, [userId]);
-
-  const hydrateArtifactStorage = useCallback((storage: ArtifactStorageState) => {
-    setArtifactStorage(storage);
-    writeStoredArtifacts(storage, userId);
-  }, [userId]);
+    commit((current) => updateWorkspaceArtifactStorage(current, updater));
+  }, [commit]);
 
   const selectArtifact = useCallback((artifactId: string) => {
     const artifactExists = Object.values(artifactStorage.artifactsByAnchorId)
       .some((artifacts) => artifacts.some((artifact) => artifact.id === artifactId));
-    if (artifactExists) {
-      setSelectedArtifactId(artifactId);
-    }
+    if (artifactExists) setSelectedArtifactId(artifactId);
   }, [artifactStorage.artifactsByAnchorId, setSelectedArtifactId]);
 
   const resetSelectedArtifact = useCallback(() => {
@@ -114,19 +91,8 @@ export function useArtifactCollection({
     if (selectedArtifactId === artifactId) setSelectedArtifactId(null);
   }, [selectedArtifactId, setSelectedArtifactId, updateArtifacts]);
 
-  const clearArtifactsForAnchor = useCallback((anchorId: string) => {
-    updateArtifacts((current) => removeArtifactsForAnchor(current, anchorId));
-  }, [updateArtifacts]);
-
-  const clearArtifactsForDocument = useCallback((documentId: string) => {
-    updateArtifacts((current) => removeArtifactsForDocument(current, documentId));
-  }, [updateArtifacts]);
-
   const updateNoteDraft = useCallback((content: string) => {
-    if (!activeDocument || !activeAnchor) {
-      return;
-    }
-
+    if (!activeDocument || !activeAnchor) return;
     updateArtifacts((current) => upsertNoteDraft({
       storage: current,
       documentId: activeDocument.id,
@@ -145,11 +111,8 @@ export function useArtifactCollection({
     selectArtifact,
     resetSelectedArtifact,
     deleteArtifact,
-    removeArtifactsForAnchor: clearArtifactsForAnchor,
-    removeArtifactsForDocument: clearArtifactsForDocument,
     updateNoteDraft,
     updateArtifacts,
-    hydrateArtifactStorage,
   };
 }
 

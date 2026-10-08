@@ -3,6 +3,7 @@ import type {
   ReadingSessionSnapshot,
   WorkspacePreferencesPayload,
 } from '@/features/reading';
+import type { CloudWorkspacePort } from '@/features/reading/reading-sync';
 import { requestCloudEmpty, requestCloudJson } from './cloud-api';
 
 export function getCloudWorkspace(): Promise<CloudWorkspaceState> {
@@ -35,3 +36,10 @@ export function saveCloudWorkspacePreferences(
     body: JSON.stringify(preferences),
   });
 }
+
+export const httpCloudWorkspace: CloudWorkspacePort = {
+  load: getCloudWorkspace,
+  saveSession: saveCloudReadingSession,
+  deleteSession: deleteCloudReadingSession,
+  savePreferences: saveCloudWorkspacePreferences,
+};

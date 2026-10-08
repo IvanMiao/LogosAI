@@ -1,85 +1,55 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { HistoryItem } from '@/types';
-import type {
-  WorkspaceDocument,
-  WorkspaceDocumentLibrary,
-} from '@/features/reading';
+import type { WorkspaceDocument } from '@/features/reading';
 import {
   createWorkspaceDocument,
   isSupportedTextFile,
 } from '@/features/reading/reading-core';
 import {
-  addDocumentToLibrary,
-  closeLibraryDocument,
   listLibraryDocuments,
-  openLibraryDocument,
-  removeDocumentFromLibrary,
-  renameLibraryDocument,
 } from '@/features/reading/reading-library';
 import {
-  getActiveDocument,
-  readStoredDocumentLibrary,
-  writeStoredDocumentLibrary,
-} from '@/features/reading/reading-storage';
+  addDocument as addWorkspaceDocument,
+  closeDocument,
+  openDocument as openWorkspaceDocument,
+  renameDocument as renameWorkspaceDocument,
+} from '@/features/reading/reading-workspace';
 import { readHistory, removeHistoryItem } from '@/utils/history-storage';
+import { getActiveDocument } from '@/features/reading/reading-storage';
 import type { ImportState } from './workspace-types';
+import type { ReadingWorkspaceStore } from './useReadingWorkspace';
 
 interface ReadingLibrary {
-  documentLibrary: WorkspaceDocumentLibrary;
   activeDocument: WorkspaceDocument | null;
   documents: WorkspaceDocument[];
   history: HistoryItem[];
   importState: ImportState;
-  workspaceError: string;
   setPasteText: (text: string) => void;
   setSessionTitle: (title: string) => void;
   importPastedText: () => boolean;
   importTextFile: (file: File | null) => Promise<boolean>;
   openDocument: (documentId: string) => boolean;
   renameDocument: (documentId: string, title: string) => void;
-  removeDocument: (documentId: string) => boolean;
   startNewDocument: () => boolean;
   openHistoryAsDocument: (item: HistoryItem) => boolean;
   deleteHistoryItem: (id: number) => void;
-  hydrateDocumentLibrary: (library: WorkspaceDocumentLibrary) => void;
 }
 
-export function useReadingLibrary(userId: string): ReadingLibrary {
-  const [documentLibrary, setDocumentLibrary] = useState<WorkspaceDocumentLibrary>(
-    () => readStoredDocumentLibrary(userId),
-  );
+export function useReadingLibrary(userId: string, store: ReadingWorkspaceStore): ReadingLibrary {
+  const { commit, state } = store;
+  const { documentLibrary } = state;
   const [importState, setImportState] = useState<ImportState>({
     pasteText: '',
     sessionTitle: '',
     importError: '',
   });
   const [history, setHistory] = useState<HistoryItem[]>(() => readHistory(userId));
-  const [workspaceError, setWorkspaceError] = useState('');
   const activeDocument = getActiveDocument(documentLibrary);
-  const documents = useMemo(
-    () => listLibraryDocuments(documentLibrary),
-    [documentLibrary],
-  );
+  const documents = useMemo(() => listLibraryDocuments(documentLibrary), [documentLibrary]);
 
-  const commitDocumentLibrary = useCallback((nextLibrary: WorkspaceDocumentLibrary) => {
-    if (!writeStoredDocumentLibrary(nextLibrary, userId)) {
-      setWorkspaceError('This change could not be saved. Check browser storage and try again.');
-      return false;
-    }
-
-    setDocumentLibrary(nextLibrary);
-    setWorkspaceError('');
-    return true;
-  }, [userId]);
-
-  const hydrateDocumentLibrary = useCallback((library: WorkspaceDocumentLibrary) => {
-    setDocumentLibrary(library);
-    writeStoredDocumentLibrary(library, userId);
-  }, [userId]);
-
-  const addDocument = useCallback((document: WorkspaceDocument): boolean => {
-    return commitDocumentLibrary(addDocumentToLibrary(documentLibrary, document));
-  }, [commitDocumentLibrary, documentLibrary]);
+  const addDocument = useCallback((document: WorkspaceDocument): boolean => (
+    commit((current) => addWorkspaceDocument(current, document))
+  ), [commit]);
 
   const setPasteText = useCallback((text: string) => {
     setImportState((current) => ({ ...current, pasteText: text, importError: '' }));
@@ -92,31 +62,21 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
   const importPastedText = useCallback((): boolean => {
     const text = importState.pasteText.trim();
     if (!text) {
-      setImportState((current) => ({
-        ...current,
-        importError: 'Paste some text before importing.',
-      }));
+      setImportState((current) => ({ ...current, importError: 'Paste some text before importing.' }));
       return false;
     }
-
-    if (!addDocument(createWorkspaceDocument(
+    const added = addDocument(createWorkspaceDocument(
       text,
       'paste',
       'Untitled document',
       importState.sessionTitle,
-    ))) {
-      return false;
-    }
-
-    setImportState({ pasteText: '', sessionTitle: '', importError: '' });
-    return true;
+    ));
+    if (added) setImportState({ pasteText: '', sessionTitle: '', importError: '' });
+    return added;
   }, [addDocument, importState.pasteText, importState.sessionTitle]);
 
   const importTextFile = useCallback(async (file: File | null): Promise<boolean> => {
-    if (!file) {
-      return false;
-    }
-
+    if (!file) return false;
     if (!isSupportedTextFile(file.name)) {
       setImportState((current) => ({
         ...current,
@@ -124,7 +84,6 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
       }));
       return false;
     }
-
     let text: string;
     try {
       text = (await file.text()).trim();
@@ -142,69 +101,49 @@ export function useReadingLibrary(userId: string): ReadingLibrary {
       }));
       return false;
     }
-
-    if (!addDocument(createWorkspaceDocument(
+    const added = addDocument(createWorkspaceDocument(
       text,
       'file',
       file.name,
       importState.sessionTitle,
-    ))) {
-      return false;
-    }
-
-    setImportState({ pasteText: '', sessionTitle: '', importError: '' });
-    return true;
+    ));
+    if (added) setImportState({ pasteText: '', sessionTitle: '', importError: '' });
+    return added;
   }, [addDocument, importState.sessionTitle]);
 
-  const openDocument = useCallback((documentId: string): boolean => {
-    return commitDocumentLibrary(openLibraryDocument(documentLibrary, documentId));
-  }, [commitDocumentLibrary, documentLibrary]);
+  const openDocument = useCallback((documentId: string): boolean => (
+    commit((current) => openWorkspaceDocument(current, documentId))
+  ), [commit]);
 
-  const renameDocument = useCallback((documentId: string, title: string) => {
-    commitDocumentLibrary(renameLibraryDocument(documentLibrary, documentId, title));
-  }, [commitDocumentLibrary, documentLibrary]);
+  const renameDocument = useCallback((documentId: string, title: string): void => {
+    commit((current) => renameWorkspaceDocument(current, documentId, title));
+  }, [commit]);
 
-  const removeDocument = useCallback((documentId: string): boolean => {
-    if (!documentLibrary.documentsById[documentId]) {
-      return false;
-    }
+  const startNewDocument = useCallback((): boolean => (
+    commit((current) => closeDocument(current))
+  ), [commit]);
 
-    return commitDocumentLibrary(removeDocumentFromLibrary(documentLibrary, documentId));
-  }, [commitDocumentLibrary, documentLibrary]);
-
-  const startNewDocument = useCallback((): boolean => {
-    return commitDocumentLibrary(closeLibraryDocument(documentLibrary));
-  }, [commitDocumentLibrary, documentLibrary]);
-
-  const openHistoryAsDocument = useCallback((item: HistoryItem): boolean => {
-    return addDocument(createWorkspaceDocument(
-      item.prompt,
-      'history',
-      `Legacy analysis ${item.id}`,
-    ));
-  }, [addDocument]);
+  const openHistoryAsDocument = useCallback((item: HistoryItem): boolean => (
+    addDocument(createWorkspaceDocument(item.prompt, 'history', `Legacy analysis ${item.id}`))
+  ), [addDocument]);
 
   const deleteHistoryItem = useCallback((id: number) => {
     setHistory(removeHistoryItem(id, userId));
   }, [userId]);
 
   return {
-    documentLibrary,
     activeDocument,
     documents,
     history,
     importState,
-    workspaceError,
     setPasteText,
     setSessionTitle,
     importPastedText,
     importTextFile,
     openDocument,
     renameDocument,
-    removeDocument,
     startNewDocument,
     openHistoryAsDocument,
     deleteHistoryItem,
-    hydrateDocumentLibrary,
   };
 }
