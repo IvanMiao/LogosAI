@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { ScanText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Artifact } from '@/features/artifacts';
+import { isNoteDraft, type Artifact } from '@/features/artifacts';
 import type { TextAnchor } from '@/features/anchors';
 import type { WorkspaceSessionArtifact } from '../workspace-types';
 import type { useWorkspaceViewState, ReaderLayout } from '../useWorkspaceViewState';
@@ -136,5 +136,9 @@ export function ReaderAnalysisPanel({
 }
 
 function getExplainKey(reading: ReaderWorkspaceState): string | undefined {
-  return reading.activeArtifact?.id ?? reading.activeAnchor?.id;
+  const { activeAnchor, activeArtifact } = reading;
+  if (activeAnchor && activeArtifact?.anchorId === activeAnchor.id && isNoteDraft(activeArtifact)) {
+    return activeAnchor.id;
+  }
+  return activeArtifact?.id ?? activeAnchor?.id;
 }
