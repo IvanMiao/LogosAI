@@ -25,9 +25,11 @@ export function writeLocalWorkspace(
   next: LocalWorkspaceState,
   userId: string,
 ): boolean {
-  let documentLibraryWritten = true;
-  if (previous.documentLibrary !== next.documentLibrary) {
-    documentLibraryWritten = writeStoredDocumentLibrary(next.documentLibrary, userId);
+  if (
+    previous.documentLibrary !== next.documentLibrary
+    && !writeStoredDocumentLibrary(next.documentLibrary, userId)
+  ) {
+    return false;
   }
   if (previous.anchorStorage !== next.anchorStorage) {
     writeStoredAnchors(next.anchorStorage, userId);
@@ -41,5 +43,5 @@ export function writeLocalWorkspace(
   if (previous.analysisLanguage !== next.analysisLanguage) {
     writeStoredAnalysisLanguage(next.analysisLanguage, userId);
   }
-  return documentLibraryWritten;
+  return true;
 }
