@@ -6,6 +6,7 @@ export {
   getArtifactsForAnchor,
   getNoteDraft,
   getPastArtifacts,
+  isNoteDraft,
   prependArtifact,
   removeArtifact,
   removeArtifactsForAnchor,

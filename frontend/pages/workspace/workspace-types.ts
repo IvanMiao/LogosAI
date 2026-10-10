@@ -1,8 +1,9 @@
-import type { WorkspaceCloudSync } from './useWorkspaceCloudSync';
 import type { AnalysisModel } from '@/types';
 import type { HistoryItem } from '@/types';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
+import type { ReadingConflict } from '@/features/reading/reading-session-merge';
+import type { ReadingSync, ReadingSyncStatus } from '@/features/reading/reading-sync';
 import type {
   AnalysisLanguage,
   ReaderPreferences,
@@ -19,7 +20,7 @@ export interface WorkspacePageProps {
 }
 
 export type ApiKeyStatusTone = 'ready' | 'missing';
-export type WorkspaceSyncStatus = 'loading' | 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
+export type WorkspaceSyncStatus = ReadingSyncStatus;
 
 export interface WorkspaceViewModel {
   apiKeyStatusLabel: string;
@@ -108,6 +109,6 @@ export interface WorkspaceController {
   updateAnalysisLanguage: (language: AnalysisLanguage) => void;
   clearDocument: () => void;
   retryCloudSync: () => void;
-  syncConflicts: WorkspaceCloudSync['conflicts'];
-  resolveSyncConflict: WorkspaceCloudSync['resolveConflict'];
+  syncConflicts: ReadingConflict[];
+  resolveSyncConflict: ReadingSync['resolveConflict'];
 }

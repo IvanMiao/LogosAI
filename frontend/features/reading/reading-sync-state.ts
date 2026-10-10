@@ -1,10 +1,17 @@
 import { buildReadingSessions, buildWorkspacePreferences, createLocalWorkspaceState, fingerprint,
   mergeCloudWorkspace, type LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 import { copyReadingSession } from '@/features/reading/reading-session-copy';
-import { describeReading, keepBothArtifactVersions, mergeReadingSession, readingBaseline, stableFingerprint,
-  type ReadingConflict, type ReadingConflictChoice } from '@/features/reading/reading-session-merge';
-import type { WorkspaceSyncJournal } from '@/features/reading/reading-sync-journal';
+import {
+  describeReading,
+  keepBothArtifactVersions,
+  mergeReadingSession,
+  readingBaseline,
+  stableFingerprint,
+  type ReadingConflict,
+  type ReadingConflictChoice,
+} from '@/features/reading/reading-session-merge';
 import type { CloudWorkspaceState, ReadingSessionSnapshot, StoredReadingSession } from '@/features/reading';
+import type { WorkspaceSyncJournal } from './reading-sync-types';
 
 function syncFingerprint(session: ReadingSessionSnapshot): string {
   return stableFingerprint({ content: readingBaseline(session), activeAnchorId: session.activeAnchorId,
@@ -79,15 +86,19 @@ export class WorkspaceSyncState {
   private retainBaseline(id: string, journal: WorkspaceSyncJournal) {
     const revision = journal.revisions?.[id];
     const baseline = journal.baselines?.[id];
-    if (revision !== undefined) this.known.revisions![id] = revision;
-    if (baseline) this.known.baselines![id] = baseline;
+    if (revision !== undefined) {
+      this.known.revisions = { ...this.known.revisions, [id]: revision };
+    }
+    if (baseline) {
+      this.known.baselines = { ...this.known.baselines, [id]: baseline };
+    }
   }
 
   private confirmBaseline(id: string) {
     const remote = this.remote.get(id);
     if (!remote) return;
-    this.known.revisions![id] = remote.revision;
-    this.known.baselines![id] = readingBaseline(remote);
+    this.known.revisions = { ...this.known.revisions, [id]: remote.revision };
+    this.known.baselines = { ...this.known.baselines, [id]: readingBaseline(remote) };
   }
 
   revision(id: string): number { return this.remote.get(id)?.revision ?? this.known.revisions?.[id] ?? 0; }
@@ -105,8 +116,12 @@ export class WorkspaceSyncState {
     this.remote.delete(id);
     this.fingerprints.delete(id);
     this.known.knownSessionIds = this.known.knownSessionIds.filter((knownId) => knownId !== id);
-    delete this.known.revisions![id];
-    delete this.known.baselines![id];
+    const revisions = { ...this.known.revisions };
+    const baselines = { ...this.known.baselines };
+    delete revisions[id];
+    delete baselines[id];
+    this.known.revisions = revisions;
+    this.known.baselines = baselines;
   }
 
   savedPreferences(preferences: CloudWorkspaceState['preferences']) { this.preferences = fingerprint(preferences); }

@@ -37,7 +37,7 @@ export function getPastArtifacts(artifacts: Artifact[]): Artifact[] {
   return artifacts.slice(1);
 }
 
-function isNoteDraft(artifact: Artifact): artifact is NoteArtifact {
+export function isNoteDraft(artifact: Artifact): artifact is NoteArtifact {
   return artifact.type === 'note' && artifact.status === 'draft';
 }
 

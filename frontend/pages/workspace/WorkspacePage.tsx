@@ -18,7 +18,7 @@ import { useWorkspaceViewport } from './useWorkspaceViewport';
 import type { WorkspaceAppChromeProps } from './components/WorkspaceHeader';
 import type { WorkspaceController, WorkspacePageProps } from './workspace-types';
 import type { ReadingConflict } from '@/features/reading/reading-session-merge';
-import type { ConflictResolution } from '@/features/reading/reading-sync-state';
+import type { ConflictResolution } from '@/features/reading/reading-sync';
 
 export function AuthenticatedWorkspacePage(): ReactElement {
   const auth = useAuth();

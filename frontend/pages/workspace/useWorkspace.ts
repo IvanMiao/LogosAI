@@ -1,508 +1,118 @@
-import { useCallback, useMemo, useState } from 'react';
-import { runAnchorSkill } from '@/client-api/anchor-api';
-import { streamAnalysis } from '@/client-api/analysis-api';
-import type { HistoryItem } from '@/types';
-import {
-  createAnchorFromRange,
-  getAnchorsForDocument,
-  resolveAnchor,
-  type AnchorSkill,
-  type TextAnchor,
-} from '@/features/anchors';
-import type { Artifact } from '@/features/artifacts';
-import {
-  buildReadingSessionStats,
-  type DocumentParagraph,
-} from '@/features/reading/reading-core';
-import type {
-  WorkspaceController,
-  WorkspacePageProps,
-  WorkspaceSyncStatus,
-  WorkspaceViewModel,
-} from './workspace-types';
+import { useMemo } from 'react';
+import { buildReadingSessionStats } from '@/features/reading/reading-core';
 import { useArtifactCollection } from './useArtifactCollection';
 import { useArtifactTasks } from './useArtifactTasks';
 import { useReadingLibrary } from './useReadingLibrary';
-import { useReadingPreferences } from './useReadingPreferences';
 import { useReadingSelection } from './useReadingSelection';
-import { useWorkspaceCloudSync } from './useWorkspaceCloudSync';
-import { getSessionArtifacts } from './workspace-selectors';
-import type { LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
-
-function buildWorkspaceViewModel({
-  hasApiKey,
-  syncStatus,
-}: Pick<WorkspacePageProps, 'hasApiKey'> & {
-  syncStatus: WorkspaceSyncStatus;
-}): WorkspaceViewModel {
-  const syncLabelByStatus: Record<WorkspaceSyncStatus, string> = {
-    loading: 'Loading cloud workspace',
-    saving: 'Saving to cloud',
-    saved: 'Saved to cloud',
-    offline: 'Cloud sync offline. Select to retry.',
-    error: 'Cloud sync failed. Select to retry.',
-    conflict: 'Sync needs review. Local changes are kept on this device.',
-  };
-  return {
-    apiKeyStatusLabel: hasApiKey ? 'API key ready' : 'API key missing',
-    apiKeyStatusTone: hasApiKey ? 'ready' : 'missing',
-    cloudSyncLabel: syncLabelByStatus[syncStatus],
-    cloudSyncTone: syncStatus,
-  };
-}
-
-function getArtifactTypeForSkill(skill: AnchorSkill): Artifact['type'] {
-  const typeBySkill: Record<AnchorSkill, Artifact['type']> = {
-    explain: 'explanation',
-    translate: 'translation',
-    vocab: 'vocabulary',
-  };
-
-  return typeBySkill[skill];
-}
-
-function getArtifactTitleForSkill(skill: AnchorSkill): string {
-  const titleBySkill: Record<AnchorSkill, string> = {
-    explain: 'Explanation',
-    translate: 'Translation',
-    vocab: 'Vocabulary',
-  };
-
-  return titleBySkill[skill];
-}
+import { useReadingSync } from './useReadingSync';
+import { useReadingWorkspace } from './useReadingWorkspace';
+import { buildWorkspaceViewModel, getSessionArtifacts } from './workspace-selectors';
+import { useWorkspaceActions } from './useWorkspaceActions';
+import type { WorkspaceController, WorkspacePageProps } from './workspace-types';
 
 export function useWorkspace(props: WorkspacePageProps): WorkspaceController {
   const { userId, hasApiKey, model } = props;
-  const [workspaceActionError, setWorkspaceActionError] = useState('');
-  const {
-    documentLibrary,
-    activeDocument,
-    documents,
-    history,
-    importState,
-    workspaceError,
-    setPasteText,
-    setSessionTitle,
-    importPastedText: importPastedTextIntoLibrary,
-    importTextFile: importTextFileIntoLibrary,
-    openDocument: openLibraryDocument,
-    renameDocument: renameLibraryDocument,
-    removeDocument: removeLibraryDocument,
-    startNewDocument: closeLibraryDocument,
-    openHistoryAsDocument: addHistoryDocument,
-    deleteHistoryItem,
-    hydrateDocumentLibrary,
-  } = useReadingLibrary(userId);
-  const {
-    readerPreferences,
-    analysisLanguage,
-    updateReaderPreference,
-    updateAnalysisLanguage,
-    hydrateReadingPreferences,
-  } = useReadingPreferences(userId);
-  const {
-    anchorStorage,
-    activeAnchor,
-    activeAnchorId,
-    anchors,
-    selectionToolbarPlacement,
-    showSelectionActions,
-    dismissSelectionToolbar,
-    resetSelectionState,
-    confirmPendingSelection: confirmSelection,
-    setActiveAnchorId: activateStoredAnchor,
-    clearActiveAnchor: clearStoredActiveAnchor,
-    activateAnchor: storeActiveAnchor,
-    removeAnchor,
-    removeDocumentAnchors,
-    hydrateAnchorStorage,
-  } = useReadingSelection({ userId, activeDocument });
-  const {
-    artifactStorage,
-    activeArtifacts,
-    activeArtifact,
-    artifactCountByAnchorId,
-    noteDraftContent,
-    anchorMarkStatusById,
-    selectArtifact,
-    resetSelectedArtifact,
-    deleteArtifact: removeArtifact,
-    removeArtifactsForAnchor,
-    removeArtifactsForDocument,
-    updateNoteDraft,
-    updateArtifacts,
-    hydrateArtifactStorage,
-  } = useArtifactCollection({
-    userId,
-    activeDocument,
-    activeAnchor,
-    activeAnchorId,
-    anchors,
+  const store = useReadingWorkspace(userId);
+  const library = useReadingLibrary(userId, store);
+  const selection = useReadingSelection({ store, activeDocument: library.activeDocument });
+  const artifacts = useArtifactCollection({
+    store,
+    activeDocument: library.activeDocument,
+    activeAnchor: selection.activeAnchor,
+    activeAnchorId: selection.activeAnchorId,
+    anchors: selection.anchors,
   });
-  const {
-    runArtifactTask,
-    stopArtifact,
-    abortTasksFor,
-  } = useArtifactTasks({ artifactStorage, updateArtifacts });
-
-  const localWorkspaceState = useMemo<LocalWorkspaceState>(() => ({
-    documentLibrary,
-    anchorStorage,
-    artifactStorage,
-    readerPreferences,
-    analysisLanguage,
-  }), [
-    analysisLanguage,
-    anchorStorage,
-    artifactStorage,
-    documentLibrary,
-    readerPreferences,
-  ]);
-  const hydrateWorkspace = useCallback((state: LocalWorkspaceState) => {
-    hydrateDocumentLibrary(state.documentLibrary);
-    hydrateAnchorStorage(state.anchorStorage);
-    hydrateArtifactStorage(state.artifactStorage);
-    hydrateReadingPreferences(state.readerPreferences, state.analysisLanguage);
-  }, [
-    hydrateAnchorStorage,
-    hydrateArtifactStorage,
-    hydrateDocumentLibrary,
-    hydrateReadingPreferences,
-  ]);
-  const cloudSync = useWorkspaceCloudSync({
+  const tasks = useArtifactTasks({
+    artifactStorage: artifacts.artifactStorage,
+    updateArtifacts: artifacts.updateArtifacts,
+  });
+  const sync = useReadingSync({
     enabled: props.cloudSyncEnabled ?? false,
     userId,
-    state: localWorkspaceState,
-    onHydrate: hydrateWorkspace,
+    state: store.state,
+    replaceLocalState: store.replace,
   });
-  const viewModel = useMemo(
-    () => buildWorkspaceViewModel({ hasApiKey, syncStatus: cloudSync.status }),
-    [cloudSync.status, hasApiKey],
-  );
-  const sessionStatsByDocumentId = useMemo(() => {
-    return buildReadingSessionStats(documents, anchorStorage, artifactStorage);
-  }, [anchorStorage, artifactStorage, documents]);
+  const viewModel = useMemo(() => buildWorkspaceViewModel({
+    hasApiKey,
+    syncStatus: sync.status,
+  }), [hasApiKey, sync.status]);
+  const sessionStatsByDocumentId = useMemo(() => buildReadingSessionStats(
+    library.documents,
+    store.state.anchorStorage,
+    store.state.artifactStorage,
+  ), [library.documents, store.state.anchorStorage, store.state.artifactStorage]);
   const sessionArtifacts = useMemo(() => getSessionArtifacts(
-    artifactStorage,
-    anchorStorage.anchorsById,
-    activeDocument?.id,
-  ), [activeDocument?.id, anchorStorage.anchorsById, artifactStorage]);
-
-  const resetTransientDocumentState = useCallback(() => {
-    resetSelectionState();
-  }, [resetSelectionState]);
-
-  const importPastedText = () => {
-    if (importPastedTextIntoLibrary()) {
-      resetTransientDocumentState();
-    }
-  };
-
-  const importTextFile = async (file: File | null) => {
-    if (await importTextFileIntoLibrary(file)) {
-      resetTransientDocumentState();
-    }
-  };
-
-  const confirmPendingSelection = (): TextAnchor | null => {
-    const anchor = confirmSelection();
-    if (anchor) {
-      resetSelectedArtifact();
-    }
-    return anchor;
-  };
-
-  const setActiveAnchorId = (anchorId: string) => {
-    if (activateStoredAnchor(anchorId)) {
-      resetSelectedArtifact();
-    }
-  };
-
-  const openSessionArtifact = (artifactId: string) => {
-    const sessionArtifact = sessionArtifacts.find(({ artifact }) => artifact.id === artifactId);
-    if (!sessionArtifact || !activateStoredAnchor(sessionArtifact.anchor.id)) {
-      return;
-    }
-
-    selectArtifact(sessionArtifact.artifact.id);
-  };
-
-  const deleteArtifact = (artifactId: string) => {
-    abortTasksFor((taskArtifactId) => taskArtifactId === artifactId);
-    removeArtifact(artifactId);
-  };
-
-  const deleteAnchor = (anchorId: string) => {
-    if (!anchorStorage.anchorsById[anchorId]) {
-      return;
-    }
-
-    abortTasksFor((_, taskAnchorId) => taskAnchorId === anchorId);
-    removeAnchor(anchorId);
-    removeArtifactsForAnchor(anchorId);
-    resetSelectedArtifact();
-  };
-
-  const clearActiveAnchor = () => {
-    clearStoredActiveAnchor();
-    resetSelectedArtifact();
-  };
-
-  const activateAnchor = (anchor: TextAnchor) => {
-    storeActiveAnchor(anchor);
-    resetSelectedArtifact();
-  };
-
-  const runCloseRead = async (anchor: TextAnchor, text: string, title: string) => {
-    activateAnchor(anchor);
-
-    if (!hasApiKey) {
-      return;
-    }
-    setWorkspaceActionError('');
-
-    await runArtifactTask({
-      documentId: anchor.documentId,
-      anchorId: anchor.id,
-      title,
-      execute: async ({ signal, onChunk, onStage }) => {
-        const finalResult = await streamAnalysis(
-          {
-            model,
-            text,
-            userLanguage: analysisLanguage,
-            signal,
-          },
-          {
-            onChunk,
-            onStage,
-          },
-        );
-        return { content: finalResult };
-      },
-    });
-  };
-
-  const runAnchorSkillForAnchor = async (anchor: TextAnchor, skill: AnchorSkill) => {
-    if (!activeDocument) {
-      return;
-    }
-
-    activateAnchor(anchor);
-    const title = getArtifactTitleForSkill(skill);
-    const artifactType = getArtifactTypeForSkill(skill);
-    if (!hasApiKey) {
-      return;
-    }
-    setWorkspaceActionError('');
-
-    await runArtifactTask({
-      documentId: activeDocument.id,
-      anchorId: anchor.id,
-      title,
-      type: artifactType,
-      requestIdPrefix: 'pending',
-      execute: async ({ signal, onChunk, onMetadata, onStage }) => {
-        const finalResult = await runAnchorSkill(
-          {
-            model,
-            document: activeDocument,
-            anchor,
-            skill,
-            userLanguage: analysisLanguage,
-            signal,
-          },
-          {
-            onChunk,
-            onStage: (stage) => onStage(stage),
-            onMetadata,
-          },
-        );
-        return {
-          content: finalResult.result,
-          requestId: finalResult.requestId,
-          traceId: finalResult.traceId,
-        };
-      },
-    });
-  };
-
-  const runAnchorSkillForActiveAnchor = async (skill: AnchorSkill) => {
-    if (!activeAnchor) {
-      return;
-    }
-
-    await runAnchorSkillForAnchor(activeAnchor, skill);
-  };
-
-  const runAnchorSkillForPendingSelection = async (skill: AnchorSkill) => {
-    const anchor = confirmPendingSelection();
-    if (!anchor) {
-      return;
-    }
-
-    await runAnchorSkillForAnchor(anchor, skill);
-  };
-
-  const startNoteForPendingSelection = (): TextAnchor | null => {
-    return confirmPendingSelection();
-  };
-
-  const runCloseReadDocument = async () => {
-    if (!activeDocument) {
-      return;
-    }
-
-    const anchor = createAnchorFromRange({
-      documentId: activeDocument.id,
-      documentText: activeDocument.text,
-      startOffset: 0,
-      endOffset: activeDocument.text.length,
-      scope: 'document',
-    });
-
-    if (anchor) {
-      await runCloseRead(anchor, activeDocument.text, 'Close Reading');
-    }
-  };
-
-  const runExplainParagraph = async (paragraph: DocumentParagraph) => {
-    if (!activeDocument) {
-      return;
-    }
-
-    const anchor = createAnchorFromRange({
-      documentId: activeDocument.id,
-      documentText: activeDocument.text,
-      startOffset: paragraph.startOffset,
-      endOffset: paragraph.endOffset,
-      scope: 'paragraph',
-    });
-
-    if (anchor) {
-      await runAnchorSkillForAnchor(anchor, 'explain');
-    }
-  };
-
-  const retryArtifact = async (artifact: Artifact) => {
-    const anchor = anchorStorage.anchorsById[artifact.anchorId];
-    if (!activeDocument || !anchor) {
-      return;
-    }
-
-    const resolvedAnchor = anchor.scope === 'document'
-      ? { quote: activeDocument.text }
-      : resolveAnchor(anchor, activeDocument.text);
-    if (!resolvedAnchor) {
-      setWorkspaceActionError('Source text changed and this saved source can no longer be resolved.');
-      return;
-    }
-
-    if (artifact.type === 'explanation') {
-      await runAnchorSkillForAnchor(anchor, 'explain');
-      return;
-    }
-
-    if (artifact.type === 'translation') {
-      await runAnchorSkillForAnchor(anchor, 'translate');
-      return;
-    }
-
-    if (artifact.type === 'vocabulary') {
-      await runAnchorSkillForAnchor(anchor, 'vocab');
-      return;
-    }
-
-    await runCloseRead(anchor, resolvedAnchor.quote, artifact.title);
-  };
-
-  const startNewDocument = () => {
-    if (closeLibraryDocument()) {
-      resetTransientDocumentState();
-    }
-  };
-
-  const openDocument = (documentId: string) => {
-    if (openLibraryDocument(documentId)) {
-      resetTransientDocumentState();
-    }
-  };
-
-  const deleteDocument = (documentId: string) => {
-    if (!documentLibrary.documentsById[documentId]) {
-      return;
-    }
-
-    const documentAnchorIds = new Set(
-      getAnchorsForDocument(anchorStorage.anchorsById, documentId).map((anchor) => anchor.id),
-    );
-    abortTasksFor((_, anchorId) => documentAnchorIds.has(anchorId));
-    if (!removeLibraryDocument(documentId)) {
-      return;
-    }
-
-    removeDocumentAnchors(documentId);
-    removeArtifactsForDocument(documentId);
-    resetTransientDocumentState();
-  };
-
-  const openHistoryAsDocument = (item: HistoryItem) => {
-    if (addHistoryDocument(item)) {
-      resetTransientDocumentState();
-    }
-  };
+    store.state.artifactStorage,
+    store.state.anchorStorage.anchorsById,
+    library.activeDocument?.id,
+  ), [
+    library.activeDocument?.id,
+    store.state.anchorStorage.anchorsById,
+    store.state.artifactStorage,
+  ]);
+  const actions = useWorkspaceActions({
+    hasApiKey,
+    model,
+    store,
+    library,
+    selection,
+    artifacts,
+    tasks,
+    sync,
+    sessionArtifacts,
+  });
 
   return {
     viewModel,
-    activeDocument,
-    documents,
+    activeDocument: library.activeDocument,
+    documents: library.documents,
     sessionStatsByDocumentId,
-    activeAnchor,
-    anchors,
-    activeAnchorId,
-    activeArtifacts,
-    activeArtifact,
+    activeAnchor: selection.activeAnchor,
+    anchors: selection.anchors,
+    activeAnchorId: selection.activeAnchorId,
+    activeArtifacts: artifacts.activeArtifacts,
+    activeArtifact: artifacts.activeArtifact,
     sessionArtifacts,
-    artifactCountByAnchorId,
-    noteDraftContent,
-    anchorMarkStatusById,
-    history,
-    workspaceError: workspaceActionError || workspaceError || cloudSync.error,
-    importState,
-    readerPreferences,
-    analysisLanguage,
-    selectionToolbarPlacement,
-    setPasteText,
-    setSessionTitle,
-    importPastedText,
-    importTextFile,
-    showSelectionActions,
-    dismissSelectionToolbar,
-    runAnchorSkillForPendingSelection,
-    startNoteForPendingSelection,
-    setActiveAnchorId,
-    selectArtifact,
-    openSessionArtifact,
-    deleteArtifact,
-    deleteAnchor,
-    clearActiveAnchor,
-    updateNoteDraft,
-    runAnchorSkillForActiveAnchor,
-    runCloseReadDocument,
-    runExplainParagraph,
-    stopArtifact,
-    retryArtifact,
-    openDocument,
-    renameDocument: renameLibraryDocument,
-    deleteDocument,
-    startNewDocument,
-    openHistoryAsDocument,
-    deleteHistoryItem,
-    updateReaderPreference,
-    updateAnalysisLanguage,
-    clearDocument: startNewDocument,
-    retryCloudSync: cloudSync.retry,
-    syncConflicts: cloudSync.conflicts,
-    resolveSyncConflict: cloudSync.resolveConflict,
+    artifactCountByAnchorId: artifacts.artifactCountByAnchorId,
+    noteDraftContent: artifacts.noteDraftContent,
+    anchorMarkStatusById: artifacts.anchorMarkStatusById,
+    history: library.history,
+    workspaceError: actions.workspaceError,
+    importState: library.importState,
+    readerPreferences: store.state.readerPreferences,
+    analysisLanguage: store.state.analysisLanguage,
+    selectionToolbarPlacement: selection.selectionToolbarPlacement,
+    setPasteText: library.setPasteText,
+    setSessionTitle: library.setSessionTitle,
+    importPastedText: actions.importPastedText,
+    importTextFile: actions.importTextFile,
+    showSelectionActions: selection.showSelectionActions,
+    dismissSelectionToolbar: selection.dismissSelectionToolbar,
+    runAnchorSkillForPendingSelection: actions.runAnchorSkillForPendingSelection,
+    startNoteForPendingSelection: actions.startNoteForPendingSelection,
+    setActiveAnchorId: actions.setActiveAnchorId,
+    selectArtifact: artifacts.selectArtifact,
+    openSessionArtifact: actions.openSessionArtifact,
+    deleteArtifact: actions.deleteArtifact,
+    deleteAnchor: actions.deleteAnchor,
+    clearActiveAnchor: actions.clearActiveAnchor,
+    updateNoteDraft: artifacts.updateNoteDraft,
+    runAnchorSkillForActiveAnchor: actions.runAnchorSkillForActiveAnchor,
+    runCloseReadDocument: actions.runCloseReadDocument,
+    runExplainParagraph: actions.runExplainParagraph,
+    stopArtifact: actions.stopArtifact,
+    retryArtifact: actions.retryArtifact,
+    openDocument: actions.openDocument,
+    renameDocument: actions.renameDocument,
+    deleteDocument: actions.deleteDocument,
+    startNewDocument: actions.startNewDocument,
+    openHistoryAsDocument: actions.openHistoryAsDocument,
+    deleteHistoryItem: library.deleteHistoryItem,
+    updateReaderPreference: actions.updateReaderPreference,
+    updateAnalysisLanguage: actions.updateAnalysisLanguage,
+    clearDocument: actions.clearDocument,
+    retryCloudSync: actions.retryCloudSync,
+    syncConflicts: actions.syncConflicts,
+    resolveSyncConflict: actions.resolveSyncConflict,
   };
 }
