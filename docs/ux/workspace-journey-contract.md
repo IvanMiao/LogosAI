@@ -87,7 +87,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 ## 维护
 
 只在持久交互规则变化时更新对应条目与测试；视觉微调在 PR 说明即可，不新建 UX 文档。
-纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
+纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [AGENTS.md](../../AGENTS.md#verification)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
 
 ## 云写入冲突恢复

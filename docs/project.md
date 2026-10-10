@@ -119,7 +119,7 @@ D1 触发器使过期整包替换原子失败。构建云快照时校验 active 
 ## 验证边界
 
 Contract tests、真实服务端到端检查、模型评估与用户观察不能互相替代。
-命令统一见 [README](../README.md#verify-changes)，每次执行结果写入 PR；原始记录留本地。
+命令统一见 [AGENTS.md](../AGENTS.md#verification)，每次执行结果写入 PR；原始记录留本地。
 已知阻塞与验收待办由[路线图](roadmap.md)维护，历史报告不证明当前部署通过。
 
 ### 已记录的生产验收
