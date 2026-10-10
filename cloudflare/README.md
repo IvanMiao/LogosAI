@@ -114,43 +114,17 @@ on `/login`.
 
 ## Data and credential rules
 
-- D1 is the durable source of truth; browser storage is a user-scoped working
-  cache and offline fallback.
-- A user-scoped sync journal records dirty sessions and deletion tombstones
-  before the debounce window, so a quick reload cannot resurrect cloud data
-  that the reader just changed or deleted locally.
-- A reading session owns one source document, its source anchors, and all notes
-  and AI entries attached to those anchors.
-- The Gemini key is AES-GCM encrypted with a random IV and user-ID associated
-  data. APIs return only a final-four-character hint.
-- OAuth tokens use Better Auth's token encryption.
-- Only four existing AI paths may reach FastAPI. Cookies, browser authorization
-  headers, and origins are stripped before forwarding.
-- A persisted `running` artifact is read back as `stopped`; a browser reload
-  never claims that an abandoned stream is still running.
+Data ownership, key encryption, sync journal, and revision rules are maintained in
+[Project Reference](../docs/project.md#数据与隐私边界). Conflict recovery behavior is in the
+[journey contract](../docs/ux/workspace-journey-contract.md#云写入冲突恢复).
 
 ## Verification
 
-```bash
-npm run typecheck
-npm test
-```
+Run `npm run check` (typecheck + Vitest); repo-wide commands are in
+[AGENTS.md](../AGENTS.md#verification). The D1 concurrency tests run on Miniflare,
+an explicit development dependency; Worker CI uses Node 22 for that runtime.
 
 For a local end-to-end smoke test, register through the UI, save an API key,
 create a reading session, reload, and confirm the session and its entries return.
 The account settings response must contain `hasApiKey` and `apiKeyHint`, never
 the plaintext key.
-
-## Reading revision preconditions
-
-Reading-session PUT and DELETE requests require `If-Match: "<revision>"` from the
-workspace response; creating a new session uses `If-Match: "0"`. Missing headers
-return 428, stale revisions return 409. The JSON snapshot format is unchanged.
-Migration `0003_reading_revision_guards.sql` makes a stale aggregate replacement
-roll back as one D1 transaction, including simultaneous writers. Apply it before
-publishing the Worker and frontend together. Older open pages must reload after
-receiving 428. On a conflict, Retry cloud sync preserves the cloud reading and
-saves local edits in a separate reading titled `(conflict copy)`.
-
-The D1 concurrency tests use Miniflare (already used by Wrangler), declared as an
-explicit development dependency. Worker CI uses Node 22 for that runtime.

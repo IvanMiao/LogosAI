@@ -100,10 +100,8 @@ instead of copying it. Keep documentation proportional to the change.
 | Run, local setup, deployment, secrets | `README.md`, `cloudflare/README.md` |
 | Engineering rules, verification commands | `AGENTS.md` |
 | Product/API facts, architecture, data rules | `docs/project.md` |
-| Priorities and evidence gates | `docs/roadmap.md` |
-| User evidence and hypotheses | `docs/user-evidence.md` |
+| Priorities, evidence gates, user evidence, open design questions | `docs/roadmap.md` |
 | Durable workspace interaction rules | `docs/ux/workspace-journey-contract.md` and its tests |
-| Unresolved cross-slice design | `docs/ux/reading-workspace-evolution.md` |
 | Lasting architecture/data decisions | `docs/adr/` |
 
 - Presentation-only UI changes (spacing, color, copy) need only the PR

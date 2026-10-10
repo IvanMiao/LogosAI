@@ -28,4 +28,5 @@ For hot reload and local secrets, see
   each kind of documentation belongs.
 - [Project Reference](./docs/project.md): product boundaries, architecture, and
   runtime contracts.
-- [Roadmap](./docs/roadmap.md): priorities and evidence gates.
+- [Roadmap](./docs/roadmap.md): priorities, user evidence, and open design
+  questions.
