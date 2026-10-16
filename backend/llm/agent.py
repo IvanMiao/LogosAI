@@ -16,9 +16,18 @@ class TextAnalysisLangchain:
 
         self.model = model
         self.lite_model = "gemini-2.5-flash-lite"
-        self.llm_flash = ChatGoogleGenerativeAI(
-            model=model, api_key=gemini_key, temperature=0.3
-        )
+        if model == "gemini-4-argon":
+            # Clear LangChain's default temperature to use Argon's sampling defaults.
+            self.llm_flash = ChatGoogleGenerativeAI(
+                model=model,
+                api_key=gemini_key,
+                max_output_tokens=32768,
+                timeout=1200,
+            ).bind(generation_config={"temperature": None})
+        else:
+            self.llm_flash = ChatGoogleGenerativeAI(
+                model=model, api_key=gemini_key, temperature=0.3
+            )
         self.llm_lite = ChatGoogleGenerativeAI(
             model=self.lite_model, api_key=gemini_key, temperature=0.0
         )
