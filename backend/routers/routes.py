@@ -16,7 +16,7 @@ api_router = APIRouter(
     dependencies=[Depends(require_cloudflare_gateway)],
 )
 
-_ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro"}
+_ALLOWED_MODELS = {"gemini-2.5-flash", "gemini-2.5-pro", "gemini-4-argon"}
 
 
 def _require_agent(

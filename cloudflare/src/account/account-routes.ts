@@ -15,7 +15,7 @@ import type { UserSettings } from './account-types';
 
 const SettingsInputSchema = z
   .object({
-    model: z.enum(['gemini-2.5-flash', 'gemini-2.5-pro']),
+    model: z.enum(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-4-argon']),
     apiKey: z.string().trim().min(10).max(512).optional(),
   })
   .strict();
