@@ -2,7 +2,7 @@
 
 - 状态：Active，当前产品与工程参考
 - 核对：2026-09-19，同步主线的云写入保护与已记录验收；本次未重跑生产验收
-- 下一步：[路线图](roadmap.md)；用户与价值假设：[用户证据](user-evidence.md)
+- 下一步、用户证据与待决设计：[路线图](roadmap.md)
 
 ## 产品边界
 
@@ -106,6 +106,8 @@ Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 - LocalStorage 为用户隔离缓存；旧数据首次认领保持兼容，不可跨账号继承。
 - 本地 journal 保存未同步修改及删除意图；服务端删除 session 级联 anchors 与 artifacts。保存/删除均校验 revision；独立修改按内容基准合并，重叠修改保留本地待复核版本，不自动复制阅读；无服务端删除 tombstone。
 - 默认不向监控服务上报完整原文、prompt、note、key 或身份。AI 请求仍会发送原文给模型；LLM 监控内容仅在显式开启 `SENTRY_CAPTURE_LLM_CONTENT` 后按长度上限采集。
+- Worker 只把上表 4 条 AI 路径转发给 FastAPI，转发前去除 cookie、浏览器 authorization 头与 origin。
+- 持久化为 `running` 的 artifact 读回时视为 `stopped`；重载不声称已中断的流仍在运行。
 - Source 为不可信数据；当前无 tool execution，仍需检查 prompt injection 对 grounding 的影响。
 
 ## 云写入版本前提
@@ -119,18 +121,11 @@ D1 触发器使过期整包替换原子失败。构建云快照时校验 active 
 ## 验证边界
 
 Contract tests、真实服务端到端检查、模型评估与用户观察不能互相替代。
-命令统一见 [README](../README.md#verify-changes)，每次执行结果写入 PR；原始记录留本地。
+命令统一见 [AGENTS.md](../AGENTS.md#verification)，每次执行结果写入 PR；原始记录留本地。
 已知阻塞与验收待办由[路线图](roadmap.md)维护，历史报告不证明当前部署通过。
 
-### 已记录的生产验收
-
-- 2026-09-13：真实 Gemini 完成、无效 key、Stop/Retry、任务归属和 D1 保存通过；提前 EOF、identity 改变与 error 使用受控回放。当时发现并发覆盖，后由 #49/#50 修复。
-- 2026-09-15：#49/#50 与 migration 0003 已部署；记录的生产提交为 `c8eb696`，Worker 版本为 `bdbd0041-26a0-4229-bf9b-62ef3e861962`。并发保存/删除、立即刷新、离线加并发恢复、重新登录及 History 返回通过。
-- Firefox 实际 200% 缩放由用户实测通过；屏幕阅读器、模型质量和自然回访仍无完成证据。
-
-原始证据保留在 Git 历史：[9 月 13 日验收](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-13.md)、
-[9 月 15 日发布与复验](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-15.md)。
-这些结论限于当次环境与场景，不自动证明后续提交或部署通过。
+历史验收的原始记录在 Git 历史：[2026-09-13](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-13.md)、
+[2026-09-15](https://github.com/IvanMiao/LogosAI/blob/3b37a346817fcafabaf1828c5f66df00568859cc/docs/ux/real-service-acceptance-2026-09-15.md)；结论限于当次环境，不证明后续提交或部署通过。
 
 ## 阅读现场与地址
 

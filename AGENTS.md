@@ -9,14 +9,17 @@ then takes precedence.
 
 ## Commands
 
-- Backend uses `uv`
-- Frontend and Cloudflare Worker use `npm`
-- Worker verification: run `npm run check` from `cloudflare/`
+- Backend uses `uv` and Ruff; frontend and Cloudflare Worker use `npm`, ESLint for the frontend.
 
-### Linting
+## Verification
 
-- Backend: Ruff
-- Frontend: ESLint
+Run the checks for each area you changed:
+
+```bash
+(cd backend && uv run pytest && uv run ruff check .)
+(cd frontend && npm run lint && npx tsc --noEmit && npm test && npm run build)
+(cd cloudflare && npm run check)
+```
 
 ## Repo-Wide Non-Negotiables
 
@@ -57,15 +60,6 @@ then takes precedence.
 - Page presentation components receive typed props and callbacks; they must not
   import `frontend/client-api/` directly.
 
-## Frontend Verification
-
-For frontend changes, run from `frontend/`:
-
-- `npm run lint`
-- `npx tsc --noEmit`
-- `npm test`
-- `npm run build`
-
 ## Backend (`backend/`)
 
 **Entry Point**: `app.py` — FastAPI application.
@@ -98,31 +92,28 @@ for the AI backend. See [operations](cloudflare/README.md).
 
 ## Documentation
 
-Keep documentation proportional to the change. A UI change does not by itself
-require a new document or updates to every reference.
+Each kind of information has one owner; update it in place and link to it
+instead of copying it. Keep documentation proportional to the change.
 
-- Current product/API facts belong in `docs/project.md`, priorities in
-  `docs/roadmap.md`, and durable workspace behavior in
-  `docs/ux/workspace-journey-contract.md`. Update only the affected owner, in place;
-  link to it instead of repeating its contents or appending a dated change log.
-- Spacing, colors, alignment, copy, and other presentation-only changes normally
-  need only a concise PR description and relevant verification. Update the UX
-  contract only when navigation, action semantics, state, persistence, accessibility
-  behavior, or failure handling changes; keep test details in executable tests.
-- Put per-change validation results in the PR: environment/version, scenarios,
-  result, and material gaps. Raw QA logs, screenshots, drafts, and research notes
-  belong in ignored `docs/local/`; superseded material may stay in ignored
-  `docs/archive/`. Neither directory is an implementation backlog.
-- Before moving a document out of Git, retain unresolved blockers and necessary
-  decisions in their owning tracked document or issue. Tracked docs must stand
-  alone without local-only files. Git history preserves removed tracked content.
-- Add a tracked design only for a substantial, unresolved cross-cutting change
-  that cannot be explained clearly in the PR or an existing document. Keep its
-  scope, decisions, open questions, and exit criteria concise. Use an ADR for
-  lasting architecture/data decisions and their rationale. After implementation,
-  fold current behavior into its owner and remove superseded planning detail.
+| Information | Owner |
+| --- | --- |
+| Run, local setup, deployment, secrets | `README.md`, `cloudflare/README.md` |
+| Engineering rules, verification commands | `AGENTS.md` |
+| Product/API facts, architecture, data rules | `docs/project.md` |
+| Priorities, evidence gates, user evidence, open design questions | `docs/roadmap.md` |
+| Durable workspace interaction rules | `docs/ux/workspace-journey-contract.md` and its tests |
+| Lasting architecture/data decisions | `docs/adr/` |
 
-The documentation placement guide is in [README](README.md#documentation).
+- Presentation-only UI changes (spacing, color, copy) need only the PR
+  description. Update the journey contract only when navigation, action
+  semantics, state, persistence, accessibility, or failure handling changes.
+- Per-change verification results go in the PR: environment/version, scenarios,
+  result, and material gaps. Raw logs, screenshots, drafts, and notes go in
+  ignored `docs/local/`; superseded material in ignored `docs/archive/`.
+- Add a tracked design doc only for a substantial unresolved change that the PR
+  or an existing owner cannot hold; after delivery, fold current behavior into
+  its owner and remove the planning detail. Tracked docs must not depend on
+  local-only files.
 
 ## Definition of Done
 

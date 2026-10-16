@@ -119,7 +119,7 @@ Costs and limits:
 
 Deployment prerequisites and commands are maintained in
 [Cloudflare Operations](../../cloudflare/README.md); verification commands are in
-[README](../../README.md#verify-changes). Production readiness also requires a
+[AGENTS.md](../../AGENTS.md#verification). Production readiness also requires a
 recorded smoke test of registration/login, enabled OAuth providers, key settings,
 session reload, and sign-out against the deployed origin. This ADR records the
 architecture decision, not completion of those checks.

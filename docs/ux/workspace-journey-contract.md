@@ -64,7 +64,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
   损坏的视图快照使用默认值，存储满时明确提示。
 - 笔记与任务保持既有保存路径；现场快照只保存编辑器状态，不复制正文或启动任务。
 
-讨论模型、常驻 agent 和跨设备视图同步仍属[目标设计](reading-workspace-evolution.md)。
+讨论模型、常驻 agent 和跨设备视图同步仍属[路线图待决设计](../roadmap.md#待决设计)。
 
 ## 测试与未验证范围
 
@@ -87,7 +87,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 ## 维护
 
 只在持久交互规则变化时更新对应条目与测试；视觉微调在 PR 说明即可，不新建 UX 文档。
-纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [README](../../README.md#verify-changes)；
+纯文档纠偏无需修改测试；只改测试结构时说明行为未变。检查命令统一见 [AGENTS.md](../../AGENTS.md#verification)；
 单独运行旅程可用 `npm test -- --run tests/workspace/workspace-journey.test.tsx`（frontend 内）。
 
 ## 云写入冲突恢复
@@ -106,5 +106,4 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 旧版 journal 缺少基准时，相同内容可直接收敛，不同内容须复核，不能推断修改归属。
 删除与内容编辑冲突需显式选择；远端已删除的本地改动只能明确恢复为新阅读，不复活原地址。
 已有冲突副本不按名称自动删除。
-验收范围与版本见[项目参考](../project.md#已记录的生产验收)。
 新建阅读的云快照只引用属于该阅读的 active anchor，避免切换阅读后保存被拒绝。
