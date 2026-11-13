@@ -105,7 +105,7 @@ class TestAnchorExplainEndpoint:
         assert resp.status_code == 422
 
     def test_error_event_contains_contract_ids(self, client, fake_agent):
-        async def failing_stream(_text, _language):
+        async def failing_stream(_text, _language, _paragraphs=None):
             yield {"event": "stage", "stage": "detect"}
             raise RuntimeError("LLM exploded")
 
