@@ -14,6 +14,7 @@ import {
   type DocumentParagraph,
 } from '@/features/reading/reading-core';
 import { getReaderFontClassName } from '../reading-typography';
+import type { ParagraphReveal } from '../useWorkspaceViewState';
 import type {
   AnchorMarkStatus,
   PendingSelection,
@@ -25,6 +26,7 @@ interface ReadingSurfaceProps {
   preferences: ReaderPreferences;
   isIndependentScroll?: boolean;
   sourceRevealRequest?: number;
+  paragraphReveal?: ParagraphReveal | null;
   activeAnchor: TextAnchor | null;
   anchors: TextAnchor[];
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
@@ -106,6 +108,19 @@ function renderParagraphText(
   );
 }
 
+function scrollSourceIntoView(
+  source: HTMLElement | null | undefined,
+  block: ScrollLogicalPosition,
+): void {
+  const prefersReducedMotion = window.matchMedia?.(
+    '(prefers-reduced-motion: reduce)',
+  ).matches ?? false;
+  source?.scrollIntoView?.({
+    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    block,
+  });
+}
+
 function AnchorMark({
   anchor,
   status,
@@ -170,6 +185,7 @@ export function ReadingSurface({
   preferences,
   isIndependentScroll = false,
   sourceRevealRequest = 0,
+  paragraphReveal = null,
   activeAnchor,
   anchors,
   anchorMarkStatusById,
@@ -184,6 +200,7 @@ export function ReadingSurface({
   const paneRef = useReadingScroll('source');
   const articleRef = useRef<HTMLElement | null>(null);
   const [revealedAnchorId, setRevealedAnchorId] = useState<string | null>(null);
+  const [revealedParagraphNumber, setRevealedParagraphNumber] = useState<number | null>(null);
   const paragraphs = splitDocumentParagraphsWithOffsets(activeDocument.text);
   const fontClassName = getReaderFontClassName(preferences.fontFamily);
 
@@ -222,16 +239,9 @@ export function ReadingSurface({
     const anchorId = activeAnchor.id;
     setRevealedAnchorId(anchorId);
     const scrollTimer = window.setTimeout(() => {
-      const source = articleRef.current?.querySelector<HTMLElement>(
+      scrollSourceIntoView(articleRef.current?.querySelector<HTMLElement>(
         '[data-active-range="true"], [data-active-source="true"]',
-      );
-      const prefersReducedMotion = window.matchMedia?.(
-        '(prefers-reduced-motion: reduce)',
-      ).matches ?? false;
-      source?.scrollIntoView?.({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-        block: 'center',
-      });
+      ), 'center');
     }, 0);
     const highlightTimer = window.setTimeout(() => {
       setRevealedAnchorId((currentAnchorId) => (
@@ -244,6 +254,29 @@ export function ReadingSurface({
       window.clearTimeout(highlightTimer);
     };
   }, [activeAnchor, paneRef, sourceRevealRequest]);
+
+  useEffect(() => {
+    if (!paragraphReveal) {
+      return undefined;
+    }
+
+    paneRef.current?.dispatchEvent(new Event('reading-reveal'));
+    const { paragraphNumber } = paragraphReveal;
+    setRevealedParagraphNumber(paragraphNumber);
+    const scrollTimer = window.setTimeout(() => {
+      scrollSourceIntoView(articleRef.current?.querySelector<HTMLElement>(
+        `[data-paragraph-number="${paragraphNumber}"]`,
+      ), 'start');
+    }, 0);
+    const highlightTimer = window.setTimeout(() => {
+      setRevealedParagraphNumber((current) => (current === paragraphNumber ? null : current));
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(highlightTimer);
+    };
+  }, [paneRef, paragraphReveal]);
 
   const handleSelection = () => {
     const selection = window.getSelection();
@@ -296,7 +329,8 @@ export function ReadingSurface({
       >
         {paragraphs.map((paragraph, index) => {
           const isActiveSource = isAnchorStartInParagraph(activeAnchor, paragraph);
-          const isRevealedSource = isActiveSource && revealedAnchorId === activeAnchor?.id;
+          const isRevealedSource = (isActiveSource && revealedAnchorId === activeAnchor?.id)
+            || revealedParagraphNumber === index + 1;
           const paragraphAnchors = anchors.filter((anchor) => (
             anchor.startOffset >= paragraph.startOffset && anchor.startOffset < paragraph.endOffset
           ));
@@ -305,6 +339,7 @@ export function ReadingSurface({
             <div
               key={`${activeDocument.id}-${index}`}
               data-active-source={isActiveSource ? 'true' : undefined}
+              data-paragraph-number={index + 1}
               className={cn(
                 'group grid scroll-mt-36 grid-cols-[1rem_minmax(0,1fr)] gap-2 border-s-4 border-s-transparent transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
                 isRevealedSource ? 'border-l-secondary bg-secondary/10' : '',

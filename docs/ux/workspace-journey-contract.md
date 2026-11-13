@@ -47,6 +47,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 | WJ-15 | 打开已无法定位的 Explain | 保存的引文及结果可读；定位入口禁用并说明原因 |
 | WJ-16 | 粘贴草稿后导入不支持/空/不可读文件，再开始阅读 | 错误直接可见；保留标题和文本；可继续完成粘贴导入（hardening 测试） |
 | WJ-17 | 从菜单打开 History、Reading appearance，再关闭弹窗与菜单 | History 使用原查询入口；外观不含语言控件；Escape 依次恢复外观菜单项和菜单按钮焦点 |
+| WJ-18 | 整篇 Close Reading 的段落块 → Show paragraph n in source | 分块显示 Overview / Paragraph n / Synthesis，不显示原始标记；定位并短暂高亮原文第 n 段，窄屏切到原文；不发起 AI、不新增 anchor 或成果；无标记的旧结果按整篇显示 |
 
 ## 阅读现场与导航（E1）
 
@@ -73,6 +74,7 @@ Explain 为关联原文的当前详情，Close Reading 为整篇分析。
 | [旅程](../../frontend/tests/workspace/workspace-journey.test.tsx)、[失败路径](../../frontend/tests/workspace/workspace-hardening.test.tsx) | 上述场景、导入失败与草稿保留 |
 | [阅读控件](../../frontend/tests/workspace/reading-controls.test.tsx) | 语言、外观、菜单、同步失败及重试 |
 | [导航](../../frontend/tests/workspace/reading-navigation.test.tsx)、[地址加载](../../frontend/tests/workspace/reading-route-loading.test.tsx)、[滚动](../../frontend/tests/workspace/reading-scroll.test.ts) | 深链、History 返回、账号隔离、现场与重排恢复 |
+| [段落对齐精读](../../frontend/tests/workspace/close-reading-paragraphs.test.tsx)、[分块解析](../../frontend/tests/reading/close-reading-blocks.test.ts) | WJ-18、请求附带段落、retry 后替换正文、标记容错 |
 | [SSE 客户端](../../frontend/tests/client-api/anchor-stream.test.ts) | 提前 EOF、缺 done、身份不一致、error、UTF-8 分片 |
 
 组件测试使用 localStorage fixture、mock SSE 与模拟视口，不调用真实 Gemini 或云服务。

@@ -12,6 +12,7 @@ const STREAM_STAGE_LABEL: Record<AnalysisStreamStage, string> = {
   detect: 'Detecting language and genre...',
   correct: 'Correcting source text...',
   interpret: 'Streaming interpretation...',
+  retry: 'Streaming interpretation...',
 };
 
 interface AnalysisPanelProps {

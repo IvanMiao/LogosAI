@@ -39,7 +39,7 @@ personal memory、主动推荐与自动 agent 工作流的启动条件见[路线
 | Anchor | 内部原文坐标，含 scope、quote、normalized quote/hash、start/end offset；不作为 UI 术语 |
 | Artifact | 关联原文的 AI output 或用户 note |
 | Task | 一次 streaming action 的运行状态和 request identity |
-| Close Reading | 整篇文本的连续 Markdown 深度讲解 |
+| Close Reading | 整篇文本的深度讲解；整篇精读按原文段落分块，每块可跳回原文对应段落 |
 | History | 当前 session 内已保存工作的显式查询入口 |
 | Legacy analysis | 旧的一次性分析记录，经兼容入口导入，不等同于当前 session |
 | Skill | 在 Anchor 上触发的 AI 动作：Explain、Translate、Vocab；每次运行生成一个 Artifact |
@@ -94,6 +94,15 @@ Gemini 4 使用普通 `generateContent` 同步/流式请求，保留默认 think
 部署前先应用 `0004_gemini_4_model.sql`，扩展 D1 模型约束并保留已有加密凭据。
 
 Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
+
+整篇 Close Reading 在 `/api/analyze*` 请求中附带 `paragraphs`（前端
+`splitDocumentParagraphsWithOffsets` 的段落文本，顺序即编号）。此时后端在 `GENERAL_PROMPT`
+后追加 `CLOSE_READING_PROMPT`，输出为 `[[OVERVIEW]]`、每段一个 `[[Pn]]`、`[[SYNTHESIS]]`
+标记分块的 Markdown，段内逐句引原文讲解；为保证引文与所见原文一致，不执行 correct 阶段。
+后端容错修正标记写法并校验“每段恰好一块且有序”，不通过时发出 `stage: retry` 并重新生成一次
+（客户端丢弃已收到的正文）；仍不通过则原样返回，前端对无标记的结果按整篇 Markdown 渲染。
+不带 `paragraphs` 的请求行为不变。对齐结果仍存为单个 document-scope `close_read` artifact，
+渲染时再切块，未新增数据表字段。
 **要求**：identity 一致、只有匹配 done 能完成、error 后不再完成。
 [anchor-api](../frontend/client-api/anchor-api.ts) 要求非空 done.result、请求中的 anchor ID，
 以及流内一致的 request/trace ID；提前 EOF、身份不一致或 error 均失败。

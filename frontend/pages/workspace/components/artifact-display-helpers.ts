@@ -33,5 +33,6 @@ export function getArtifactProgressLabel(artifact: Artifact): string {
     if (artifact.type === 'explanation') return 'Explaining selection…';
     return 'Interpreting the full text…';
   }
+  if (artifact.stage === 'retry') return 'Realigning with source paragraphs…';
   return 'Starting analysis…';
 }
