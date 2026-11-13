@@ -14,11 +14,12 @@ from tests.helpers import make_fake_agent
     "endpoint",
     ["/api/analyze", "/api/analyze/stream", "/api/anchors/explain", "/api/anchors/run"],
 )
-def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint):
-    body = {"text": "Alpha beta gamma.", "model": "gemini-4-argon"}
+@pytest.mark.parametrize("model_id", ["gemini-4-argon", "gemini-4-hydrogen"])
+def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint, model_id):
+    body = {"text": "Alpha beta gamma.", "model": model_id}
     if endpoint.startswith("/api/anchors/"):
         body = {
-            "model": "gemini-4-argon",
+            "model": model_id,
             "document": {"id": "document-1", "text": "Alpha beta gamma."},
             "anchor": {
                 "id": "anchor-1",
@@ -30,14 +31,14 @@ def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint):
             **({"skill": "explain"} if endpoint.endswith("/run") else {}),
         }
     agent = make_fake_agent()
-    agent.model = "gemini-4-argon"
+    agent.model = model_id
     with patch("routers.routes.TextAnalysisLangchain", return_value=agent) as factory:
         response = TestClient(app).post(
             endpoint, json=body, headers={"X-Gemini-Key": "test-key"}
         )
 
     assert response.status_code == 200
-    factory.assert_called_once_with(gemini_key="test-key", model="gemini-4-argon")
+    factory.assert_called_once_with(gemini_key="test-key", model=model_id)
     if endpoint == "/api/analyze":
         assert response.json() == {
             "result": "Hello world",
@@ -49,8 +50,14 @@ def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint):
         assert '"result": "Hello world"' in response.text
 
 
-def test_gemini_4_serializes_without_sampling_or_thinking_budget_overrides():
-    agent = TextAnalysisLangchain("test-key", model="gemini-4-argon")
+@pytest.mark.parametrize(
+    ("model_id", "output_tokens"),
+    [("gemini-4-argon", 32768), ("gemini-4-hydrogen", 65536)],
+)
+def test_gemini_4_serializes_without_sampling_or_thinking_budget_overrides(
+    model_id, output_tokens
+):
+    agent = TextAnalysisLangchain("test-key", model=model_id)
     model = agent.llm_flash
     request = model.bound._prepare_request(
         [HumanMessage("Explain this passage.")], **model.kwargs
@@ -59,8 +66,8 @@ def test_gemini_4_serializes_without_sampling_or_thinking_budget_overrides():
         request.generation_config, always_print_fields_with_no_presence=False
     )
 
-    assert request.model == "models/gemini-4-argon"
-    assert config["max_output_tokens"] == 32768
+    assert request.model == f"models/{model_id}"
+    assert config["max_output_tokens"] == output_tokens
     assert not {"temperature", "top_p", "top_k", "thinking_config"} & config.keys()
     assert model.bound.timeout == 1200
     assert agent.llm_lite.model == "models/gemini-2.5-flash-lite"
