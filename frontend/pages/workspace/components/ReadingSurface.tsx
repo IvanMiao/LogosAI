@@ -306,11 +306,11 @@ export function ReadingSurface({
               key={`${activeDocument.id}-${index}`}
               data-active-source={isActiveSource ? 'true' : undefined}
               className={cn(
-                'group grid scroll-mt-36 grid-cols-1 border-s-4 border-s-transparent transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
+                'group grid scroll-mt-36 grid-cols-[1rem_minmax(0,1fr)] gap-2 border-s-4 border-s-transparent transition-colors duration-300 lg:grid-cols-[1.5rem_minmax(0,1fr)] lg:gap-3',
                 isRevealedSource ? 'border-l-secondary bg-secondary/10' : '',
               )}
             >
-              <div className="hidden flex-col items-center gap-2 pt-1 lg:flex">
+              <div className="flex flex-col items-center gap-2 pt-1">
                 <button
                   type="button"
                   aria-label="Explain paragraph"
@@ -318,7 +318,7 @@ export function ReadingSurface({
                   onClick={() => {
                     void onExplainParagraph(paragraph);
                   }}
-                  className="flex h-6 w-6 items-center justify-center border-2 border-border bg-background opacity-0 shadow-[2px_2px_0px_0px_var(--border)] transition-opacity hover:bg-primary focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100"
+                  className="hidden h-6 w-6 items-center justify-center border-2 border-border bg-background opacity-0 shadow-[2px_2px_0px_0px_var(--border)] transition-opacity hover:bg-primary focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 group-focus-within:opacity-100 lg:flex"
                 >
                   <Brain className="h-3 w-3" />
                 </button>
