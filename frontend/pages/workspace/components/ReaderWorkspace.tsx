@@ -121,6 +121,7 @@ export function ReaderWorkspace({
       isIndependentScroll
       sourceRevealRequest={view.sourceRevealRequest}
       paragraphReveal={view.paragraphReveal}
+      onParagraphRevealHandled={view.clearParagraphReveal}
       activeAnchor={locatedAnchor}
       anchors={reading.anchors}
       anchorMarkStatusById={reading.anchorMarkStatusById}

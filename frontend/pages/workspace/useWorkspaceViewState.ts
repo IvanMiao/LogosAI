@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useReadingViewState } from './useReadingViewState';
 import { isRecord } from './reading-view-storage';
 
@@ -17,7 +17,6 @@ interface WorkspaceViewState {
 export interface ParagraphReveal {
   /** 1-based position of the source paragraph. */
   paragraphNumber: number;
-  request: number;
 }
 
 interface WorkspaceViewController extends WorkspaceViewState {
@@ -30,6 +29,7 @@ interface WorkspaceViewController extends WorkspaceViewState {
   selectCloseReading: (artifactId: string | null) => void;
   revealSource: () => void;
   revealParagraph: (paragraphNumber: number) => void;
+  clearParagraphReveal: () => void;
 }
 
 export function useWorkspaceViewState(
@@ -55,6 +55,8 @@ export function useWorkspaceViewState(
       selectedCloseReadingId: typeof value.selectedCloseReadingId === 'string' ? value.selectedCloseReadingId : null,
     };
   });
+
+  const clearParagraphReveal = useCallback(() => setParagraphReveal(null), []);
 
   const openReaderLayout = (readerLayout: ReaderLayout) => {
     setView((current) => ({ ...current, destination: 'reader', readerLayout }));
@@ -86,9 +88,8 @@ export function useWorkspaceViewState(
       setView((current) => ({ ...current, selectedCloseReadingId: artifactId }));
     },
     revealSource: () => setSourceRevealRequest((request) => request + 1),
-    revealParagraph: (paragraphNumber) => {
-      setParagraphReveal((current) => ({ paragraphNumber, request: (current?.request ?? 0) + 1 }));
-    },
+    revealParagraph: (paragraphNumber) => setParagraphReveal({ paragraphNumber }),
+    clearParagraphReveal,
   };
 }
 

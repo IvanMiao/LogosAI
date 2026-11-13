@@ -84,6 +84,14 @@ describe('paragraph-aligned Close Reading', () => {
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
     const target = scrollIntoView.mock.contexts[scrollIntoView.mock.contexts.length - 1] as HTMLElement;
     expect(target).toHaveAttribute('data-paragraph-number', '1');
+
+    // Remounting the source later must not replay the jump.
+    await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
+    scrollIntoView.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Show source only' }));
+    await screen.findByRole('region', { name: 'Reading surface' });
+    await new Promise((resolve) => { window.setTimeout(resolve, 20); });
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it('sends the source paragraphs and replaces a misaligned first attempt', async () => {

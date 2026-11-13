@@ -27,6 +27,7 @@ interface ReadingSurfaceProps {
   isIndependentScroll?: boolean;
   sourceRevealRequest?: number;
   paragraphReveal?: ParagraphReveal | null;
+  onParagraphRevealHandled?: () => void;
   activeAnchor: TextAnchor | null;
   anchors: TextAnchor[];
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
@@ -186,6 +187,7 @@ export function ReadingSurface({
   isIndependentScroll = false,
   sourceRevealRequest = 0,
   paragraphReveal = null,
+  onParagraphRevealHandled,
   activeAnchor,
   anchors,
   anchorMarkStatusById,
@@ -200,7 +202,7 @@ export function ReadingSurface({
   const paneRef = useReadingScroll('source');
   const articleRef = useRef<HTMLElement | null>(null);
   const [revealedAnchorId, setRevealedAnchorId] = useState<string | null>(null);
-  const [revealedParagraphNumber, setRevealedParagraphNumber] = useState<number | null>(null);
+  const [revealedParagraph, setRevealedParagraph] = useState<ParagraphReveal | null>(null);
   const paragraphs = splitDocumentParagraphsWithOffsets(activeDocument.text);
   const fontClassName = getReaderFontClassName(preferences.fontFamily);
 
@@ -257,26 +259,36 @@ export function ReadingSurface({
 
   useEffect(() => {
     if (!paragraphReveal) {
+      return;
+    }
+
+    // Hand the request over to local state and clear it upstream, so a later
+    // remount of the source does not replay an old jump.
+    setRevealedParagraph(paragraphReveal);
+    onParagraphRevealHandled?.();
+  }, [onParagraphRevealHandled, paragraphReveal]);
+
+  useEffect(() => {
+    if (!revealedParagraph) {
       return undefined;
     }
 
     paneRef.current?.dispatchEvent(new Event('reading-reveal'));
-    const { paragraphNumber } = paragraphReveal;
-    setRevealedParagraphNumber(paragraphNumber);
+    const { paragraphNumber } = revealedParagraph;
     const scrollTimer = window.setTimeout(() => {
       scrollSourceIntoView(articleRef.current?.querySelector<HTMLElement>(
         `[data-paragraph-number="${paragraphNumber}"]`,
       ), 'start');
     }, 0);
     const highlightTimer = window.setTimeout(() => {
-      setRevealedParagraphNumber((current) => (current === paragraphNumber ? null : current));
+      setRevealedParagraph((current) => (current === revealedParagraph ? null : current));
     }, 1800);
 
     return () => {
       window.clearTimeout(scrollTimer);
       window.clearTimeout(highlightTimer);
     };
-  }, [paneRef, paragraphReveal]);
+  }, [paneRef, revealedParagraph]);
 
   const handleSelection = () => {
     const selection = window.getSelection();
@@ -330,7 +342,7 @@ export function ReadingSurface({
         {paragraphs.map((paragraph, index) => {
           const isActiveSource = isAnchorStartInParagraph(activeAnchor, paragraph);
           const isRevealedSource = (isActiveSource && revealedAnchorId === activeAnchor?.id)
-            || revealedParagraphNumber === index + 1;
+            || revealedParagraph?.paragraphNumber === index + 1;
           const paragraphAnchors = anchors.filter((anchor) => (
             anchor.startOffset >= paragraph.startOffset && anchor.startOffset < paragraph.endOffset
           ));
