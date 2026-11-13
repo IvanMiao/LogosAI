@@ -12,6 +12,9 @@ export interface CloseReadingBlock {
 // commentary. Streaming text reaches the reader before the server normalizes it.
 const MARKER_LINE = /^[ \t]*[`*]{0,2}\[\[(OVERVIEW|SYNTHESIS|P\d+)\]{1,2}[`*]{0,2}[ \t]*(.*)$/gm;
 
+// A tag still arriving at the end of a stream, such as `[[P5` before its closing brackets.
+const PARTIAL_MARKER_AT_END = /(^|\n)[ \t]*[`*]{0,2}\[\[?[A-Z]*\d*\]?$/;
+
 function createBlock(tag: string, content: string): CloseReadingBlock {
   if (tag === 'OVERVIEW') return { kind: 'overview', content };
   if (tag === 'SYNTHESIS') return { kind: 'synthesis', content };
@@ -22,9 +25,10 @@ function createBlock(tag: string, content: string): CloseReadingBlock {
  * Splits a paragraph-aligned Close Reading into its tagged blocks.
  * Returns null for readings without tags, which are rendered as one document.
  */
-export function parseCloseReadingBlocks(content: string): CloseReadingBlock[] | null {
+export function parseCloseReadingBlocks(rawContent: string): CloseReadingBlock[] | null {
+  const content = rawContent.replace(PARTIAL_MARKER_AT_END, '$1');
   const markers = [...content.matchAll(MARKER_LINE)];
-  if (markers.length === 0) return null;
+  if (markers.length === 0) return content.trim() ? null : [];
 
   const blocks: CloseReadingBlock[] = [];
   const preamble = content.slice(0, markers[0].index).trim();

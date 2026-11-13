@@ -35,6 +35,20 @@ describe('parseCloseReadingBlocks', () => {
     ]);
   });
 
+  it.each(['[', '[[', '[[P', '[[P2', '[[P2]', '`[[SYNTH'])(
+    'hides the unfinished tag %s at the end of a stream',
+    (partial) => {
+      expect(parseCloseReadingBlocks(`[[OVERVIEW]]\nIntro\n\n[[P1]]\nOne\n\n${partial}`)).toEqual([
+        { kind: 'overview', content: 'Intro' },
+        { kind: 'paragraph', paragraphNumber: 1, content: 'One' },
+      ]);
+    },
+  );
+
+  it('shows nothing while the first tag is still arriving', () => {
+    expect(parseCloseReadingBlocks('[[OVER')).toEqual([]);
+  });
+
   it('returns null for a reading without tags', () => {
     expect(parseCloseReadingBlocks('# Legacy reading\n\nMentions `[[P1]]` inline.')).toBeNull();
   });
