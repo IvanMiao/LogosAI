@@ -94,6 +94,63 @@ describe('paragraph-aligned Close Reading', () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
+  it('jumps from a source paragraph to its block in the Close Reading', async () => {
+    writeStoredAnchors({ anchorsById: { [documentAnchor.id]: documentAnchor }, activeAnchorId: null }, userId);
+    writeStoredArtifacts({ artifactsByAnchorId: { [documentAnchor.id]: [closeReading] }, tasksByRequestId: {} }, userId);
+    vi.stubGlobal('fetch', vi.fn());
+    const user = userEvent.setup();
+    mount();
+
+    const source = await screen.findByRole('region', { name: 'Reading surface' });
+    await user.click(within(source).getByRole('button', { name: 'Show Close Reading of paragraph 2' }));
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    const target = scrollIntoView.mock.contexts[scrollIntoView.mock.contexts.length - 1] as HTMLElement;
+    expect(target).toHaveAttribute('data-close-reading-block', 'paragraph');
+    expect(target).toHaveTextContent('Second notes.');
+    expect(target).toHaveClass('bg-secondary/10');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('switches a narrow screen to the Close Reading when jumping from the source', async () => {
+    window.innerWidth = 480;
+    writeStoredAnchors({ anchorsById: { [documentAnchor.id]: documentAnchor }, activeAnchorId: null }, userId);
+    writeStoredArtifacts({ artifactsByAnchorId: { [documentAnchor.id]: [closeReading] }, tasksByRequestId: {} }, userId);
+    vi.stubGlobal('fetch', vi.fn());
+    const user = userEvent.setup();
+    mount();
+
+    const source = await screen.findByRole('region', { name: 'Reading surface' });
+    await user.click(within(source).getByRole('button', { name: 'Show Close Reading of paragraph 1' }));
+
+    const pane = await screen.findByRole('complementary', { name: 'Close Reading' });
+    expect(screen.queryByRole('region', { name: 'Reading surface' })).not.toBeInTheDocument();
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    const target = scrollIntoView.mock.contexts[scrollIntoView.mock.contexts.length - 1] as HTMLElement;
+    expect(pane).toContainElement(target);
+    expect(target).toHaveTextContent('First notes.');
+
+    // Remounting the Close Reading later must not replay the jump.
+    await user.click(screen.getByRole('button', { name: 'Show source only' }));
+    scrollIntoView.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Show analysis only' }));
+    await screen.findByRole('complementary', { name: 'Close Reading' });
+    await new Promise((resolve) => { window.setTimeout(resolve, 20); });
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('offers no jump from the source without an aligned Close Reading', async () => {
+    const legacy = { ...closeReading, content: '# Legacy reading\n\nOne continuous lecture.' };
+    writeStoredAnchors({ anchorsById: { [documentAnchor.id]: documentAnchor }, activeAnchorId: null }, userId);
+    writeStoredArtifacts({ artifactsByAnchorId: { [documentAnchor.id]: [legacy] }, tasksByRequestId: {} }, userId);
+    vi.stubGlobal('fetch', vi.fn());
+    mount();
+
+    expect(await screen.findByText('One continuous lecture.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Show Close Reading of paragraph/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Show paragraph \d+ in source/ })).not.toBeInTheDocument();
+  });
+
   it('sends the source paragraphs and replaces a misaligned first attempt', async () => {
     const fetchMock = vi.fn().mockResolvedValue(sse([
       ['stage', { stage: 'interpret' }],

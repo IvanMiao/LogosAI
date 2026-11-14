@@ -1,4 +1,6 @@
+import { useCloseReadingBlockReveal } from '../useCloseReadingBlockReveal';
 import { useReadingScroll } from '../useReadingScroll';
+import type { ParagraphReveal } from '../useWorkspaceViewState';
 import type { ReactElement } from 'react';
 import {
   ArrowLeft,
@@ -27,6 +29,8 @@ interface CloseReadingPaneProps {
   mode: CloseReadingPaneMode;
   onShowSource: () => void;
   onShowParagraph: (paragraphNumber: number) => void;
+  blockReveal: ParagraphReveal | null;
+  onBlockRevealHandled: () => void;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onRunAgain: () => void;
@@ -68,6 +72,8 @@ export function CloseReadingPane({
   mode,
   onShowSource,
   onShowParagraph,
+  blockReveal,
+  onBlockRevealHandled,
   onSelectArtifact,
   onRequestDeleteArtifact,
   onRunAgain,
@@ -75,6 +81,9 @@ export function CloseReadingPane({
   onRetryArtifact,
 }: CloseReadingPaneProps): ReactElement {
   const paneRef = useReadingScroll(`artifact:${artifact.id}`);
+  const highlightedParagraphNumber = useCloseReadingBlockReveal(
+    paneRef, blockReveal, onBlockRevealHandled,
+  );
   const sourceScopeLabel = getSourceScopeLabel(activeAnchor);
   const showTaskControls = artifact.status !== 'complete';
   const paneClassName = cn(
@@ -126,6 +135,7 @@ export function CloseReadingPane({
           variant="reading"
           readingPreferences={readingPreferences}
           onShowParagraph={activeAnchor.scope === 'document' ? onShowParagraph : undefined}
+          highlightedParagraphNumber={highlightedParagraphNumber}
         />
       </div>
     </aside>

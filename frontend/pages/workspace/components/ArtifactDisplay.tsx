@@ -27,6 +27,7 @@ interface ArtifactBodyProps {
   showRecoveryHint?: boolean;
   readingPreferences?: ReaderPreferences;
   onShowParagraph?: (paragraphNumber: number) => void;
+  highlightedParagraphNumber?: number | null;
 }
 
 interface ArtifactTaskControlsProps {
@@ -97,12 +98,22 @@ function ArtifactFeedback({ artifact, showRecoveryHint }: { artifact: Artifact; 
 function ArtifactMarkdown({
   artifact,
   onShowParagraph,
-}: Pick<ArtifactBodyProps, 'artifact' | 'onShowParagraph'>): ReactElement {
+  highlightedParagraphNumber,
+}: Pick<
+  ArtifactBodyProps,
+  'artifact' | 'onShowParagraph' | 'highlightedParagraphNumber'
+>): ReactElement {
   const blocks = artifact.type === 'close_read'
     ? parseCloseReadingBlocks(artifact.content)
     : null;
   if (!blocks) return <ReactMarkdown>{artifact.content}</ReactMarkdown>;
-  return <CloseReadingBlocks blocks={blocks} onShowParagraph={onShowParagraph} />;
+  return (
+    <CloseReadingBlocks
+      blocks={blocks}
+      onShowParagraph={onShowParagraph}
+      highlightedParagraphNumber={highlightedParagraphNumber}
+    />
+  );
 }
 
 export function ArtifactBody({
@@ -111,6 +122,7 @@ export function ArtifactBody({
   showRecoveryHint = false,
   readingPreferences,
   onShowParagraph,
+  highlightedParagraphNumber,
 }: ArtifactBodyProps): ReactElement {
   const isReadingVariant = variant === 'reading';
   const contentClassName = cn(
@@ -136,7 +148,11 @@ export function ArtifactBody({
       <ArtifactFeedback artifact={artifact} showRecoveryHint={showRecoveryHint} />
       {artifact.content ? (
         <div className={contentClassName} style={contentStyle}>
-          <ArtifactMarkdown artifact={artifact} onShowParagraph={onShowParagraph} />
+          <ArtifactMarkdown
+            artifact={artifact}
+            onShowParagraph={onShowParagraph}
+            highlightedParagraphNumber={highlightedParagraphNumber}
+          />
         </div>
       ) : (
         <p className="text-sm leading-6 text-muted-foreground">
