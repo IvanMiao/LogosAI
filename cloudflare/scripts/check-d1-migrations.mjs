@@ -142,8 +142,8 @@ function checkUpgrade(root, label, initial, current) {
 
 function checkFailedMigration(database, current) {
   const before = snapshot(database);
-  const insert = `INSERT INTO verification (id, identifier, value, expiresAt)
-    VALUES ('ci-failure-probe', 'ci', 'fixture', 0);`;
+  const insert = `INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt)
+    VALUES ('ci-failure-probe', 'ci', 'fixture', 0, 100, 200);`;
   const migration = { name: '9999_ci_failure_probe.sql', sql: `${insert}\n${insert}` };
   assert.ok(!current.some(({ name }) => name === migration.name));
   writeMigrations(database, [migration]);
