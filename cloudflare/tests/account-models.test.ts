@@ -1,5 +1,6 @@
 import schema from '../migrations/0001_auth_and_reading.sql?raw';
 import migration from '../migrations/0004_gemini_4_model.sql?raw';
+import hydrogenMigration from '../migrations/0005_gemini_4_hydrogen_model.sql?raw';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { Miniflare } from 'miniflare';
@@ -37,6 +38,7 @@ beforeAll(async () => {
   await database.prepare('INSERT INTO user_settings VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind('reader', 'gemini-2.5-pro', 'encrypted-value', 'test-iv', '•••• alue', 100, 200).run();
   await executeSql(migration);
+  await executeSql(hydrogenMigration);
   migratedSettings = await database.prepare('SELECT * FROM user_settings').first();
 }, 30_000);
 afterAll(() => runtime.dispose());
@@ -49,14 +51,14 @@ function request(method = 'GET', body?: object) {
 }
 
 describe('account model persistence', () => {
-  it('preserves every existing settings field through the model migration', () => {
+  it('preserves every existing settings field through the model migrations', () => {
     expect(migratedSettings).toEqual({
       user_id: 'reader', model: 'gemini-2.5-pro', encrypted_api_key: 'encrypted-value',
       api_key_iv: 'test-iv', api_key_hint: '•••• alue', created_at: 100, updated_at: 200,
     });
   });
 
-  it.each(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-4-argon'])(
+  it.each(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-4-argon', 'gemini-4-hydrogen'])(
     'saves and reloads %s without replacing the encrypted key', async (model) => {
       const response = await request('PUT', { model });
       expect(response.status).toBe(200);

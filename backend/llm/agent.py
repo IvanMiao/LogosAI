@@ -20,6 +20,8 @@ from llm.state import (
 from monitoring.llm import track_llm_stage
 from schemas.analyze import TextDirectives
 
+_GEMINI_4_OUTPUT_TOKENS = {"gemini-4-argon": 32768, "gemini-4-hydrogen": 65536}
+
 
 class TextAnalysisLangchain:
     def __init__(self, gemini_key: str | None, model: str = "gemini-2.5-flash"):
@@ -28,12 +30,12 @@ class TextAnalysisLangchain:
 
         self.model = model
         self.lite_model = "gemini-2.5-flash-lite"
-        if model == "gemini-4-argon":
-            # Clear LangChain's default temperature to use Argon's sampling defaults.
+        if model in _GEMINI_4_OUTPUT_TOKENS:
+            # Clear LangChain's default temperature to use Gemini 4 sampling defaults.
             self.llm_flash = ChatGoogleGenerativeAI(
                 model=model,
                 api_key=gemini_key,
-                max_output_tokens=32768,
+                max_output_tokens=_GEMINI_4_OUTPUT_TOKENS[model],
                 timeout=1200,
             ).bind(generation_config={"temperature": None})
         else:
