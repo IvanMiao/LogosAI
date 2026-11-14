@@ -120,6 +120,8 @@ export function ReaderWorkspace({
       preferences={reading.readerPreferences}
       isIndependentScroll
       sourceRevealRequest={view.sourceRevealRequest}
+      paragraphReveal={view.paragraphReveal}
+      onParagraphRevealHandled={view.clearParagraphReveal}
       activeAnchor={locatedAnchor}
       anchors={reading.anchors}
       anchorMarkStatusById={reading.anchorMarkStatusById}
@@ -158,6 +160,11 @@ export function ReaderWorkspace({
         actions.dismissSelectionToolbar();
         navigation.openLayout(isDesktopViewport ? 'split' : 'source');
         view.revealSource();
+      }}
+      onShowParagraph={(paragraphNumber) => {
+        actions.dismissSelectionToolbar();
+        navigation.openLayout(isDesktopViewport ? 'split' : 'source');
+        view.revealParagraph(paragraphNumber);
       }}
       onStartCloseReading={startCloseReading}
       visibleReaderLayout={visibleReaderLayout}

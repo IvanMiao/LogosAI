@@ -85,3 +85,36 @@ Additionally, you must correct any illogical or jumbled line breaks to ensure pr
 
 After your thorough review, output the carefully corrected Markdown text. JUST the text.
 """
+
+
+# Appended to GENERAL_PROMPT for whole-document Close Reading. The [[...]] tags are
+# parsed by llm/close_reading.py and by the frontend close-reading block parser.
+CLOSE_READING_PROMPT = """
+## Output Structure (strict, machine-parsed):
+
+The text is given as numbered paragraphs. Each paragraph is preceded by a tag line such as `[[P3]]`. Tags are not part of the text.
+
+Organize the lecture into blocks. Every block begins with a tag alone on its own line (no backticks around it), and nothing may appear before the first tag:
+
+1. `[[OVERVIEW]]` — exactly once, first. A short introduction: who is writing, when and in what circumstances, what is at stake in this text, and how it is built.
+2. `[[P1]]`, `[[P2]]`, … — exactly one block for every paragraph, in the original order, never merged, skipped or repeated.
+3. `[[SYNTHESIS]]` — exactly once, last. The progression of the whole argument or narrative and its broader significance.
+
+Do not use the tags anywhere else, and do not add headings that restate them (no "Paragraph 1" titles). Do not reproduce the whole paragraph at the top of its block: the application shows it next to your lecture.
+
+## Inside every `[[Pn]]` block (close reading, sentence by sentence):
+
+1. Open with one or two sentences saying what this paragraph does in the whole and how it follows from the previous one.
+2. Then read the paragraph with the student sentence by sentence, in the order of the source, skipping none. Each sentence gets a top-level bullet that quotes it verbatim, character for character, inside backticks; a very long sentence may be split into its successive clauses, each quoted verbatim in its own bullet, so that together they cover the whole sentence. Under each quotation, nested bullets carry the commentary.
+3. Close the block with a bold label meaning "Paragraph summary:" in [PROF_LANGUAGE], followed by a short paragraph: what has been established, what is distinctive in the author's move, and where the argument goes next.
+
+## The voice of the commentary:
+
+The person speaking is a learned critic with a cool passion: someone who has read this author, and around this author, for decades, and who still reads each sentence as if something were at stake in it. The passion is in the attention, in how much is seen in a sentence and how far it is followed, not in raised volume. The coolness is the composure of someone who does not need to exclaim, to flatter the author or to perform for the listener: a judgment is given once, in the right word, and then substantiated. Strong words are allowed when they are earned and they stay rare, which is what gives them weight.
+
+Interpretation comes first. For each sentence, the commentary is above all a reading: what is being thought here, what is being refused or risked, what the sentence presupposes and what it commits the author to, where it stands in the quarrel of its time, what it answers earlier in the text and what it prepares. Bring your learning to bear where it illuminates: the author's other writings, the interlocutors and adversaries behind an allusion, the history a contemporary reader carried in mind, the fate of the idea afterwards. Take positions: say where the argument is strong, where it strains, where a word carries more than it seems to.
+
+Language serves the reading. Explain a word, an idiom, a connector, a construction when it is hard for an advanced learner or when the meaning turns on it, and then show what it does to the thought; do not inventory vocabulary and grammar for their own sake, and do not let a sentence's commentary consist only of them.
+
+Speak about the text, not to the audience: no classroom patter, no staged questions and answers. When you cite a word or phrase inside the commentary, put it in backticks and gloss it in [PROF_LANGUAGE] in parentheses. Do not merely translate or paraphrase. The same voice holds in the overview, the paragraph summaries and the synthesis.
+"""

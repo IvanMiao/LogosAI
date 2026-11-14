@@ -13,7 +13,9 @@ import { Button } from '@/components/ui/button';
 import { getArtifactProgressLabel } from './artifact-display-helpers';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
+import { parseCloseReadingBlocks } from '@/features/reading/close-reading-blocks';
 import { cn } from '@/utils/class-name';
+import { CloseReadingBlocks } from './CloseReadingBlocks';
 import {
   getCloseReadingFontSize,
   getReaderFontClassName,
@@ -24,6 +26,7 @@ interface ArtifactBodyProps {
   variant?: 'compact' | 'reading';
   showRecoveryHint?: boolean;
   readingPreferences?: ReaderPreferences;
+  onShowParagraph?: (paragraphNumber: number) => void;
 }
 
 interface ArtifactTaskControlsProps {
@@ -91,11 +94,23 @@ function ArtifactFeedback({ artifact, showRecoveryHint }: { artifact: Artifact; 
   </>;
 }
 
+function ArtifactMarkdown({
+  artifact,
+  onShowParagraph,
+}: Pick<ArtifactBodyProps, 'artifact' | 'onShowParagraph'>): ReactElement {
+  const blocks = artifact.type === 'close_read'
+    ? parseCloseReadingBlocks(artifact.content)
+    : null;
+  if (!blocks) return <ReactMarkdown>{artifact.content}</ReactMarkdown>;
+  return <CloseReadingBlocks blocks={blocks} onShowParagraph={onShowParagraph} />;
+}
+
 export function ArtifactBody({
   artifact,
   variant = 'compact',
   showRecoveryHint = false,
   readingPreferences,
+  onShowParagraph,
 }: ArtifactBodyProps): ReactElement {
   const isReadingVariant = variant === 'reading';
   const contentClassName = cn(
@@ -121,7 +136,7 @@ export function ArtifactBody({
       <ArtifactFeedback artifact={artifact} showRecoveryHint={showRecoveryHint} />
       {artifact.content ? (
         <div className={contentClassName} style={contentStyle}>
-          <ReactMarkdown>{artifact.content}</ReactMarkdown>
+          <ArtifactMarkdown artifact={artifact} onShowParagraph={onShowParagraph} />
         </div>
       ) : (
         <p className="text-sm leading-6 text-muted-foreground">

@@ -26,6 +26,7 @@ interface ArtifactTaskContext {
   onChunk: (chunk: string) => void;
   onMetadata: (metadata: ArtifactTaskMetadata) => void;
   onStage: (stage: AnalysisStreamStage) => void;
+  onRestart: () => void;
 }
 
 interface RunArtifactTaskInput {
@@ -116,6 +117,13 @@ export function useArtifactTasks({
               traceId: metadata.traceId,
               updatedAt: new Date().toISOString(),
             }),
+          ));
+        },
+        onRestart: () => {
+          updateArtifacts((current) => updateArtifact(
+            current,
+            artifact.id,
+            (item) => ({ ...item, content: '', updatedAt: new Date().toISOString() }),
           ));
         },
         onStage: (stage) => {

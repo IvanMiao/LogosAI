@@ -26,6 +26,7 @@ interface CloseReadingPaneProps {
   analysisLanguage: AnalysisLanguage;
   mode: CloseReadingPaneMode;
   onShowSource: () => void;
+  onShowParagraph: (paragraphNumber: number) => void;
   onSelectArtifact: (artifactId: string) => void;
   onRequestDeleteArtifact: (artifact: Artifact) => void;
   onRunAgain: () => void;
@@ -66,6 +67,7 @@ export function CloseReadingPane({
   analysisLanguage,
   mode,
   onShowSource,
+  onShowParagraph,
   onSelectArtifact,
   onRequestDeleteArtifact,
   onRunAgain,
@@ -123,6 +125,7 @@ export function CloseReadingPane({
           artifact={artifact}
           variant="reading"
           readingPreferences={readingPreferences}
+          onShowParagraph={activeAnchor.scope === 'document' ? onShowParagraph : undefined}
         />
       </div>
     </aside>

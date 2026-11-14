@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from llm.prompts import GENERAL_PROMPT
+from llm.prompts import CLOSE_READING_PROMPT, GENERAL_PROMPT
 
 LANG_MAP = {
     "AR": "Arabic",
@@ -38,3 +38,11 @@ def build_analysis_prompt(text_language: str, user_language: str) -> str:
     return GENERAL_PROMPT.replace("[LEARN_LANGUAGE]", learn_lang).replace(
         "[PROF_LANGUAGE]", user_lang
     )
+
+
+def build_close_reading_prompt(text_language: str, user_language: str) -> str:
+    user_lang = LANG_MAP.get(user_language, "English")
+
+    return build_analysis_prompt(
+        text_language, user_language
+    ) + CLOSE_READING_PROMPT.replace("[PROF_LANGUAGE]", user_lang)

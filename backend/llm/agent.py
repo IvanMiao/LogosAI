@@ -3,8 +3,20 @@ from collections.abc import AsyncIterator
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from llm.close_reading import (
+    MAX_ATTEMPTS,
+    find_marker_problem,
+    normalize_markers,
+    number_paragraphs,
+    retry_instruction,
+)
 from llm.prompts import CORRECTION_SYS_PROMPT, EXAM_SYS_PROMPT
-from llm.state import AnalysisState, build_analysis_prompt, create_initial_state
+from llm.state import (
+    AnalysisState,
+    build_analysis_prompt,
+    build_close_reading_prompt,
+    create_initial_state,
+)
 from monitoring.llm import track_llm_stage
 from schemas.analyze import TextDirectives
 
@@ -69,12 +81,19 @@ class TextAnalysisLangchain:
         return [SystemMessage(CORRECTION_SYS_PROMPT), HumanMessage(text)]
 
     @staticmethod
-    def _interpretation_messages(state: AnalysisState) -> list[BaseMessage]:
-        prompt = build_analysis_prompt(
-            state["text_language"],
-            state["user_language"],
-        )
-        return [SystemMessage(prompt), HumanMessage(state["text"])]
+    def _interpretation_messages(
+        state: AnalysisState, paragraphs: list[str] | None = None
+    ) -> list[BaseMessage]:
+        languages = (state["text_language"], state["user_language"])
+        if paragraphs:
+            return [
+                SystemMessage(build_close_reading_prompt(*languages)),
+                HumanMessage(number_paragraphs(paragraphs)),
+            ]
+        return [
+            SystemMessage(build_analysis_prompt(*languages)),
+            HumanMessage(state["text"]),
+        ]
 
     async def _detect(self, state: AnalysisState) -> None:
         messages = self._detection_messages(state["text"])
@@ -121,32 +140,38 @@ class TextAnalysisLangchain:
             raise ValueError("Analysis failed - no interpretation generated")
         return result
 
-    async def _prepare_state(self, text: str, user_language: str) -> AnalysisState:
+    async def _prepare_state(
+        self, text: str, user_language: str, paragraphs: list[str] | None
+    ) -> AnalysisState:
         state = create_initial_state(text, user_language)
         await self._detect(state)
-        if state["needs_correction"]:
+        # Paragraph-aligned readings quote the source verbatim, so the text the
+        # reader sees must not be rewritten.
+        if state["needs_correction"] and not paragraphs:
             await self._correct(state)
         return state
 
-    async def analyze(self, text: str, user_language: str) -> str:
-        state = await self._prepare_state(text, user_language)
-        return await self._interpret(self._interpretation_messages(state))
+    async def analyze(
+        self, text: str, user_language: str, paragraphs: list[str] | None = None
+    ) -> str:
+        state = await self._prepare_state(text, user_language, paragraphs)
+        messages = self._interpretation_messages(state, paragraphs)
+        result = await self._interpret(messages)
+        if not paragraphs:
+            return result
 
-    async def analyze_stream(
-        self, text: str, user_language: str
+        result = normalize_markers(result)
+        for _ in range(MAX_ATTEMPTS - 1):
+            problem = find_marker_problem(result, len(paragraphs))
+            if not problem:
+                break
+            retry = [*messages, HumanMessage(retry_instruction(problem))]
+            result = normalize_markers(await self._interpret(retry))
+        return result
+
+    async def _stream_interpretation(
+        self, messages: list[BaseMessage], chunks: list[str]
     ) -> AsyncIterator[dict[str, str]]:
-        state = create_initial_state(text, user_language)
-
-        yield {"event": "stage", "stage": "detect"}
-        await self._detect(state)
-
-        if state["needs_correction"]:
-            yield {"event": "stage", "stage": "correct"}
-            await self._correct(state)
-
-        yield {"event": "stage", "stage": "interpret"}
-        messages = self._interpretation_messages(state)
-        chunks: list[str] = []
         with track_llm_stage(
             "interpret",
             self.model,
@@ -160,13 +185,48 @@ class TextAnalysisLangchain:
                 chunks.append(delta)
                 yield {"event": "chunk", "delta": delta}
 
-            result = "".join(chunks).strip()
-            if not result:
+            if not "".join(chunks).strip():
                 fallback = await self.llm_flash.ainvoke(messages)
                 result = self._content_to_text(fallback.content).strip()
                 if result:
                     telemetry.record_first_token()
+                    chunks.append(result)
                     yield {"event": "chunk", "delta": result}
-            telemetry.record_response(result)
+            telemetry.record_response("".join(chunks).strip())
 
-        yield {"event": "done", "result": self._require_result(result)}
+    async def analyze_stream(
+        self, text: str, user_language: str, paragraphs: list[str] | None = None
+    ) -> AsyncIterator[dict[str, str]]:
+        state = create_initial_state(text, user_language)
+
+        yield {"event": "stage", "stage": "detect"}
+        await self._detect(state)
+
+        if state["needs_correction"] and not paragraphs:
+            yield {"event": "stage", "stage": "correct"}
+            await self._correct(state)
+
+        yield {"event": "stage", "stage": "interpret"}
+        messages = self._interpretation_messages(state, paragraphs)
+        chunks: list[str] = []
+        async for event in self._stream_interpretation(messages, chunks):
+            yield event
+        result = self._require_result("".join(chunks).strip())
+
+        if paragraphs:
+            result = normalize_markers(result)
+            for _ in range(MAX_ATTEMPTS - 1):
+                problem = find_marker_problem(result, len(paragraphs))
+                if not problem:
+                    break
+                # The client discards the streamed text when it sees this stage.
+                yield {"event": "stage", "stage": "retry"}
+                retry = [*messages, HumanMessage(retry_instruction(problem))]
+                chunks = []
+                async for event in self._stream_interpretation(retry, chunks):
+                    yield event
+                result = normalize_markers(
+                    self._require_result("".join(chunks).strip())
+                )
+
+        yield {"event": "done", "result": result}

@@ -11,7 +11,10 @@ import {
 import type { Artifact } from '@/features/artifacts';
 import type { WorkspaceDocument } from '@/features/reading';
 import type { AnalysisLanguage } from '@/features/reading';
-import type { DocumentParagraph } from '@/features/reading/reading-core';
+import {
+  splitDocumentParagraphsWithOffsets,
+  type DocumentParagraph,
+} from '@/features/reading/reading-core';
 import type { useArtifactTasks } from './useArtifactTasks';
 
 const ARTIFACT_BY_SKILL: Record<AnchorSkill, { type: Artifact['type']; title: string }> = {
@@ -63,14 +66,18 @@ export function useAnchorSkillActions({
     activateAnchor(anchor);
     if (!hasApiKey) return;
     setActionError('');
+    // Whole-document readings are aligned to the same paragraphs the reader sees.
+    const paragraphs = anchor.scope === 'document'
+      ? splitDocumentParagraphsWithOffsets(text).map((paragraph) => paragraph.text)
+      : undefined;
     await runArtifactTask({
       documentId: anchor.documentId,
       anchorId: anchor.id,
       title,
-      execute: async ({ signal, onChunk, onStage }) => {
+      execute: async ({ signal, onChunk, onStage, onRestart }) => {
         const content = await streamAnalysis(
-          { model, text, userLanguage: analysisLanguage, signal },
-          { onChunk, onStage },
+          { model, text, userLanguage: analysisLanguage, paragraphs, signal },
+          { onChunk, onStage, onRestart },
         );
         return { content };
       },

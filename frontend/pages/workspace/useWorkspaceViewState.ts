@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useReadingViewState } from './useReadingViewState';
 import { isRecord } from './reading-view-storage';
 
@@ -14,20 +14,29 @@ interface WorkspaceViewState {
   selectedCloseReadingId: string | null;
 }
 
+export interface ParagraphReveal {
+  /** 1-based position of the source paragraph. */
+  paragraphNumber: number;
+}
+
 interface WorkspaceViewController extends WorkspaceViewState {
   sourceRevealRequest: number;
+  paragraphReveal: ParagraphReveal | null;
   openReaderLayout: (layout: ReaderLayout) => void;
   openHistory: () => void;
   openExplain: (origin: ExplainOrigin, layout: ReaderLayout) => void;
   closeExplain: () => void;
   selectCloseReading: (artifactId: string | null) => void;
   revealSource: () => void;
+  revealParagraph: (paragraphNumber: number) => void;
+  clearParagraphReveal: () => void;
 }
 
 export function useWorkspaceViewState(
   initialReaderLayout: ReaderLayout,
 ): WorkspaceViewController {
   const [sourceRevealRequest, setSourceRevealRequest] = useState(0);
+  const [paragraphReveal, setParagraphReveal] = useState<ParagraphReveal | null>(null);
   const initialView: WorkspaceViewState = {
     destination: 'reader',
     readerLayout: initialReaderLayout,
@@ -47,6 +56,8 @@ export function useWorkspaceViewState(
     };
   });
 
+  const clearParagraphReveal = useCallback(() => setParagraphReveal(null), []);
+
   const openReaderLayout = (readerLayout: ReaderLayout) => {
     setView((current) => ({ ...current, destination: 'reader', readerLayout }));
   };
@@ -64,6 +75,7 @@ export function useWorkspaceViewState(
   return {
     ...view,
     sourceRevealRequest,
+    paragraphReveal,
     openReaderLayout,
     openHistory: () => {
       setView((current) => ({ ...current, destination: 'history' }));
@@ -76,6 +88,8 @@ export function useWorkspaceViewState(
       setView((current) => ({ ...current, selectedCloseReadingId: artifactId }));
     },
     revealSource: () => setSourceRevealRequest((request) => request + 1),
+    revealParagraph: (paragraphNumber) => setParagraphReveal({ paragraphNumber }),
+    clearParagraphReveal,
   };
 }
 

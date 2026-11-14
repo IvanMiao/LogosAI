@@ -140,7 +140,7 @@ class TestStreamEndpoint:
         assert resp.status_code == 401
 
     def test_stream_error_yields_error_event(self, client, fake_agent):
-        async def failing_stream(_text, _lang):
+        async def failing_stream(_text, _lang, _paragraphs=None):
             yield {"event": "stage", "stage": "detect"}
             raise RuntimeError("LLM exploded")
 

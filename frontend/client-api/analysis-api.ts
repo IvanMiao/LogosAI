@@ -19,12 +19,16 @@ export interface StreamAnalysisRequest {
   model: string;
   text: string;
   userLanguage: string;
+  /** Source paragraphs in reading order; requests a paragraph-aligned Close Reading. */
+  paragraphs?: string[];
   signal?: AbortSignal;
 }
 
 export interface StreamAnalysisCallbacks {
   onChunk: (chunk: string) => void;
   onStage: (stage: AnalysisStreamStage) => void;
+  /** The server discarded its output so far and is generating it again. */
+  onRestart?: () => void;
 }
 
 export async function streamAnalysis(
@@ -54,6 +58,7 @@ async function requestAnalysisStream(
       text: request.text,
       user_language: request.userLanguage,
       model: request.model,
+      ...(request.paragraphs?.length ? { paragraphs: request.paragraphs } : {}),
     }),
   });
 
@@ -90,6 +95,10 @@ async function readAnalysisStream(
   const handleSseEvent = (event: ParsedSseEvent) => {
     if (event.event === 'stage') {
       const payload = JSON.parse(event.data) as StreamStagePayload;
+      if (payload.stage === 'retry') {
+        pendingChunk = '';
+        callbacks.onRestart?.();
+      }
       callbacks.onStage(payload.stage);
       return;
     }

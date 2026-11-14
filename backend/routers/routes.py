@@ -96,6 +96,7 @@ def _stream_agent_response(
     pipeline_name: str,
     error_tags: dict[str, str],
     event_context: dict[str, str] | None = None,
+    paragraphs: list[str] | None = None,
 ) -> StreamingResponse:
     context = event_context or {}
 
@@ -105,7 +106,9 @@ def _stream_agent_response(
 
         try:
             with track_llm_pipeline(pipeline_name, agent.model):
-                async for event in agent.analyze_stream(text, user_language):
+                async for event in agent.analyze_stream(
+                    text, user_language, paragraphs
+                ):
                     event_type = event.get("event")
                     if event_type == "stage" and event.get("stage"):
                         yield to_sse_event(
@@ -143,7 +146,9 @@ async def get_analyse_info(
     try:
         agent = _require_agent(x_gemini_key, request.model)
         with track_llm_pipeline("close_read", request.model):
-            result = await agent.analyze(request.text, request.user_language)
+            result = await agent.analyze(
+                request.text, request.user_language, request.paragraphs
+            )
         return AnalysisResponse(result=result, success=True)
     except HTTPException:
         raise
@@ -167,6 +172,7 @@ async def stream_analyse_info(
         user_language=request.user_language,
         pipeline_name="close_read",
         error_tags={"endpoint": "analyze.stream", "model": request.model},
+        paragraphs=request.paragraphs,
     )
 
 
