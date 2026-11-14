@@ -22,6 +22,8 @@ export interface ParagraphReveal {
 interface WorkspaceViewController extends WorkspaceViewState {
   sourceRevealRequest: number;
   paragraphReveal: ParagraphReveal | null;
+  /** A pending jump from a source paragraph to its Close Reading block. */
+  readingBlockReveal: ParagraphReveal | null;
   openReaderLayout: (layout: ReaderLayout) => void;
   openHistory: () => void;
   openExplain: (origin: ExplainOrigin, layout: ReaderLayout) => void;
@@ -30,6 +32,8 @@ interface WorkspaceViewController extends WorkspaceViewState {
   revealSource: () => void;
   revealParagraph: (paragraphNumber: number) => void;
   clearParagraphReveal: () => void;
+  revealReadingBlock: (paragraphNumber: number) => void;
+  clearReadingBlockReveal: () => void;
 }
 
 export function useWorkspaceViewState(
@@ -57,6 +61,8 @@ export function useWorkspaceViewState(
   });
 
   const clearParagraphReveal = useCallback(() => setParagraphReveal(null), []);
+  const [readingBlockReveal, setReadingBlockReveal] = useState<ParagraphReveal | null>(null);
+  const clearReadingBlockReveal = useCallback(() => setReadingBlockReveal(null), []);
 
   const openReaderLayout = (readerLayout: ReaderLayout) => {
     setView((current) => ({ ...current, destination: 'reader', readerLayout }));
@@ -76,6 +82,7 @@ export function useWorkspaceViewState(
     ...view,
     sourceRevealRequest,
     paragraphReveal,
+    readingBlockReveal,
     openReaderLayout,
     openHistory: () => {
       setView((current) => ({ ...current, destination: 'history' }));
@@ -90,6 +97,8 @@ export function useWorkspaceViewState(
     revealSource: () => setSourceRevealRequest((request) => request + 1),
     revealParagraph: (paragraphNumber) => setParagraphReveal({ paragraphNumber }),
     clearParagraphReveal,
+    revealReadingBlock: (paragraphNumber) => setReadingBlockReveal({ paragraphNumber }),
+    clearReadingBlockReveal,
   };
 }
 

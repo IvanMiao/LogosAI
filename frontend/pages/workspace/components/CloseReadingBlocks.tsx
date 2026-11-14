@@ -2,11 +2,14 @@ import type { ReactElement } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CornerUpLeft } from 'lucide-react';
 import type { CloseReadingBlock } from '@/features/reading/close-reading-blocks';
+import { cn } from '@/utils/class-name';
 
 interface CloseReadingBlocksProps {
   blocks: CloseReadingBlock[];
   /** Jumps to a source paragraph by its 1-based number; omitted where no source is shown. */
   onShowParagraph?: (paragraphNumber: number) => void;
+  /** Paragraph block to mark briefly after a jump from the source. */
+  highlightedParagraphNumber?: number | null;
 }
 
 const LABEL_CLASS_NAME = 'not-prose font-mono text-[11px] font-black uppercase tracking-[0.1em] text-muted-foreground';
@@ -45,6 +48,7 @@ function BlockLabel({
 export function CloseReadingBlocks({
   blocks,
   onShowParagraph,
+  highlightedParagraphNumber = null,
 }: CloseReadingBlocksProps): ReactElement {
   return (
     <>
@@ -52,7 +56,13 @@ export function CloseReadingBlocks({
         <section
           key={`${block.kind}-${block.paragraphNumber ?? ''}-${index}`}
           data-close-reading-block={block.kind}
-          className="mt-8 border-t-2 border-border/20 pt-5 first:mt-0 first:border-t-0 first:pt-0"
+          data-paragraph-number={block.paragraphNumber}
+          className={cn(
+            'mt-8 scroll-mt-14 border-s-4 border-t-2 border-border/20 border-s-transparent ps-3 pt-5 transition-colors duration-300 first:mt-0 first:border-t-0 first:pt-0',
+            block.kind === 'paragraph' && block.paragraphNumber === highlightedParagraphNumber
+              ? 'border-s-secondary bg-secondary/10'
+              : '',
+          )}
         >
           <BlockLabel block={block} onShowParagraph={onShowParagraph} />
           <ReactMarkdown>{block.content}</ReactMarkdown>

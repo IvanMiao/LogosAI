@@ -28,6 +28,9 @@ interface ReadingSurfaceProps {
   sourceRevealRequest?: number;
   paragraphReveal?: ParagraphReveal | null;
   onParagraphRevealHandled?: () => void;
+  /** Paragraph numbers that have a block in the shown Close Reading. */
+  closeReadingParagraphNumbers?: number[];
+  onShowParagraphReading?: (paragraphNumber: number) => void;
   activeAnchor: TextAnchor | null;
   anchors: TextAnchor[];
   anchorMarkStatusById: Record<string, AnchorMarkStatus>;
@@ -188,6 +191,8 @@ export function ReadingSurface({
   sourceRevealRequest = 0,
   paragraphReveal = null,
   onParagraphRevealHandled,
+  closeReadingParagraphNumbers = [],
+  onShowParagraphReading,
   activeAnchor,
   anchors,
   anchorMarkStatusById,
@@ -358,6 +363,18 @@ export function ReadingSurface({
               )}
             >
               <div className="flex flex-col items-center gap-2 pt-1">
+                {onShowParagraphReading && closeReadingParagraphNumbers.includes(index + 1) ? (
+                  <button
+                    type="button"
+                    aria-label={`Show Close Reading of paragraph ${index + 1}`}
+                    title="Show in Close Reading"
+                    onClick={() => onShowParagraphReading(index + 1)}
+                    // The number is drawn by CSS so that it never becomes part of a
+                    // text selection spanning several paragraphs.
+                    data-paragraph-label={index + 1}
+                    className="min-h-6 w-full select-none before:content-[attr(data-paragraph-label)] font-mono text-[10px] font-black leading-none text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                ) : null}
                 <button
                   type="button"
                   aria-label="Explain paragraph"

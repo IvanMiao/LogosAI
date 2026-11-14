@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactElement } from 'react';
 import { useReaderNavigation } from '../useReaderNavigation';
 import { resolveAnchor } from '@/features/anchors';
+import { parseCloseReadingBlocks } from '@/features/reading/close-reading-blocks';
 import type { AnchorSkill, TextAnchor } from '@/features/anchors';
 import type { Artifact } from '@/features/artifacts';
 import type { DocumentParagraph } from '@/features/reading/reading-core';
@@ -18,6 +19,13 @@ import {
 import type { ReaderWorkspaceProps } from './reader-workspace-types';
 import { ReaderAnalysisPanel } from './ReaderAnalysisPanel';
 import { UnavailableResultNotice } from './UnavailableResultNotice';
+
+/** Source paragraphs that the shown whole-document Close Reading has a block for. */
+function getCloseReadingParagraphNumbers(entry: WorkspaceSessionArtifact | null): number[] {
+  if (!entry || entry.anchor.scope !== 'document') return [];
+  return (parseCloseReadingBlocks(entry.artifact.content) ?? [])
+    .flatMap((block) => (block.paragraphNumber ? [block.paragraphNumber] : []));
+}
 
 function selectCloseReadings(entries: WorkspaceSessionArtifact[], selectedId: string | null) {
   const closeReadingEntries = entries.filter(({ artifact }) => artifact.type === 'close_read');
@@ -59,6 +67,7 @@ export function ReaderWorkspace({
     reading.sessionArtifacts, view.selectedCloseReadingId,
   );
   const closeReadings = closeReadingEntries.map(({ artifact }) => artifact);
+  const closeReadingParagraphNumbers = getCloseReadingParagraphNumbers(activeCloseReadingEntry);
 
   const requestDeleteAnchor = (anchor: TextAnchor) => {
     setDeletionTarget({
@@ -122,6 +131,13 @@ export function ReaderWorkspace({
       sourceRevealRequest={view.sourceRevealRequest}
       paragraphReveal={view.paragraphReveal}
       onParagraphRevealHandled={view.clearParagraphReveal}
+      closeReadingParagraphNumbers={closeReadingParagraphNumbers}
+      onShowParagraphReading={(paragraphNumber) => {
+        actions.dismissSelectionToolbar();
+        navigation.closeExplain();
+        navigation.openLayout(isDesktopViewport ? 'split' : 'analysis');
+        view.revealReadingBlock(paragraphNumber);
+      }}
       activeAnchor={locatedAnchor}
       anchors={reading.anchors}
       anchorMarkStatusById={reading.anchorMarkStatusById}

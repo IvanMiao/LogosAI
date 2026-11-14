@@ -118,6 +118,8 @@ export function ReaderAnalysisPanel({
           view.revealSource();
         }}
         onShowParagraph={onShowParagraph}
+        blockReveal={view.readingBlockReveal}
+        onBlockRevealHandled={view.clearReadingBlockReveal}
         onSelectArtifact={selectCloseReading}
         onRequestDeleteArtifact={requestDeleteArtifact}
         onRunAgain={onStartCloseReading}
