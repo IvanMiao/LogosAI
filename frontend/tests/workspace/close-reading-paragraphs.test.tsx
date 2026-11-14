@@ -102,6 +102,8 @@ describe('paragraph-aligned Close Reading', () => {
     mount();
 
     const source = await screen.findByRole('region', { name: 'Reading surface' });
+    // Gutter numbers add no text, so selections across paragraphs still match the source.
+    expect(source.querySelector('article')).toHaveTextContent(/^First passage\.\s*Second passage\.$/);
     await user.click(within(source).getByRole('button', { name: 'Show Close Reading of paragraph 2' }));
 
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());

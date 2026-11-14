@@ -369,10 +369,11 @@ export function ReadingSurface({
                     aria-label={`Show Close Reading of paragraph ${index + 1}`}
                     title="Show in Close Reading"
                     onClick={() => onShowParagraphReading(index + 1)}
-                    className="min-h-6 w-full font-mono text-[10px] font-black leading-none text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {index + 1}
-                  </button>
+                    // The number is drawn by CSS so that it never becomes part of a
+                    // text selection spanning several paragraphs.
+                    data-paragraph-label={index + 1}
+                    className="min-h-6 w-full select-none before:content-[attr(data-paragraph-label)] font-mono text-[10px] font-black leading-none text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
                 ) : null}
                 <button
                   type="button"
