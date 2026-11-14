@@ -58,8 +58,9 @@ Worker Assets together with the API Worker. Apply committed migrations before a
 schema-dependent deployment:
 
 ```bash
-npm run db:migrate:remote
 npm run check
+npm run test:db:migrations
+npm run db:migrate:remote
 npm run deploy
 ```
 
@@ -123,6 +124,19 @@ Data ownership, key encryption, sync journal, and revision rules are maintained 
 Run `npm run check` (typecheck + Vitest); repo-wide commands are in
 [AGENTS.md](../AGENTS.md#verification). The D1 concurrency tests run on Miniflare,
 an explicit development dependency; Worker CI uses Node 22 for that runtime.
+
+Run `npm run test:db:migrations` to check the real Wrangler migration path. It
+creates disposable local D1 databases with synthetic fixtures, tests fresh
+installation and upgrades from 0001, 0003, and the Git base ref, checks data and
+constraints, and verifies repeated apply and failed-migration rollback. It uses
+an isolated configuration and `--local`; no Cloudflare credentials are needed.
+
+Migration history is append-only: keep existing SQL files unchanged and add a
+new `NNNN_description.sql` with a higher, unique four-digit number. The command
+compares with `origin/main` locally; use `-- --base-ref <commit>` to override it.
+CI compares with the PR base commit or the previous main commit on a push, so
+the checkout must contain that history. New SQL files are included automatically.
+Local checks do not replace a remote staging migration check before production.
 
 For a local end-to-end smoke test, register through the UI, save an API key,
 create a reading session, reload, and confirm the session and its entries return.

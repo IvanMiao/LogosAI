@@ -32,6 +32,8 @@ jobs:
         working-directory: cloudflare
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -40,6 +42,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Check D1 migration history and upgrades
+        run: npm run test:db:migrations
+        timeout-minutes: 10
+        env:
+          MIGRATION_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
 
   backend:
     runs-on: ubuntu-latest
