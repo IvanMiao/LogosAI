@@ -84,6 +84,18 @@ stage implementations. Model choices and workflow details belong in
 Legacy analysis and history import remain supported compatibility paths. Do not
 remove them without an explicit product and data-migration decision.
 
+## Database Migrations
+
+- Automatically discover migrations and reuse the generic checks for fresh installs,
+  Git-base upgrades, foreign keys, repeated apply, and failed-migration rollback.
+  Routine additions of nullable columns, indexes, or tables do not require a new
+  test case or historical checkpoint for each migration.
+- Add or update focused fixtures and assertions only when existing data is
+  transformed or business rules change; retain historical regression coverage.
+- Keep business assertions limited to explicit fields and behavior. Generic
+  migration checks must discover the schema rather than hardcode application
+  table or column lists.
+
 ## Deployment
 
 The Cloudflare Worker serves the browser app and API gateway; FastAPI runs on
