@@ -85,13 +85,14 @@ HTTP 与 sync journal 存储作为注入的 adapter。开发时 Vite 代理到�
 Anchor 请求见 [Pydantic schema](../backend/schemas/anchors.py)：document、anchor、skill、
 user_language、model。Scope 为 document / paragraph / selection；产品入口范围不等同于
 schema 允许的全部范围。主模型可选 `gemini-2.5-flash`（默认）、`gemini-2.5-pro`
-或 `gemini-4-argon`（Gemini 4 Argon，无免费额度）。
+、`gemini-4-argon`（Gemini 4 Argon，无免费额度）或 `gemini-4-hydrogen`
+（Gemini 4 Hydrogen）。
 
 Gemini 4 使用普通 `generateContent` 同步/流式请求，保留默认 thinking level，
-不发送 sampling 参数覆盖，输出预算为 32,768 tokens（含 thinking），请求超时为
+不发送 sampling 参数覆盖，输出预算为 Argon 32,768 / Hydrogen 65,536 tokens（含 thinking），请求超时为
 20 分钟；不启用 long decode。模型 ID 和迁移要求见 Google 官方
 [Gemini 4 指南](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Get_started_Generate_Content.ipynb#gemini4)。
-部署前先应用 `0004_gemini_4_model.sql`，扩展 D1 模型约束并保留已有加密凭据。
+部署前先应用 `0004_gemini_4_model.sql` 和 `0005_gemini_4_hydrogen_model.sql`，扩展 D1 模型约束并保留已有加密凭据。
 
 Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
 **要求**：identity 一致、只有匹配 done 能完成、error 后不再完成。
