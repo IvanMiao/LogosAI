@@ -82,7 +82,7 @@ export function CloseReadingPane({
 }: CloseReadingPaneProps): ReactElement {
   const paneRef = useReadingScroll(`artifact:${artifact.id}`);
   const highlightedParagraphNumber = useCloseReadingBlockReveal(
-    paneRef, blockReveal, onBlockRevealHandled,
+    paneRef, blockReveal, onBlockRevealHandled, artifact.status === 'running',
   );
   const sourceScopeLabel = getSourceScopeLabel(activeAnchor);
   const showTaskControls = artifact.status !== 'complete';

@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { ParagraphReveal } from './useWorkspaceViewState';
 
 const HIGHLIGHT_DURATION_MS = 1800;
@@ -11,8 +11,13 @@ export function useCloseReadingBlockReveal(
   paneRef: RefObject<HTMLElement | null>,
   reveal: ParagraphReveal | null,
   onHandled: () => void,
+  isStreaming: boolean,
 ): number | null {
   const [revealed, setRevealed] = useState<ParagraphReveal | null>(null);
+  const isStreamingRef = useRef(isStreaming);
+  useEffect(() => {
+    isStreamingRef.current = isStreaming;
+  }, [isStreaming]);
 
   useEffect(() => {
     if (!reveal) return;
@@ -28,13 +33,15 @@ export function useCloseReadingBlockReveal(
     const pane = paneRef.current;
     pane?.dispatchEvent(new Event('reading-reveal'));
     const scrollTimer = window.setTimeout(() => {
-      const prefersReducedMotion = window.matchMedia?.(
+      // While the reading streams, the pane re-pins its scroll position on every
+      // chunk, which would cancel a smooth scroll before it gets anywhere.
+      const jumpInstantly = isStreamingRef.current || (window.matchMedia?.(
         '(prefers-reduced-motion: reduce)',
-      ).matches ?? false;
+      ).matches ?? false);
       pane?.querySelector<HTMLElement>(
         `[data-close-reading-block="paragraph"][data-paragraph-number="${revealed.paragraphNumber}"]`,
       )?.scrollIntoView?.({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        behavior: jumpInstantly ? 'auto' : 'smooth',
         block: 'start',
       });
     }, 0);

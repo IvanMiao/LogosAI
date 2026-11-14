@@ -111,7 +111,35 @@ describe('paragraph-aligned Close Reading', () => {
     expect(target).toHaveAttribute('data-close-reading-block', 'paragraph');
     expect(target).toHaveTextContent('Second notes.');
     expect(target).toHaveClass('bg-secondary/10');
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'start' });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('jumps instantly while the Close Reading is still streaming', async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const body = new ReadableStream<Uint8Array>({ start: (streamController) => { controller = streamController; } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(body, { headers: { 'Content-Type': 'text/event-stream' } }),
+    ));
+    const user = userEvent.setup();
+    mount();
+    await user.click(await screen.findByRole('button', { name: 'Start Close Reading' }));
+    const partial = '[[OVERVIEW]]\nIntro notes.\n\n[[P1]]\nFirst notes.\n\n[[P2]]\nSecond no';
+    const sendChunk = (delta: string) => controller.enqueue(new TextEncoder().encode(
+      `event: chunk\ndata: ${JSON.stringify({ delta })}\n\n`,
+    ));
+    sendChunk(partial);
+    // The client batches chunks; a later one flushes what has arrived.
+    await new Promise((resolve) => { window.setTimeout(resolve, 60); });
+    sendChunk('tes');
+
+    const source = screen.getByRole('region', { name: 'Reading surface' });
+    await user.click(await within(source).findByRole('button', { name: 'Show Close Reading of paragraph 2' }));
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' }));
+    const target = scrollIntoView.mock.contexts[scrollIntoView.mock.contexts.length - 1] as HTMLElement;
+    expect(target).toHaveTextContent('Second notes');
+    controller.close();
   });
 
   it('switches a narrow screen to the Close Reading when jumping from the source', async () => {
