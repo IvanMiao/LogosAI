@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 
 export function assertMigratedFixture(database) {
   const [settings, preferences, reading, anchor, note, auth] = database.query(`
-    SELECT * FROM user_settings ORDER BY user_id;
+    SELECT user_id, model, encrypted_api_key, api_key_iv, api_key_hint, created_at, updated_at
+      FROM user_settings ORDER BY user_id;
     SELECT user_id, active_document_id, reader_font_linked, reader_line_width
       FROM workspace_preferences ORDER BY user_id;
     SELECT id, title, source_text, active_anchor_id, revision FROM reading_session;

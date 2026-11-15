@@ -138,6 +138,14 @@ CI compares with the PR base commit or the previous main commit on a push, so
 the checkout must contain that history. New SQL files are included automatically.
 Local checks do not replace a remote staging migration check before production.
 
+Ordinary additions of nullable columns, indexes, or tables reuse these checks;
+do not add a test case or historical checkpoint for every migration. Add or update
+focused fixtures and assertions only for data transformations or business-rule
+changes, while retaining existing regression cases. Business assertions select
+the fields they protect; generic repeat-apply and rollback checks discover the
+schema automatically, including new tables and columns. The rollback probe uses
+its own temporary table, so it does not depend on application insert requirements.
+
 For a local end-to-end smoke test, register through the UI, save an API key,
 create a reading session, reload, and confirm the session and its entries return.
 The account settings response must contain `hasApiKey` and `apiKeyHint`, never

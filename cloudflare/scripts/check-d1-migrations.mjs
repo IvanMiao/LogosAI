@@ -107,9 +107,16 @@ function seedDatabase(database, migrations) {
 }
 
 function snapshot(database) {
-  const tables = ['user', 'account', 'session', 'verification', 'user_settings',
-    'workspace_preferences', 'reading_session', 'reading_anchor', 'reading_artifact', 'd1_migrations'];
-  return database.query(tables.map((table) => `SELECT * FROM "${table}" ORDER BY 1`).join(';'));
+  const [schema] = database.query(`
+    SELECT type, name, tbl_name, sql FROM sqlite_schema
+    WHERE name NOT GLOB 'sqlite_*' AND name NOT GLOB '_cf_*'
+    ORDER BY type, name;
+  `);
+  const tables = schema.filter(({ type }) => type === 'table');
+  const contents = database.query(tables.map(({ name }) =>
+    `SELECT * FROM "${name.replaceAll('"', '""')}"`).join(';'));
+  // Compare the same database before/after an operation, without assuming its columns or row order.
+  return { schema, contents: contents.map((rows) => rows.map((row) => JSON.stringify(row)).sort()) };
 }
 
 function assertApplied(database, migrations) {
@@ -142,9 +149,11 @@ function checkUpgrade(root, label, initial, current) {
 
 function checkFailedMigration(database, current) {
   const before = snapshot(database);
-  const insert = `INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt)
-    VALUES ('ci-failure-probe', 'ci', 'fixture', 0, 100, 200);`;
-  const migration = { name: '9999_ci_failure_probe.sql', sql: `${insert}\n${insert}` };
+  const migration = { name: '9999_ci_failure_probe.sql', sql: `
+    CREATE TABLE "__ci_failure_probe" (id INTEGER PRIMARY KEY);
+    INSERT INTO "__ci_failure_probe" (id) VALUES (1);
+    INSERT INTO "__ci_failure_probe" (id) VALUES (1);
+  ` };
   assert.ok(!current.some(({ name }) => name === migration.name));
   writeMigrations(database, [migration]);
   database.expectMigrationFailure(/UNIQUE constraint failed/);
