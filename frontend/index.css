@@ -249,6 +249,7 @@
   font-size: 0.875em;
   color: #0f172a;
   font-weight: 500;
+  border-radius: 0;
 }
 
 .prose pre {
@@ -291,6 +292,7 @@
   color: #0f172a;
   text-decoration: underline;
   font-weight: 500;
+  border-radius: 0;
 }
 
 .prose a:hover {
@@ -311,13 +313,15 @@
 [data-close-reading-block='paragraph'] > ul > li[data-source-quote] > code:first-child,
 [data-close-reading-block='paragraph'] > ul > li[data-source-quote] > p:first-child > code {
   display: block;
-  padding: 0;
+  padding: 0 0 0 0.75em;
   border: 0;
+  border-inline-start: 3px solid color-mix(in srgb, var(--border) 35%, transparent);
   background: none;
   color: #171717;
   font-family: inherit;
   font-size: inherit;
-  font-weight: 650;
+  font-weight: 500;
+  border-radius: 0;
 }
 
 .close-reading-prose h1 {
