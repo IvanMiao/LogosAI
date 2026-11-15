@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import { CornerUpLeft } from 'lucide-react';
 import type { CloseReadingBlock } from '@/features/reading/close-reading-blocks';
 import { cn } from '@/utils/class-name';
@@ -13,6 +13,39 @@ interface CloseReadingBlocksProps {
 }
 
 const LABEL_CLASS_NAME = 'not-prose font-mono text-[11px] font-black uppercase tracking-[0.1em] text-muted-foreground';
+
+type MarkdownNode = NonNullable<ExtraProps['node']>['children'][number];
+
+function isBlank(node: MarkdownNode): boolean {
+  return node.type === 'text' && !node.value.trim();
+}
+
+/**
+ * True when a list item's own line is nothing but one backticked span: the
+ * source sentence quoted verbatim, as opposed to a term cited inside commentary.
+ */
+function isSourceQuoteItem(item: ExtraProps['node']): boolean {
+  if (!item) return false;
+  const nestedListIndex = item.children.findIndex(
+    (child) => child.type === 'element' && (child.tagName === 'ul' || child.tagName === 'ol'),
+  );
+  const ownLine = (nestedListIndex === -1 ? item.children : item.children.slice(0, nestedListIndex))
+    .filter((child) => !isBlank(child));
+  const content = ownLine.length === 1 && ownLine[0].type === 'element' && ownLine[0].tagName === 'p'
+    ? ownLine[0].children.filter((child) => !isBlank(child))
+    : ownLine;
+  return content.length === 1 && content[0].type === 'element' && content[0].tagName === 'code';
+}
+
+const PARAGRAPH_BLOCK_COMPONENTS: Components = {
+  li({ node, children, ...props }) {
+    return (
+      <li {...props} data-source-quote={isSourceQuoteItem(node) ? 'true' : undefined}>
+        {children}
+      </li>
+    );
+  },
+};
 
 function BlockLabel({
   block,
@@ -65,7 +98,9 @@ export function CloseReadingBlocks({
           )}
         >
           <BlockLabel block={block} onShowParagraph={onShowParagraph} />
-          <ReactMarkdown>{block.content}</ReactMarkdown>
+          <ReactMarkdown components={block.kind === 'paragraph' ? PARAGRAPH_BLOCK_COMPONENTS : undefined}>
+            {block.content}
+          </ReactMarkdown>
         </section>
       ))}
     </>
