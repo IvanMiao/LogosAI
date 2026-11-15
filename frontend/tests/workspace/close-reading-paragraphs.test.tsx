@@ -181,6 +181,28 @@ describe('paragraph-aligned Close Reading', () => {
     expect(screen.queryByRole('button', { name: /Show paragraph \d+ in source/ })).not.toBeInTheDocument();
   });
 
+  it('marks whole-sentence quotations apart from terms cited in the commentary', async () => {
+    const content = [
+      '[[OVERVIEW]]', '- `Overview term`', '',
+      '[[P1]]', 'Opening remark.', '',
+      '* `First passage.`', '  * The word `passage` (段落) matters here.', '  * `passage`', '',
+      '* `First` opens the sentence.', '',
+      '[[P2]]', '- `Second passage.`', '', '  - A loose list item.', '',
+      '[[SYNTHESIS]]', 'Closing notes.',
+    ].join('\n');
+    writeStoredAnchors({ anchorsById: { [documentAnchor.id]: documentAnchor }, activeAnchorId: null }, userId);
+    writeStoredArtifacts({ artifactsByAnchorId: { [documentAnchor.id]: [{ ...closeReading, content }] }, tasksByRequestId: {} }, userId);
+    vi.stubGlobal('fetch', vi.fn());
+    mount();
+
+    const pane = await screen.findByRole('complementary', { name: 'Close Reading' });
+    // Same selector as the quotation style in index.css: top-level items of a paragraph block.
+    const quotes = [...pane.querySelectorAll(
+      '[data-close-reading-block="paragraph"] > ul > li[data-source-quote="true"]',
+    )].map((item) => item.querySelector('code')?.textContent);
+    expect(quotes).toEqual(['First passage.', 'Second passage.']);
+  });
+
   it('sends the source paragraphs and replaces a misaligned first attempt', async () => {
     const fetchMock = vi.fn().mockResolvedValue(sse([
       ['stage', { stage: 'interpret' }],

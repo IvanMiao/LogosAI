@@ -307,6 +307,21 @@
   line-height: inherit;
 }
 
+/* A source sentence quoted in full reads as a quotation, not as a boxed term. */
+[data-close-reading-block='paragraph'] > ul > li[data-source-quote] > code:first-child,
+[data-close-reading-block='paragraph'] > ul > li[data-source-quote] > p:first-child > code {
+  display: block;
+  padding: 0 0 0 0.75em;
+  border: 0;
+  border-inline-start: 3px solid color-mix(in srgb, var(--border) 35%, transparent);
+  background: none;
+  color: #171717;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  border-radius: 0;
+}
+
 .close-reading-prose h1 {
   color: #171717;
   font-size: 1.375em;
