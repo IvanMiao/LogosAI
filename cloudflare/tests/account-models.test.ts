@@ -1,6 +1,7 @@
 import schema from '../migrations/0001_auth_and_reading.sql?raw';
 import migration from '../migrations/0004_gemini_4_model.sql?raw';
 import hydrogenMigration from '../migrations/0005_gemini_4_hydrogen_model.sql?raw';
+import neonMigration from '../migrations/0006_gemini_4_neon_model.sql?raw';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Hono } from 'hono';
 import { Miniflare } from 'miniflare';
@@ -39,6 +40,7 @@ beforeAll(async () => {
     .bind('reader', 'gemini-2.5-pro', 'encrypted-value', 'test-iv', '•••• alue', 100, 200).run();
   await executeSql(migration);
   await executeSql(hydrogenMigration);
+  await executeSql(neonMigration);
   migratedSettings = await database.prepare('SELECT * FROM user_settings').first();
 }, 30_000);
 afterAll(() => runtime.dispose());
@@ -58,7 +60,7 @@ describe('account model persistence', () => {
     });
   });
 
-  it.each(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-4-argon', 'gemini-4-hydrogen'])(
+  it.each(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-4-neon'])(
     'saves and reloads %s without replacing the encrypted key', async (model) => {
       const response = await request('PUT', { model });
       expect(response.status).toBe(200);
