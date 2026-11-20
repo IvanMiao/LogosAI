@@ -116,14 +116,15 @@ def _stream_agent_response(
                             "stage",
                             {**context, "stage": event["stage"]},
                         )
-                    elif event_type == "chunk" and event.get("delta"):
-                        final_result += event["delta"]
+                    elif event_type in ("chunk", "thinking") and event.get("delta"):
+                        if event_type == "chunk":
+                            final_result += event["delta"]
                         yield to_sse_event(
-                            "chunk",
+                            event_type,
                             {**context, "delta": event["delta"]},
                         )
-                    elif event_type == "done" and event.get("result", "").strip():
-                        final_result = event["result"].strip()
+                    elif event_type == "done":
+                        final_result = event.get("result", "").strip() or final_result
 
             if not final_result:
                 raise ValueError("Analysis failed - no interpretation generated")

@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -30,6 +31,42 @@ def parse_sse_events(raw: str) -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # Agent unit tests (analyze_stream)
+@pytest.mark.asyncio
+async def test_thinking_is_separate_from_result_and_first_token():
+    agent = make_fake_agent()
+
+    async def stream(_messages):
+        yield SimpleNamespace(content=[{"type": "thinking", "thinking": "Consider "}])
+        yield SimpleNamespace(content=[
+            {"type": "thinking", "thinking": "the source"},
+            {"type": "text", "text": "Answer"},
+        ])
+
+    agent.llm_flash.astream = stream
+    with patch("llm.agent.track_llm_stage") as tracking:
+        events = [event async for event in agent._stream_interpretation([], [])]
+    assert events == [
+        {"event": "thinking", "delta": "Consider "},
+        {"event": "thinking", "delta": "the source"},
+        {"event": "chunk", "delta": "Answer"},
+    ]
+    telemetry = tracking.return_value.__enter__.return_value
+    telemetry.record_first_token.assert_called_once()
+    telemetry.record_response.assert_called_once_with("Answer")
+
+
+def test_endpoint_forwards_thinking_without_using_it_as_result(client, fake_agent):
+    async def stream(*_args):
+        yield {"event": "thinking", "delta": "Reasoning"}
+
+    fake_agent.analyze_stream = stream
+    response = client.post("/api/analyze/stream", json={"text": "Bonjour"})
+    events = parse_sse_events(response.text)
+    assert events[0] == {"event": "thinking", "data": {"delta": "Reasoning"}}
+    assert events[-1]["event"] == "error"
+    assert not any(event["event"] == "done" for event in events)
+
+
 # ---------------------------------------------------------------------------
 
 

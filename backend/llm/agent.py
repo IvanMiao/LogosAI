@@ -41,10 +41,11 @@ class TextAnalysisLangchain:
                 api_key=gemini_key,
                 max_output_tokens=_GEMINI_4_OUTPUT_TOKENS[model],
                 timeout=1200,
+                include_thoughts=True,
             ).bind(generation_config={"temperature": None})
         else:
             self.llm_flash = ChatGoogleGenerativeAI(
-                model=model, api_key=gemini_key, temperature=0.3
+                model=model, api_key=gemini_key, temperature=0.3, include_thoughts=True
             )
         self.llm_lite = ChatGoogleGenerativeAI(
             model=self.lite_model, api_key=gemini_key, temperature=0.0
@@ -75,6 +76,18 @@ class TextAnalysisLangchain:
             return "".join(fragments)
 
         return ""
+
+    @staticmethod
+    def _content_to_thinking(content: object) -> str:
+        if not isinstance(content, list):
+            return ""
+        return "".join(
+            item["thinking"]
+            for item in content
+            if isinstance(item, dict)
+            and item.get("type") == "thinking"
+            and isinstance(item.get("thinking"), str)
+        )
 
     @staticmethod
     def _detection_messages(text: str) -> list[BaseMessage]:
@@ -182,6 +195,9 @@ class TextAnalysisLangchain:
             messages,
         ) as telemetry:
             async for chunk in self.llm_flash.astream(messages):
+                thinking = self._content_to_thinking(chunk.content)
+                if thinking:
+                    yield {"event": "thinking", "delta": thinking}
                 delta = self._content_to_text(chunk.content)
                 if not delta:
                     continue
