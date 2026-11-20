@@ -75,6 +75,21 @@ function createLocalState(): LocalWorkspaceState {
 }
 
 describe('reading cloud state', () => {
+  it('omits local thinking from cloud snapshots without changing local artifacts', () => {
+    const local = createLocalState();
+    const artifact = local.artifactStorage.artifactsByAnchorId['anchor-1'][0];
+    artifact.thinking = 'Private local summary';
+    expect(buildReadingSessions(local)[0].artifacts[0]).not.toHaveProperty('thinking');
+    expect(artifact.thinking).toBe('Private local summary');
+    const merged = mergeCloudWorkspace(local, {
+      sessions: [],
+      preferences: {
+        activeDocumentId: 'document-1', readerPreferences: local.readerPreferences, analysisLanguage: 'en',
+      },
+    });
+    expect(merged.artifactStorage.artifactsByAnchorId['anchor-1'][0].thinking)
+      .toBe('Private local summary');
+  });
   beforeEach(() => localStorage.clear());
 
   it('does not attach the previous reading anchor to a newly imported reading', () => {

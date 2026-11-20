@@ -136,6 +136,23 @@ describe('recovery persistence and explicit resolution', () => {
     expect(reloaded.conflicts).toEqual([]);
   });
 
+  it('keeps local thinking on other readings when resolving a conflict', () => {
+    const other = reading();
+    other.document = { ...other.document, id: 'other' };
+    other.anchors = other.anchors.map((anchor) => ({ ...anchor, documentId: 'other' }));
+    other.artifacts = other.artifacts.map((artifact) => ({ ...artifact, id: `other-${artifact.id}`, documentId: 'other' }));
+    const engine = new WorkspaceSyncState(journal());
+    const state = engine.hydrate(createLocalWorkspaceState([reading(), other], preferences), { preferences, sessions: [] }, journal());
+    const otherArtifact = Object.values(state.artifactStorage.artifactsByAnchorId).flat()
+      .find((artifact) => artifact.id === 'other-one');
+    if (!otherArtifact) throw new Error('missing artifact');
+    otherArtifact.thinking = 'Model thoughts';
+    const resolved = engine.resolve(state, engine.conflicts[0], 'local');
+    const kept = Object.values(resolved.artifactStorage.artifactsByAnchorId).flat()
+      .find((artifact) => artifact.id === 'other-one');
+    expect(kept?.thinking).toBe('Model thoughts');
+  });
+
   it('restores a remotely deleted reading only through an explicit new-reading choice', () => {
     const local = reading(); local.artifacts[0].content = 'Offline note';
     const engine = new WorkspaceSyncState(journal());

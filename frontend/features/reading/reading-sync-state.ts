@@ -1,4 +1,4 @@
-import { buildReadingSessions, buildWorkspacePreferences, createLocalWorkspaceState, fingerprint,
+import { buildReadingSessions, buildWorkspacePreferences, createLocalWorkspaceState, fingerprint, preserveLocalThinking,
   mergeCloudWorkspace, type LocalWorkspaceState } from '@/features/reading/reading-cloud-state';
 import { copyReadingSession } from '@/features/reading/reading-session-copy';
 import {
@@ -152,7 +152,9 @@ export class WorkspaceSyncState {
     if (local && resolved.length && preferences.activeDocumentId === local.document.id) {
       preferences.activeDocumentId = resolved[resolved.length - 1].document.id;
     }
-    return createLocalWorkspaceState(next, preferences);
+    const resolvedState = createLocalWorkspaceState(next, preferences);
+    preserveLocalThinking(resolvedState.artifactStorage, state.artifactStorage);
+    return resolvedState;
   }
 
   private resolveSessions(local: ReadingSessionSnapshot | undefined, remote: StoredReadingSession | undefined,

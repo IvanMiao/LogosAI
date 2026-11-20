@@ -74,7 +74,8 @@ def test_gemini_4_serializes_without_sampling_or_thinking_budget_overrides(
 
     assert request.model == f"models/{model_id}"
     assert config["max_output_tokens"] == output_tokens
-    assert not {"temperature", "top_p", "top_k", "thinking_config"} & config.keys()
+    assert not {"temperature", "top_p", "top_k"} & config.keys()
+    assert config["thinking_config"] == {"include_thoughts": True}
     assert model.bound.timeout == 1200
     assert agent.llm_lite.model == "models/gemini-2.5-flash-lite"
     assert agent.llm_lite.temperature == 0

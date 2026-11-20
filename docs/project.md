@@ -96,6 +96,7 @@ Gemini 4 使用普通 `generateContent` 同步/流式请求，保留默认 think
 和 `0006_gemini_4_neon_model.sql`），扩展模型约束并保留已有加密凭据。
 
 Anchor SSE 带 request_id、trace_id、anchor_id，chunk.delta 是增量。
+两种 SSE 均可发送 `thinking`（`delta` 为 Gemini 思考摘要增量）；不计入正文或 done.result，retry 时随正文清空。摘要仅保存在本地 artifact，不上传云端。
 
 整篇 Close Reading 在 `/api/analyze*` 请求中附带 `paragraphs`（前端
 `splitDocumentParagraphsWithOffsets` 的段落文本，顺序即编号）。此时后端在 `GENERAL_PROMPT`

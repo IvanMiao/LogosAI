@@ -8,6 +8,7 @@ export interface Artifact {
   type: ArtifactType;
   title: string;
   content: string;
+  thinking?: string;
   status: ArtifactStatus;
   createdAt: string;
   updatedAt: string;

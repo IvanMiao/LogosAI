@@ -74,10 +74,10 @@ export function useAnchorSkillActions({
       documentId: anchor.documentId,
       anchorId: anchor.id,
       title,
-      execute: async ({ signal, onChunk, onStage, onRestart }) => {
+      execute: async ({ signal, onChunk, onThinking, onStage, onRestart }) => {
         const content = await streamAnalysis(
           { model, text, userLanguage: analysisLanguage, paragraphs, signal },
-          { onChunk, onStage, onRestart },
+          { onChunk, onThinking, onStage, onRestart },
         );
         return { content };
       },
@@ -96,10 +96,10 @@ export function useAnchorSkillActions({
       title: artifact.title,
       type: artifact.type,
       requestIdPrefix: 'pending',
-      execute: async ({ signal, onChunk, onMetadata, onStage }) => {
+      execute: async ({ signal, onChunk, onThinking, onMetadata, onStage, onRestart }) => {
         const result = await runAnchorSkill(
           { model, document: activeDocument, anchor, skill, userLanguage: analysisLanguage, signal },
-          { onChunk, onStage, onMetadata },
+          { onChunk, onThinking, onStage, onMetadata, onRestart },
         );
         return { content: result.result, requestId: result.requestId, traceId: result.traceId };
       },

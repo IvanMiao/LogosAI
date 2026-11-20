@@ -40,6 +40,7 @@ function getSessionArtifacts(
     .map((artifact) => {
       const snapshotArtifact = { ...artifact };
       delete snapshotArtifact.stage;
+      delete snapshotArtifact.thinking;
       return snapshotArtifact;
     });
 }
@@ -245,7 +246,18 @@ export function mergeCloudWorkspace(
   const preferences = !journal?.preferencesDirty
     ? cloudState.preferences
     : buildWorkspacePreferences(localState);
-  return createLocalWorkspaceState(mergedSessions, preferences);
+  const restored = createLocalWorkspaceState(mergedSessions, preferences);
+  preserveLocalThinking(restored.artifactStorage, localState.artifactStorage);
+  return restored;
+}
+
+export function preserveLocalThinking(next: ArtifactStorageState, previous: ArtifactStorageState): void {
+  const localById = new Map(Object.values(previous.artifactsByAnchorId).flat()
+    .map((artifact) => [artifact.id, artifact]));
+  for (const artifact of Object.values(next.artifactsByAnchorId).flat()) {
+    const local = localById.get(artifact.id);
+    if (local?.thinking !== undefined) artifact.thinking = local.thinking;
+  }
 }
 
 export function fingerprint(value: unknown): string {

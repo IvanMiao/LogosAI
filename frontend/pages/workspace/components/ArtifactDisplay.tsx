@@ -14,8 +14,10 @@ import { getArtifactProgressLabel } from './artifact-display-helpers';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
 import { parseCloseReadingBlocks } from '@/features/reading/close-reading-blocks';
+import { formatCloseReadingTags } from '@/features/reading/close-reading-display';
 import { cn } from '@/utils/class-name';
 import { CloseReadingBlocks } from './CloseReadingBlocks';
+import { ArtifactThinking } from './ArtifactThinking';
 import {
   getCloseReadingFontSize,
   getReaderFontClassName,
@@ -106,13 +108,27 @@ function ArtifactMarkdown({
   const blocks = artifact.type === 'close_read'
     ? parseCloseReadingBlocks(artifact.content)
     : null;
-  if (!blocks) return <ReactMarkdown>{artifact.content}</ReactMarkdown>;
+  if (!blocks) {
+    const content = artifact.type === 'close_read'
+      ? formatCloseReadingTags(artifact.content)
+      : artifact.content;
+    return <ReactMarkdown>{content}</ReactMarkdown>;
+  }
   return (
     <CloseReadingBlocks
       blocks={blocks}
       onShowParagraph={onShowParagraph}
       highlightedParagraphNumber={highlightedParagraphNumber}
     />
+  );
+}
+
+function ArtifactProgress({ artifact }: { artifact: Artifact }): ReactElement | null {
+  if (artifact.thinking) return null;
+  return (
+    <p className="text-sm leading-6 text-muted-foreground">
+      {artifact.status === 'running' ? getArtifactProgressLabel(artifact) : 'Draft started.'}
+    </p>
   );
 }
 
@@ -146,6 +162,7 @@ export function ArtifactBody({
   return (
     <div className="space-y-5">
       <ArtifactFeedback artifact={artifact} showRecoveryHint={showRecoveryHint} />
+      <ArtifactThinking key={artifact.id} artifact={artifact} />
       {artifact.content ? (
         <div className={contentClassName} style={contentStyle}>
           <ArtifactMarkdown
@@ -154,11 +171,7 @@ export function ArtifactBody({
             highlightedParagraphNumber={highlightedParagraphNumber}
           />
         </div>
-      ) : (
-        <p className="text-sm leading-6 text-muted-foreground">
-          {artifact.status === 'running' ? getArtifactProgressLabel(artifact) : 'Draft started.'}
-        </p>
-      )}
+      ) : <ArtifactProgress artifact={artifact} />}
     </div>
   );
 }

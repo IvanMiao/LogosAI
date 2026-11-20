@@ -24,6 +24,7 @@ interface ArtifactTaskResult {
 interface ArtifactTaskContext {
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
+  onThinking: (delta: string) => void;
   onMetadata: (metadata: ArtifactTaskMetadata) => void;
   onStage: (stage: AnalysisStreamStage) => void;
   onRestart: () => void;
@@ -99,6 +100,13 @@ export function useArtifactTasks({
     try {
       const result = await execute({
         signal: abortController.signal,
+        onThinking: (delta) => {
+          updateArtifacts((current) => updateArtifact(current, artifact.id, (item) => ({
+            ...item,
+            thinking: (item.thinking ?? '') + delta,
+            updatedAt: new Date().toISOString(),
+          })));
+        },
         onChunk: (chunk) => {
           updateArtifacts((current) => appendArtifactContent(
             current,
@@ -123,7 +131,7 @@ export function useArtifactTasks({
           updateArtifacts((current) => updateArtifact(
             current,
             artifact.id,
-            (item) => ({ ...item, content: '', updatedAt: new Date().toISOString() }),
+            (item) => ({ ...item, content: '', thinking: '', updatedAt: new Date().toISOString() }),
           ));
         },
         onStage: (stage) => {
