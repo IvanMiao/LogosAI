@@ -73,6 +73,7 @@ export function ApiKeySettingsForm({
             <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
             <SelectItem value="gemini-4-argon">Gemini 4 Argon</SelectItem>
             <SelectItem value="gemini-4-hydrogen">Gemini 4 Hydrogen</SelectItem>
+            <SelectItem value="gemini-4-neon">Gemini 4 Neon</SelectItem>
           </SelectContent>
         </Select>
       </div>

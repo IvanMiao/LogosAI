@@ -18,7 +18,10 @@ afterEach(() => {
 });
 
 describe('model settings', () => {
-  it('selects, saves, and reloads Gemini 4 Argon using its API model ID', async () => {
+  it.each([
+    ['gemini-4-argon', 'Gemini 4 Argon'],
+    ['gemini-4-neon', 'Gemini 4 Neon'],
+  ])('selects, saves, and reloads %s using its API model ID', async (modelId, displayName) => {
     // JSDOM does not implement the browser scrolling API used by Radix Select.
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
     let model = 'gemini-2.5-flash';
@@ -35,16 +38,16 @@ describe('model settings', () => {
     const select = screen.getByRole('combobox', { name: 'Model' });
     select.focus();
     await user.keyboard(' ');
-    await user.click(await screen.findByRole('option', { name: 'Gemini 4 Argon' }));
+    await user.click(await screen.findByRole('option', { name: displayName }));
     await user.click(screen.getByRole('button', { name: 'Save settings' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Settings saved.');
     expect(fetchMock).toHaveBeenCalledWith('/api/account/settings', expect.objectContaining({
-      method: 'PUT', body: JSON.stringify({ model: 'gemini-4-argon' }),
+      method: 'PUT', body: JSON.stringify({ model: modelId }),
     }));
     view.unmount();
     render(<UserSettingsProvider><SettingsHarness /></UserSettingsProvider>);
     await screen.findByRole('button', { name: 'Save settings' });
-    expect(screen.getByRole('combobox', { name: 'Model' })).toHaveTextContent('Gemini 4 Argon');
+    expect(screen.getByRole('combobox', { name: 'Model' })).toHaveTextContent(displayName);
   });
 });

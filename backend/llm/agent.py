@@ -20,7 +20,11 @@ from llm.state import (
 from monitoring.llm import track_llm_stage
 from schemas.analyze import TextDirectives
 
-_GEMINI_4_OUTPUT_TOKENS = {"gemini-4-argon": 32768, "gemini-4-hydrogen": 65536}
+_GEMINI_4_OUTPUT_TOKENS = {
+    "gemini-4-argon": 32768,
+    "gemini-4-hydrogen": 65536,
+    "gemini-4-neon": 65536,
+}
 
 
 class TextAnalysisLangchain:

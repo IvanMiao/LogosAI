@@ -21,6 +21,7 @@ _ALLOWED_MODELS = {
     "gemini-2.5-pro",
     "gemini-4-argon",
     "gemini-4-hydrogen",
+    "gemini-4-neon",
 }
 
 

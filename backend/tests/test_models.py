@@ -14,7 +14,9 @@ from tests.helpers import make_fake_agent
     "endpoint",
     ["/api/analyze", "/api/analyze/stream", "/api/anchors/explain", "/api/anchors/run"],
 )
-@pytest.mark.parametrize("model_id", ["gemini-4-argon", "gemini-4-hydrogen"])
+@pytest.mark.parametrize(
+    "model_id", ["gemini-4-argon", "gemini-4-hydrogen", "gemini-4-neon"]
+)
 def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint, model_id):
     body = {"text": "Alpha beta gamma.", "model": model_id}
     if endpoint.startswith("/api/anchors/"):
@@ -52,7 +54,11 @@ def test_gemini_4_reaches_agent_for_every_analysis_contract(endpoint, model_id):
 
 @pytest.mark.parametrize(
     ("model_id", "output_tokens"),
-    [("gemini-4-argon", 32768), ("gemini-4-hydrogen", 65536)],
+    [
+        ("gemini-4-argon", 32768),
+        ("gemini-4-hydrogen", 65536),
+        ("gemini-4-neon", 65536),
+    ],
 )
 def test_gemini_4_serializes_without_sampling_or_thinking_budget_overrides(
     model_id, output_tokens
