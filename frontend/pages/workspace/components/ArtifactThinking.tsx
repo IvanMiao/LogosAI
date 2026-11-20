@@ -27,7 +27,7 @@ export function ArtifactThinking({ artifact }: { artifact: Artifact }) {
         </span>{' '}
         {isThinking && latestHeading ? <span className="truncate">{latestHeading}</span> : null}
       </Button>
-      <div id={panelId} hidden={!expanded} className="prose prose-sm max-h-64 max-w-none overflow-y-auto border-l border-border py-1 pl-3 text-xs leading-relaxed text-muted-foreground [&_p]:my-2 [&_ul]:my-2 [&_h3]:my-2">
+      <div id={panelId} hidden={!expanded} role="region" aria-label="Model thinking" tabIndex={0} className="prose prose-sm max-h-64 max-w-none overflow-y-auto border-l border-border py-1 pl-3 text-xs leading-relaxed text-muted-foreground [&_p]:my-2 [&_ul]:my-2 [&_h3]:my-2">
         <ReactMarkdown>{artifact.thinking}</ReactMarkdown>
       </div>
     </section>
