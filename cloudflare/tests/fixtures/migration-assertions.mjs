@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
-export function assertMigratedFixture(database) {
-  const [settings, preferences, reading, anchor, note, auth] = database.query(`
+export async function assertMigratedFixture(database) {
+  const [settings, preferences, reading, anchor, note, auth] = await database.query(`
     SELECT user_id, model, encrypted_api_key, api_key_iv, api_key_hint, created_at, updated_at
       FROM user_settings ORDER BY user_id;
     SELECT user_id, active_document_id, reader_font_linked, reader_line_width
@@ -32,27 +32,27 @@ export function assertMigratedFixture(database) {
     providerId: 'github', accountId: 'external-a' }]);
 }
 
-export function assertDatabaseConstraints(database) {
-  database.expectFailure("UPDATE reading_session SET revision = revision WHERE id = 'reading-a'",
+export async function assertDatabaseConstraints(database) {
+  await database.expectFailure("UPDATE reading_session SET revision = revision WHERE id = 'reading-a'",
     /READING_REVISION_CONFLICT/);
-  database.expectFailure(`INSERT INTO reading_session (
+  await database.expectFailure(`INSERT INTO reading_session (
     id, user_id, title, source_text, source_type, created_at, updated_at, revision, synced_at
   ) VALUES ('invalid-revision', 'reader-a', 'Title', 'Text', 'paste', '2026-01-01', '2026-01-01', 2, 100)`,
   /READING_REVISION_CONFLICT/);
-  database.query("UPDATE reading_session SET revision = revision + 1 WHERE id = 'reading-a'");
-  database.expectFailure("UPDATE user_settings SET model = 'invalid' WHERE user_id = 'reader-a'",
+  await database.query("UPDATE reading_session SET revision = revision + 1 WHERE id = 'reading-a'");
+  await database.expectFailure("UPDATE user_settings SET model = 'invalid' WHERE user_id = 'reader-a'",
     /CHECK constraint failed/);
-  database.expectFailure("UPDATE user_settings SET api_key_iv = NULL WHERE user_id = 'reader-a'",
+  await database.expectFailure("UPDATE user_settings SET api_key_iv = NULL WHERE user_id = 'reader-a'",
     /CHECK constraint failed/);
-  database.expectFailure(`INSERT INTO user_settings (user_id, created_at, updated_at)
+  await database.expectFailure(`INSERT INTO user_settings (user_id, created_at, updated_at)
     VALUES ('missing-user', 100, 200)`, /FOREIGN KEY constraint failed/);
-  database.query("UPDATE user_settings SET model = 'gemini-4-hydrogen' WHERE user_id = 'reader-a'");
-  const [settings] = database.query(`SELECT model, encrypted_api_key, api_key_iv, api_key_hint
+  await database.query("UPDATE user_settings SET model = 'gemini-4-hydrogen' WHERE user_id = 'reader-a'");
+  const [settings] = await database.query(`SELECT model, encrypted_api_key, api_key_iv, api_key_hint
     FROM user_settings WHERE user_id = 'reader-a'`);
   assert.deepEqual(settings, [{ model: 'gemini-4-hydrogen', encrypted_api_key: 'fixture-ciphertext',
     api_key_iv: 'fixture-iv', api_key_hint: 'test' }]);
-  database.query('DELETE FROM "user" WHERE id = \'reader-a\'');
-  const remaining = database.query(`
+  await database.query('DELETE FROM "user" WHERE id = \'reader-a\'');
+  const remaining = await database.query(`
     SELECT id FROM "user";
     SELECT user_id FROM user_settings;
     SELECT user_id FROM workspace_preferences;
