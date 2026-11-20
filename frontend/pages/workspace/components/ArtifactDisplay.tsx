@@ -108,7 +108,12 @@ function ArtifactMarkdown({
   const blocks = artifact.type === 'close_read'
     ? parseCloseReadingBlocks(artifact.content)
     : null;
-  if (!blocks) return <ReactMarkdown>{formatCloseReadingTags(artifact.content)}</ReactMarkdown>;
+  if (!blocks) {
+    const content = artifact.type === 'close_read'
+      ? formatCloseReadingTags(artifact.content)
+      : artifact.content;
+    return <ReactMarkdown>{content}</ReactMarkdown>;
+  }
   return (
     <CloseReadingBlocks
       blocks={blocks}
