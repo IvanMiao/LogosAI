@@ -37,10 +37,12 @@ async def test_thinking_is_separate_from_result_and_first_token():
 
     async def stream(_messages):
         yield SimpleNamespace(content=[{"type": "thinking", "thinking": "Consider "}])
-        yield SimpleNamespace(content=[
-            {"type": "thinking", "thinking": "the source"},
-            {"type": "text", "text": "Answer"},
-        ])
+        yield SimpleNamespace(
+            content=[
+                {"type": "thinking", "thinking": "the source"},
+                {"type": "text", "text": "Answer"},
+            ]
+        )
 
     agent.llm_flash.astream = stream
     with patch("llm.agent.track_llm_stage") as tracking:
