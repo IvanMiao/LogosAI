@@ -4,12 +4,13 @@ import ReactMarkdown from 'react-markdown';
 import type { Artifact } from '@/features/artifacts';
 import { Button } from '@/components/ui/button';
 import { getLatestThoughtHeading } from './artifact-thinking-helpers';
+import { formatCloseReadingTags } from '@/features/reading/close-reading-display';
 
 export function ArtifactThinking({ artifact }: { artifact: Artifact }) {
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const isThinking = artifact.status === 'running' && !artifact.content;
-  const latestHeading = getLatestThoughtHeading(artifact.thinking ?? '');
+  const latestHeading = getLatestThoughtHeading(formatCloseReadingTags(artifact.thinking ?? ''));
   const Chevron = expanded ? ChevronDown : ChevronRight;
   if (!artifact.thinking) return null;
 
@@ -28,7 +29,7 @@ export function ArtifactThinking({ artifact }: { artifact: Artifact }) {
         {isThinking && latestHeading ? <span className="truncate">{latestHeading}</span> : null}
       </Button>
       <div id={panelId} hidden={!expanded} role="region" aria-label="Model thinking" tabIndex={0} className="prose prose-sm max-h-64 max-w-none overflow-y-auto border-l border-border py-1 pl-3 text-xs leading-relaxed text-muted-foreground [&_p]:my-2 [&_ul]:my-2 [&_h3]:my-2">
-        <ReactMarkdown>{artifact.thinking}</ReactMarkdown>
+        <ReactMarkdown>{formatCloseReadingTags(artifact.thinking)}</ReactMarkdown>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import ReactMarkdown, { type Components, type ExtraProps } from 'react-markdown';
 import { CornerUpLeft } from 'lucide-react';
 import type { CloseReadingBlock } from '@/features/reading/close-reading-blocks';
+import { formatCloseReadingTags } from '@/features/reading/close-reading-display';
 import { cn } from '@/utils/class-name';
 
 interface CloseReadingBlocksProps {
@@ -99,7 +100,7 @@ export function CloseReadingBlocks({
         >
           <BlockLabel block={block} onShowParagraph={onShowParagraph} />
           <ReactMarkdown components={block.kind === 'paragraph' ? PARAGRAPH_BLOCK_COMPONENTS : undefined}>
-            {block.content}
+            {formatCloseReadingTags(block.content)}
           </ReactMarkdown>
         </section>
       ))}

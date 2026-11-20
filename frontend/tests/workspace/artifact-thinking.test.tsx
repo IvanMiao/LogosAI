@@ -10,6 +10,16 @@ const artifact: Artifact = {
 };
 
 describe('artifact thinking', () => {
+  it('renders paragraph tag mentions as readable labels without modifying the artifact', () => {
+    const thinking = 'Requirements: `[[P1]]`, **[[OVERVIEW]]** and [[SYNTHESIS]].';
+    const item = { ...artifact, thinking, status: 'complete' as const };
+    render(<ArtifactThinking artifact={item} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show thinking' }));
+    const panel = screen.getByRole('region', { name: 'Model thinking' });
+    expect(panel).toHaveTextContent('Requirements: ¶1, Overview and Synthesis.');
+    expect(panel).not.toHaveTextContent('[[P1]]');
+    expect(item.thinking).toBe(thinking);
+  });
   it('starts collapsed while thinking and preserves user expansion when content starts', () => {
     const { rerender } = render(<ArtifactThinking artifact={artifact} />);
     const thinkingToggle = screen.getByRole('button', { name: 'Thinking… Considering context' });

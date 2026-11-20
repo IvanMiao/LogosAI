@@ -14,6 +14,7 @@ import { getArtifactProgressLabel } from './artifact-display-helpers';
 import type { Artifact } from '@/features/artifacts';
 import type { ReaderPreferences } from '@/features/reading';
 import { parseCloseReadingBlocks } from '@/features/reading/close-reading-blocks';
+import { formatCloseReadingTags } from '@/features/reading/close-reading-display';
 import { cn } from '@/utils/class-name';
 import { CloseReadingBlocks } from './CloseReadingBlocks';
 import { ArtifactThinking } from './ArtifactThinking';
@@ -107,7 +108,7 @@ function ArtifactMarkdown({
   const blocks = artifact.type === 'close_read'
     ? parseCloseReadingBlocks(artifact.content)
     : null;
-  if (!blocks) return <ReactMarkdown>{artifact.content}</ReactMarkdown>;
+  if (!blocks) return <ReactMarkdown>{formatCloseReadingTags(artifact.content)}</ReactMarkdown>;
   return (
     <CloseReadingBlocks
       blocks={blocks}
