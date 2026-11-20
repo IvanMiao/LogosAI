@@ -6,33 +6,42 @@ import type { Artifact } from '@/features/artifacts';
 
 const artifact: Artifact = {
   id: 'a', documentId: 'd', anchorId: 's', type: 'explanation', title: 'Explain',
-  content: '', thinking: 'Considering **context**', status: 'running', createdAt: '', updatedAt: '',
+  content: '', thinking: '**Considering context**\nDetails', status: 'running', createdAt: '', updatedAt: '',
 };
 
 describe('artifact thinking', () => {
-  it('expands while thinking then collapses when content starts', () => {
+  it('starts collapsed while thinking and preserves user expansion when content starts', () => {
     const { rerender } = render(<ArtifactThinking artifact={artifact} />);
-    expect(screen.getByRole('button', { name: 'Thinking…' })).toHaveAttribute('aria-expanded', 'true');
+    const thinkingToggle = screen.getByRole('button', { name: 'Thinking… Considering context' });
+    expect(thinkingToggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(thinkingToggle);
+    expect(thinkingToggle).toHaveAttribute('aria-expanded', 'true');
     rerender(<ArtifactThinking artifact={{ ...artifact, content: 'Answer' }} />);
-    const toggle = screen.getByRole('button', { name: 'Show thinking' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const toggle = screen.getByRole('button', { name: 'Hide thinking' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(toggle);
-    expect(screen.getByRole('button', { name: 'Hide thinking' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Show thinking' })).toHaveAttribute('aria-expanded', 'false');
     rerender(<ArtifactThinking artifact={{ ...artifact, status: 'complete', content: 'Answer' }} />);
-    expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it.each(['complete', 'stopped', 'failed'] as const)('starts collapsed when %s', (status) => {
-    render(<ArtifactThinking artifact={{ ...artifact, status }} />);
+  it.each(['running', 'complete', 'stopped', 'failed'] as const)('starts collapsed with content when %s', (status) => {
+    render(<ArtifactThinking artifact={{ ...artifact, content: 'Answer', status }} />);
     expect(screen.getByRole('button', { name: 'Show thinking' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('preserves a user collapse during generation and renders nothing without thinking', () => {
     const { rerender } = render(<ArtifactThinking artifact={artifact} />);
     fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button'));
     rerender(<ArtifactThinking artifact={{ ...artifact, thinking: 'More context' }} />);
     expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
     rerender(<ArtifactThinking artifact={{ ...artifact, thinking: '' }} />);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('shows no step title when the stream has no heading', () => {
+    render(<ArtifactThinking artifact={{ ...artifact, thinking: 'Considering context' }} />);
+    expect(screen.getByRole('button', { name: 'Thinking…' })).toHaveAttribute('aria-expanded', 'false');
   });
 });
