@@ -251,7 +251,7 @@ export function mergeCloudWorkspace(
   return restored;
 }
 
-function preserveLocalThinking(next: ArtifactStorageState, previous: ArtifactStorageState): void {
+export function preserveLocalThinking(next: ArtifactStorageState, previous: ArtifactStorageState): void {
   const localById = new Map(Object.values(previous.artifactsByAnchorId).flat()
     .map((artifact) => [artifact.id, artifact]));
   for (const artifact of Object.values(next.artifactsByAnchorId).flat()) {
