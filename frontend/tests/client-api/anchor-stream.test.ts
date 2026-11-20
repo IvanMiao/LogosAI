@@ -33,12 +33,28 @@ function respondWith(text: string): void {
 }
 
 function callbacks() {
-  return { onChunk: vi.fn(), onStage: vi.fn(), onMetadata: vi.fn() };
+  return { onChunk: vi.fn(), onThinking: vi.fn(), onRestart: vi.fn(), onStage: vi.fn(), onMetadata: vi.fn() };
 }
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('anchored stream completion', () => {
+  it('delivers thinking with validated metadata and restarts on retry', async () => {
+    respondWith(event('thinking', { delta: 'Réfléchir' })
+      + event('stage', { stage: 'retry' }) + event('done', { result: 'Answer' }));
+    const handlers = callbacks();
+    await runAnchorSkill(request, handlers);
+    expect(handlers.onThinking).toHaveBeenCalledWith('Réfléchir', {
+      requestId: 'request-1', traceId: 'trace-1', anchorId: 'anchor-1',
+    });
+    expect(handlers.onRestart).toHaveBeenCalledOnce();
+    expect(handlers.onChunk).not.toHaveBeenCalled();
+  });
+
+  it('rejects thinking with invalid identity', async () => {
+    respondWith(event('thinking', { delta: 'Thought', anchor_id: 'wrong' }));
+    await expect(runAnchorSkill(request, callbacks())).rejects.toThrow(/identity/);
+  });
   it('preserves UTF-8 chunks and completes with matching done metadata', async () => {
     respondWith(': heartbeat\r\n\r\n' + event('stage', { stage: 'interpret' })
       + event('chunk', { delta: '你好' }) + event('done', { result: '你好' }));
@@ -82,6 +98,16 @@ describe('anchored stream completion', () => {
 });
 
 describe('legacy stream transport', () => {
+  it('delivers thinking separately and restarts on retry', async () => {
+    respondWith(event('thinking', { delta: 'Réfléchir' })
+      + event('stage', { stage: 'retry' }) + event('done', { result: 'Answer' }));
+    const handlers = callbacks();
+    await expect(streamAnalysis({ model: request.model, text: 'Source', userLanguage: 'en' }, handlers))
+      .resolves.toBe('Answer');
+    expect(handlers.onThinking).toHaveBeenCalledWith('Réfléchir');
+    expect(handlers.onRestart).toHaveBeenCalledOnce();
+    expect(handlers.onChunk).not.toHaveBeenCalled();
+  });
   it('still decodes chunks and returns the final result', async () => {
     respondWith(event('chunk', { delta: '你好' }) + event('done', { result: '你好' }));
     const handlers = callbacks();

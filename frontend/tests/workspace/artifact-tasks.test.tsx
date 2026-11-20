@@ -33,6 +33,25 @@ const TASK_SOURCE = {
 };
 
 describe('artifact task lifecycle', () => {
+  it('appends thinking and clears it with content on restart', async () => {
+    const { result } = renderHook(useArtifactTaskHarness);
+    await act(async () => {
+      await result.current.runArtifactTask({
+        ...TASK_SOURCE,
+        execute: async ({ onThinking, onChunk, onRestart }) => {
+          onThinking('Discarded thought');
+          onChunk('Discarded output');
+          onRestart();
+          onThinking('New ');
+          onThinking('thought');
+          return { content: 'Final' };
+        },
+      });
+    });
+    expect(getOnlyArtifact(result.current.artifactStorage)).toMatchObject({
+      content: 'Final', thinking: 'New thought', status: 'complete',
+    });
+  });
   it('keeps metadata and reaches complete through the shared lifecycle', async () => {
     const { result } = renderHook(useArtifactTaskHarness);
 

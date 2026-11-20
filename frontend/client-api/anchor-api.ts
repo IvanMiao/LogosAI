@@ -25,6 +25,8 @@ export interface RunAnchorExplainRequest {
 }
 
 export interface AnchorExplainCallbacks {
+  onThinking?: (delta: string, metadata: AnchorStreamMetadata) => void;
+  onRestart?: () => void;
   onChunk: (chunk: string, metadata: AnchorStreamMetadata) => void;
   onStage: (stage: AnalysisStreamStage, metadata: AnchorStreamMetadata) => void;
   onMetadata: (metadata: AnchorStreamMetadata) => void;
@@ -135,7 +137,7 @@ function handleAnchorEvent(
   anchorId: string,
   callbacks: AnchorExplainCallbacks,
 ): void {
-  if (!['stage', 'chunk', 'done', 'error'].includes(event.event)) return;
+  if (!['stage', 'chunk', 'thinking', 'done', 'error'].includes(event.event)) return;
   const payload = JSON.parse(event.data) as AnchorSsePayload;
   const metadata = requireMetadata(payload, anchorId, state.metadata);
   if (event.event === 'error') {
@@ -150,6 +152,15 @@ function handleAnchorEvent(
   dispatchAnchorPayload(event.event, payload, metadata, state, callbacks);
 }
 
+function dispatchAnchorStage(
+  stage: AnalysisStreamStage | undefined,
+  metadata: AnchorStreamMetadata,
+  callbacks: AnchorExplainCallbacks,
+): void {
+  if (stage === 'retry') callbacks.onRestart?.();
+  if (stage) callbacks.onStage(stage, metadata);
+}
+
 function dispatchAnchorPayload(
   eventName: string,
   payload: AnchorSsePayload,
@@ -159,7 +170,10 @@ function dispatchAnchorPayload(
 ): void {
   switch (eventName) {
     case 'stage':
-      if (payload.stage) callbacks.onStage(payload.stage, metadata);
+      dispatchAnchorStage(payload.stage, metadata, callbacks);
+      break;
+    case 'thinking':
+      if (payload.delta) callbacks.onThinking?.(payload.delta, metadata);
       break;
     case 'chunk':
       if (payload.delta) callbacks.onChunk(payload.delta, metadata);

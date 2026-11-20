@@ -16,6 +16,7 @@ import type { ReaderPreferences } from '@/features/reading';
 import { parseCloseReadingBlocks } from '@/features/reading/close-reading-blocks';
 import { cn } from '@/utils/class-name';
 import { CloseReadingBlocks } from './CloseReadingBlocks';
+import { ArtifactThinking } from './ArtifactThinking';
 import {
   getCloseReadingFontSize,
   getReaderFontClassName,
@@ -116,6 +117,15 @@ function ArtifactMarkdown({
   );
 }
 
+function ArtifactProgress({ artifact }: { artifact: Artifact }): ReactElement | null {
+  if (artifact.thinking) return null;
+  return (
+    <p className="text-sm leading-6 text-muted-foreground">
+      {artifact.status === 'running' ? getArtifactProgressLabel(artifact) : 'Draft started.'}
+    </p>
+  );
+}
+
 export function ArtifactBody({
   artifact,
   variant = 'compact',
@@ -146,6 +156,7 @@ export function ArtifactBody({
   return (
     <div className="space-y-5">
       <ArtifactFeedback artifact={artifact} showRecoveryHint={showRecoveryHint} />
+      <ArtifactThinking key={artifact.id} artifact={artifact} />
       {artifact.content ? (
         <div className={contentClassName} style={contentStyle}>
           <ArtifactMarkdown
@@ -154,11 +165,7 @@ export function ArtifactBody({
             highlightedParagraphNumber={highlightedParagraphNumber}
           />
         </div>
-      ) : (
-        <p className="text-sm leading-6 text-muted-foreground">
-          {artifact.status === 'running' ? getArtifactProgressLabel(artifact) : 'Draft started.'}
-        </p>
-      )}
+      ) : <ArtifactProgress artifact={artifact} />}
     </div>
   );
 }

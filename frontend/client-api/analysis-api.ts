@@ -15,6 +15,11 @@ import { readSseStream } from './sse-stream';
 
 const STREAM_FLUSH_INTERVAL_MS = 40;
 
+function deliverThinking(event: ParsedSseEvent, callbacks: StreamAnalysisCallbacks): void {
+  const payload = JSON.parse(event.data) as StreamChunkPayload;
+  callbacks.onThinking?.(payload.delta);
+}
+
 export interface StreamAnalysisRequest {
   model: string;
   text: string;
@@ -25,6 +30,7 @@ export interface StreamAnalysisRequest {
 }
 
 export interface StreamAnalysisCallbacks {
+  onThinking?: (delta: string) => void;
   onChunk: (chunk: string) => void;
   onStage: (stage: AnalysisStreamStage) => void;
   /** The server discarded its output so far and is generating it again. */
@@ -93,6 +99,10 @@ async function readAnalysisStream(
   };
 
   const handleSseEvent = (event: ParsedSseEvent) => {
+    if (event.event === 'thinking') {
+      deliverThinking(event, callbacks);
+      return;
+    }
     if (event.event === 'stage') {
       const payload = JSON.parse(event.data) as StreamStagePayload;
       if (payload.stage === 'retry') {
