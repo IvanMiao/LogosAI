@@ -15,11 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
+        id: node
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - uses: actions/cache@v5
+        id: frontend-dependencies
+        with:
+          path: frontend/node_modules
+          key: frontend-node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('frontend/package-lock.json') }}
       - run: npm ci
+        if: steps.frontend-dependencies.outputs.cache-hit != 'true'
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npx vitest run
@@ -42,11 +49,36 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Detect migration-relevant changes
+        id: migration-changes
+        working-directory: .
+        env:
+          MIGRATION_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          base="$MIGRATION_BASE_REF"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git rev-parse --verify "${base}^{commit}" >/dev/null 2>&1; then
+            echo "Migration base unavailable; running D1 migration checks against origin/main."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "base-ref=origin/main" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$base" HEAD -- \
+            'cloudflare/migrations/**' \
+            'cloudflare/scripts/check-d1-migrations.mjs' \
+            'cloudflare/tests/fixtures/migration-*' \
+            'cloudflare/package.json' 'cloudflare/package-lock.json' \
+            '.github/workflows/ci.yml'; then
+            echo "Skipping D1 migration checks: no migration-relevant files changed."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Migration-relevant changes detected; running D1 migration checks."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "base-ref=$base" >> "$GITHUB_OUTPUT"
+          fi
       - name: Check D1 migration history and upgrades
+        if: steps.migration-changes.outputs.run == 'true'
         run: npm run test:db:migrations
         timeout-minutes: 10
         env:
-          MIGRATION_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          MIGRATION_BASE_REF: ${{ steps.migration-changes.outputs.base-ref }}
 
   backend:
     runs-on: ubuntu-latest

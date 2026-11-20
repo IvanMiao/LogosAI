@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { Miniflare } from 'miniflare';
+import { unstable_splitSqlQuery as splitSqlQuery } from 'wrangler';
 import { assertMigratedFixture, assertDatabaseConstraints } from '../tests/fixtures/migration-assertions.mjs';
 
 const PROJECT = fileURLToPath(new URL('../', import.meta.url));
@@ -70,6 +72,27 @@ function invoke(database, args, expectedError) {
   return result.stdout;
 }
 
+function createSqlExecutor(database) {
+  let runtime;
+  async function dispose() {
+    await runtime?.dispose();
+    runtime = undefined;
+  }
+  async function query(sql) {
+    // Match Wrangler's local execute runtime, persistence layout, and SQL splitting.
+    runtime ??= new Miniflare({
+      modules: true, script: '', resourcePersistencePath: join(database.state, 'v3'),
+      d1Databases: { DATABASE: '00000000-0000-0000-0000-000000000001' },
+    });
+    const db = await runtime.getD1Database('DATABASE');
+    const results = await db.batch(splitSqlQuery(sql).map((statement) => db.prepare(statement)));
+    return results.map((statement) => (statement.results ?? []).map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [key, Array.isArray(value) ? `[${value.join(', ')}]` : value]),
+    )));
+  }
+  return { query, dispose };
+}
+
 function createDatabase(root, label) {
   const folder = join(root, label);
   mkdirSync(join(folder, 'migrations'), { recursive: true });
@@ -80,15 +103,20 @@ function createDatabase(root, label) {
     d1_databases: [{ binding: 'DB', database_name: DATABASE,
       database_id: '00000000-0000-0000-0000-000000000001', migrations_dir: 'migrations' }],
   }));
+  const executor = createSqlExecutor(database);
+  async function apply(expectedError) {
+    await executor.dispose();
+    return invoke(database, ['migrations', 'apply', DATABASE], expectedError);
+  }
   return {
     folder,
-    apply: () => invoke(database, ['migrations', 'apply', DATABASE]),
-    query: (sql) => JSON.parse(invoke(database, ['execute', DATABASE, '--command', sql, '--json']))
-      .map((statement) => statement.results),
-    seed: () => invoke(database, ['execute', DATABASE, '--file', FIXTURE, '--json']),
-    expectFailure: (sql, pattern) => invoke(database,
-      ['execute', DATABASE, '--command', sql, '--json'], pattern),
-    expectMigrationFailure: (pattern) => invoke(database, ['migrations', 'apply', DATABASE], pattern),
+    apply,
+    query: executor.query,
+    seed: () => executor.query(readFileSync(FIXTURE, 'utf8')),
+    expectFailure: (sql, pattern) => assert.rejects(executor.query(sql),
+      (error) => { assert.match(String(error.cause?.message ?? error.message), pattern); return true; }),
+    expectMigrationFailure: apply,
+    dispose: executor.dispose,
   };
 }
 
@@ -98,57 +126,56 @@ function writeMigrations(database, migrations) {
   }
 }
 
-function seedDatabase(database, migrations) {
-  database.seed();
+async function seedDatabase(database, migrations) {
+  await database.seed();
   if (migrations.some(({ name }) => name === '0002_reader_appearance.sql')) {
-    database.query(`UPDATE workspace_preferences SET reader_font_linked =
+    await database.query(`UPDATE workspace_preferences SET reader_font_linked =
       CASE WHEN reader_font_family = close_reading_font_family THEN 1 ELSE 0 END`);
   }
 }
 
-function snapshot(database) {
-  const [schema] = database.query(`
+async function snapshot(database) {
+  const [schema] = await database.query(`
     SELECT type, name, tbl_name, sql FROM sqlite_schema
     WHERE name NOT GLOB 'sqlite_*' AND name NOT GLOB '_cf_*'
     ORDER BY type, name;
   `);
   const tables = schema.filter(({ type }) => type === 'table');
-  const contents = database.query(tables.map(({ name }) =>
+  const contents = await database.query(tables.map(({ name }) =>
     `SELECT * FROM "${name.replaceAll('"', '""')}"`).join(';'));
   // Compare the same database before/after an operation, without assuming its columns or row order.
   return { schema, contents: contents.map((rows) => rows.map((row) => JSON.stringify(row)).sort()) };
 }
 
-function assertApplied(database, migrations) {
-  const [applied, violations] = database.query(
+async function assertApplied(database, migrations) {
+  const [applied, violations] = await database.query(
     'SELECT name FROM d1_migrations ORDER BY id; PRAGMA foreign_key_check',
   );
   assert.deepEqual(applied.map(({ name }) => name), migrations.map(({ name }) => name));
   assert.deepEqual(violations, [], 'Foreign key violations after migration.');
 }
 
-function checkUpgrade(root, label, initial, current) {
-  const database = createDatabase(root, label);
+async function checkUpgrade(database, label, initial, current) {
   writeMigrations(database, initial);
   if (initial.length) {
-    database.apply();
-    seedDatabase(database, initial);
+    await database.apply();
+    await seedDatabase(database, initial);
   }
   writeMigrations(database, current);
-  database.apply();
-  if (!initial.length) seedDatabase(database, current);
-  assertApplied(database, current);
-  assertMigratedFixture(database);
-  const before = snapshot(database);
-  database.apply();
-  assert.deepEqual(snapshot(database), before, 'Repeated apply changed data or migration records.');
-  assertDatabaseConstraints(database);
+  await database.apply();
+  if (!initial.length) await seedDatabase(database, current);
+  await assertApplied(database, current);
+  await assertMigratedFixture(database);
+  const before = await snapshot(database);
+  await database.apply();
+  assert.deepEqual(await snapshot(database), before, 'Repeated apply changed data or migration records.');
+  await assertDatabaseConstraints(database);
   console.log(`PASS ${label}: ${current.length} migrations, data, constraints, repeat apply`);
   return database;
 }
 
-function checkFailedMigration(database, current) {
-  const before = snapshot(database);
+async function checkFailedMigration(database, current) {
+  const before = await snapshot(database);
   const migration = { name: '9999_ci_failure_probe.sql', sql: `
     CREATE TABLE "__ci_failure_probe" (id INTEGER PRIMARY KEY);
     INSERT INTO "__ci_failure_probe" (id) VALUES (1);
@@ -156,8 +183,8 @@ function checkFailedMigration(database, current) {
   ` };
   assert.ok(!current.some(({ name }) => name === migration.name));
   writeMigrations(database, [migration]);
-  database.expectMigrationFailure(/UNIQUE constraint failed/);
-  assert.deepEqual(snapshot(database), before, 'Failed migration left writes or an applied record.');
+  await database.expectMigrationFailure(/UNIQUE constraint failed/);
+  assert.deepEqual(await snapshot(database), before, 'Failed migration left writes or an applied record.');
   console.log('PASS failed migration: partial writes rolled back; earlier migrations retained');
 }
 
@@ -172,7 +199,7 @@ function upgradeCases(current, baseline) {
   return cases;
 }
 
-function main() {
+async function main() {
   const { values } = parseArgs({ options: { 'base-ref': { type: 'string' } } });
   const baseRef = values['base-ref'] ?? process.env.MIGRATION_BASE_REF ?? 'origin/main';
   const current = readCurrentMigrations();
@@ -180,20 +207,23 @@ function main() {
   assertMigrationHistory(current, baseline);
   console.log(`PASS append-only migration history against ${baseRef}`);
   const root = mkdtempSync(join(tmpdir(), 'logosai-d1-migrations-'));
+  let database;
   try {
-    let database;
     for (const [label, initial] of upgradeCases(current, baseline)) {
-      database = checkUpgrade(root, label, initial, current);
+      await database?.dispose();
+      database = createDatabase(root, label);
+      await checkUpgrade(database, label, initial, current);
     }
-    checkFailedMigration(database, current);
+    await checkFailedMigration(database, current);
   } finally {
+    await database?.dispose();
     rmSync(root, { recursive: true, force: true });
   }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    main();
+    await main();
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
